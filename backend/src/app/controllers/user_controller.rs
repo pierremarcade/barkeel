@@ -10,7 +10,7 @@ use crate::app::controllers::error_controller;
 
 type AuthSession = axum_login::AuthSession<Backend>;
 
-https://github.com/maxcountryman/axum-login/blob/main/examples/sqlite/src/web/app.rs
+//https://github.com/maxcountryman/axum-login/blob/main/examples/sqlite/src/web/app.rs
 
 pub async fn login(headers: HeaderMap, State(config): State<Arc<Config>>) -> impl IntoResponse {
     let tera: &Tera = &config.template;

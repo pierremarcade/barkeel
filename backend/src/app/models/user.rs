@@ -2,10 +2,11 @@ use diesel::prelude::*;
 use barkeel_derives::FormBuilder;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-
 use async_trait::async_trait;
 use axum_login::{AuthUser, AuthnBackend, UserId};
-
+use tokio::task;
+use password_auth::verify_password;
+use crate::db::schema::users::dsl::*;
 
 #[derive(Serialize, Deserialize, Queryable, FormBuilder, Clone, Debug)]
 #[diesel(table_name = crate::db::schema::users)]
@@ -37,17 +38,18 @@ pub struct Credentials {
 
 #[derive(Debug, Clone)]
 pub struct Backend {
-    db: SqlitePool,
+    config: Config,
 }
 
 impl Backend {
-    pub fn new(db: SqlitePool) -> Self {
-        Self { db }
+    pub fn new(config: Config) -> Self {
+        Self { config }
     }
 }
 
 #[async_trait]
 impl AuthnBackend for Backend {
+    
     type User = User;
     type Credentials = Credentials;
     type Error = std::convert::Infallible;
@@ -56,13 +58,26 @@ impl AuthnBackend for Backend {
         &self,
         creds: Self::Credentials,
     ) -> Result<Option<Self::User>, Self::Error> {
-        Ok(self.users.get(&user_id).cloned())
+        let user_result = users.filter(email.eq(creds.email)).first::<User>(&mut self.config.database.pool.get().unwrap());
+
+        match user_result {
+            Ok(user) => {
+                if verify_password(creds.password, &user.password).is_ok() {
+                    Ok(Some(user))
+                } else {
+                    Ok(None) 
+                }
+            },
+            Err(_) => Ok(None), 
+        }
     }
 
-    async fn get_user(
-        &self,
-        user_id: &UserId<Self>,
-    ) -> Result<Option<Self::User>, Self::Error> {
-        Ok(self.users.get(user_id).cloned())
+    async fn get_user(&self, user_id: &UserId<Self>) -> Result<Option<Self::User>, Self::Error> {
+        let user_result = users.find(user_id).first::<User>(&mut self.config.database.pool.get().unwrap());
+
+        match user_result {
+            Ok(user) => Ok(Some(user)),
+            Err(_) => Ok(None),
+        }
     }
 }
