@@ -1,0 +1,184 @@
+use crate::config::application::Config;
+use crate::app::models::user::{ User, UserCreate, UserEdit, Credentials, Backend };
+use crate::db::schema::users::dsl::*;
+use diesel::prelude::*;
+use std::sync::Arc;
+use tera::{Context, Tera};
+use axum::{ extract::{Path, State, Query}, response::{ IntoResponse, Redirect }, http::{ HeaderMap, StatusCode }, Form};
+use crate::app::utils::{ get_content_type, csrf_token_is_valid, response::Response, pagination::{ PaginationQuery, Pagination } };
+use crate::app::controllers::error_controller;
+
+type AuthSession = axum_login::AuthSession<Backend>;
+
+https://github.com/maxcountryman/axum-login/blob/main/examples/sqlite/src/web/app.rs
+
+pub async fn login(headers: HeaderMap, State(config): State<Arc<Config>>) -> impl IntoResponse {
+    let tera: &Tera = &config.template;
+    let mut tera = tera.clone();
+    tera.add_raw_template("user/login.html", include_str!("../views/user/login.html")).unwrap();
+
+    let rendered = tera.render("user/login.html", & Context::new()).unwrap();
+    Response{status_code: StatusCode::OK, content_type: "text/html", datas: rendered}
+}
+
+pub async fn authenticate(
+   mut auth_session: AuthSession, Form(payload): Form<Credentials>
+
+    ) -> impl IntoResponse {
+       
+
+
+        Redirect::to("/").into_response()
+    }
+
+pub async fn index(Query(pagination_query): Query<PaginationQuery>, headers: HeaderMap, State(config): State<Arc<Config>>) -> impl IntoResponse {
+    let total_results: i64 = get_total(config.clone());
+    let pagination = Pagination::new(pagination_query, total_results);
+    match users.limit(pagination.per_page as i64).offset(pagination.offset as i64).load::<User>(&mut config.database.pool.get().unwrap()) {
+        Ok(results) => {
+            if get_content_type(headers) == "application/json" {
+                render_json(config, results)
+            } else {    
+                render_html(config, results, pagination)
+            }
+        },
+        Err(err) => {
+            error_controller::handler_error(config, StatusCode::BAD_REQUEST, err.to_string())
+        }
+    }
+}
+
+fn render_html(config: Arc<Config>, results: Vec<User>, pagination: Pagination) -> Response<'static> {
+    let tera: &Tera = &config.template;
+    let mut tera = tera.clone();
+    let template_path = "user/index.html";
+    let template_content = include_str!("../views/user/index.html");
+    let result = tera.add_raw_template(template_path, template_content);
+    match result {
+        Ok(_) => {},
+        Err(err) => {
+            return error_controller::handler_error(config, StatusCode::BAD_REQUEST, err.to_string());
+        }
+    }
+    let mut context = Context::new();
+    context.insert("title", "User");
+    context.insert("base_url", "/users");
+    context.insert("description", "A list of all the users.");
+    context.insert("datas", &results);
+    context.insert("total_pages", &pagination.total_pages);
+    context.insert("current_page", &pagination.current_page);
+    context.insert("current_page_string", &pagination.current_page.to_string());
+    context.insert("offset", &pagination.offset);
+    context.insert("per_page", &pagination.per_page);
+    context.insert("page_numbers", &pagination.generate_page_numbers());
+
+    let rendered = tera.render("user/index.html", &context);
+    match rendered {
+        Ok(result) => {
+            Response{status_code: StatusCode::OK, content_type: "text/html", datas: result}
+        },
+        Err(err) => {
+            error_controller::handler_error(config, StatusCode::BAD_REQUEST, err.to_string())
+        }
+    }
+}
+
+fn render_json(config: Arc<Config>, results: Vec<User>) -> Response<'static> {
+    let rendered =  match  serde_json::to_string(&results) {
+        Ok(serialized) => {
+            return Response{status_code: StatusCode::OK, content_type: "application/json", datas: serialized};
+        },
+        Err(err) => {
+            return error_controller::handler_error(config, StatusCode::BAD_REQUEST, err.to_string());
+        }
+    };
+    rendered
+}
+
+fn get_total(config: Arc<Config>) -> i64 {
+    match users.count().get_result(&mut config.database.pool.get().unwrap()) {
+        Ok(count) => count,
+        Err(e) => {
+            eprintln!("Error counting users: {}", e);
+            0 
+        }
+    }
+}
+
+pub async fn show(Path(param_id): Path<i32>, State(config): State<Arc<Config>>) -> impl IntoResponse {
+    let tera: &Tera = &config.template;
+    let mut tera = tera.clone();
+    match users.find(param_id).first::<User>(&mut config.database.pool.get().unwrap()) {
+        Ok(result) => {
+            tera.add_raw_template("user/show.html", include_str!("../views/user/show.html")).unwrap();
+            let mut context = Context::new();
+            context.insert("data", &result);
+            context.insert("title", "User");
+            context.insert("description", "User's Detail");
+            let rendered = tera.render("user/show.html", &context).unwrap();
+            Response{status_code: StatusCode::OK, content_type: "text/html", datas: rendered}
+        },
+        _ => {
+            error_controller::render_404(config)
+        }
+    }
+}
+
+pub async fn new(headers: HeaderMap, State(config): State<Arc<Config>>) -> impl IntoResponse {
+    let tera: &Tera = &config.template;
+    let mut tera = tera.clone();
+    tera.add_raw_template("user/new.html", include_str!("../views/user/new.html")).unwrap();
+
+    let mut context = Context::new();
+    let config_ref = config.as_ref();
+    context.insert("data",&UserCreate::new().build_form(config_ref, headers, "/users"));
+
+    let rendered = tera.render("user/new.html", &context).unwrap();
+    Response{status_code: StatusCode::OK, content_type: "text/html", datas: rendered}
+}
+
+pub async fn create(headers: HeaderMap, State(config): State<Arc<Config>>, Form(payload): Form<UserEdit>) -> Redirect {
+    if csrf_token_is_valid(headers, config.clone(), payload.csrf_token) {
+        let _inserted_record: User = diesel::insert_into(users)
+            .values((name.eq(payload.name), email.eq(payload.email), password.eq(payload.password), role_id.eq(payload.role_id)))
+            .get_result(&mut config.database.pool.get().unwrap())
+            .expect("Error inserting data");
+    }
+    Redirect::to("/users") 
+}
+
+pub async fn edit(headers: HeaderMap, Path(param_id): Path<i32>, State(config): State<Arc<Config>>) -> impl IntoResponse {
+    let tera: &Tera = &config.template;
+    let mut tera = tera.clone();
+    tera.add_raw_template("user/edit.html", include_str!("../views/user/edit.html")).unwrap();
+    let result = users
+        .find(param_id)
+        .first::<User>(&mut config.database.pool.get().unwrap())
+        .expect("Error loading data");
+
+    let mut context = Context::new();
+    let config_ref = config.as_ref();
+    context.insert("data", &result.build_form(config_ref, headers, format!("/users/{}", param_id).as_str()));
+
+    let rendered = tera.render("user/edit.html", &context).unwrap();
+    Response{status_code: StatusCode::OK, content_type: "text/html", datas: rendered}
+}
+
+pub async fn update(headers: HeaderMap, State(config): State<Arc<Config>>, Path(param_id): Path<i32>, Form(payload): Form<UserEdit>) -> Redirect {
+    if csrf_token_is_valid(headers, config.clone(), payload.csrf_token) {
+        let _updated_record: User = diesel::update(users)
+            .filter(id.eq(param_id))
+            .set((name.eq(payload.name), email.eq(payload.email), password.eq(payload.password), role_id.eq(payload.role_id)))
+            .get_result(&mut config.database.pool.get().unwrap())
+            .expect("Error updating data");
+    }
+    Redirect::to("/users") 
+}
+
+pub async fn delete(Path(param_id): Path<i32>, State(config): State<Arc<Config>>) -> Redirect {
+    diesel::delete(users)
+        .filter(id.eq(param_id))
+        .execute(&mut config.database.pool.get().unwrap())
+        .expect("Error deleting data");
+    Redirect::to("/users") 
+}
