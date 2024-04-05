@@ -1,10 +1,8 @@
 use diesel::prelude::*;
 use barkeel_derives::FormBuilder;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 use async_trait::async_trait;
 use axum_login::{AuthUser, AuthnBackend, UserId};
-use tokio::task;
 use password_auth::verify_password;
 use crate::db::schema::users::dsl::*;
 

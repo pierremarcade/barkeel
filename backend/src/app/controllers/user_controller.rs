@@ -1,5 +1,5 @@
 use crate::config::application::Config;
-use crate::app::models::user::{ User, UserCreate, UserEdit, Credentials, Backend };
+use crate::app::models::user::{ User, UserCreate, UserEdit };
 use crate::db::schema::users::dsl::*;
 use diesel::prelude::*;
 use std::sync::Arc;
@@ -7,29 +7,6 @@ use tera::{Context, Tera};
 use axum::{ extract::{Path, State, Query}, response::{ IntoResponse, Redirect }, http::{ HeaderMap, StatusCode }, Form};
 use crate::app::utils::{ get_content_type, csrf_token_is_valid, response::Response, pagination::{ PaginationQuery, Pagination } };
 use crate::app::controllers::error_controller;
-
-type AuthSession = axum_login::AuthSession<Backend>;
-
-//https://github.com/maxcountryman/axum-login/blob/main/examples/sqlite/src/web/app.rs
-
-pub async fn login(headers: HeaderMap, State(config): State<Arc<Config>>) -> impl IntoResponse {
-    let tera: &Tera = &config.template;
-    let mut tera = tera.clone();
-    tera.add_raw_template("user/login.html", include_str!("../views/user/login.html")).unwrap();
-
-    let rendered = tera.render("user/login.html", & Context::new()).unwrap();
-    Response{status_code: StatusCode::OK, content_type: "text/html", datas: rendered}
-}
-
-pub async fn authenticate(
-   mut auth_session: AuthSession, Form(payload): Form<Credentials>
-
-    ) -> impl IntoResponse {
-       
-
-
-        Redirect::to("/").into_response()
-    }
 
 pub async fn index(Query(pagination_query): Query<PaginationQuery>, headers: HeaderMap, State(config): State<Arc<Config>>) -> impl IntoResponse {
     let total_results: i64 = get_total(config.clone());
@@ -84,15 +61,14 @@ fn render_html(config: Arc<Config>, results: Vec<User>, pagination: Pagination) 
 }
 
 fn render_json(config: Arc<Config>, results: Vec<User>) -> Response<'static> {
-    let rendered =  match  serde_json::to_string(&results) {
+    match  serde_json::to_string(&results) {
         Ok(serialized) => {
             return Response{status_code: StatusCode::OK, content_type: "application/json", datas: serialized};
         },
         Err(err) => {
             return error_controller::handler_error(config, StatusCode::BAD_REQUEST, err.to_string());
         }
-    };
-    rendered
+    }
 }
 
 fn get_total(config: Arc<Config>) -> i64 {
