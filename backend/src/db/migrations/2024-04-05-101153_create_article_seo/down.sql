@@ -1,1 +1,1 @@
-DROP TABLE article_seo;
+DROP TABLE article_seos;

@@ -8,7 +8,7 @@ diesel::table! {
 }
 
 diesel::table! {
-    article_seo (article_id) {
+    article_seos (article_id) {
         article_id -> Int4,
         #[max_length = 255]
         title_seo -> Nullable<Varchar>,
@@ -73,6 +73,13 @@ diesel::table! {
 }
 
 diesel::table! {
+    sessions (session_token) {
+        session_token -> Varchar,
+        user_id -> Nullable<Int4>,
+    }
+}
+
+diesel::table! {
     users (id) {
         id -> Int4,
         #[max_length = 255]
@@ -87,21 +94,23 @@ diesel::table! {
 
 diesel::joinable!(article_menus -> articles (article_id));
 diesel::joinable!(article_menus -> menus (menu_id));
-diesel::joinable!(article_seo -> articles (article_id));
+diesel::joinable!(article_seos -> articles (article_id));
 diesel::joinable!(articles -> users (author_id));
 diesel::joinable!(menu_items -> menus (menu_id));
 diesel::joinable!(role_permissions -> permissions (permission_id));
 diesel::joinable!(role_permissions -> roles (role_id));
+diesel::joinable!(sessions -> users (user_id));
 diesel::joinable!(users -> roles (role_id));
 
 diesel::allow_tables_to_appear_in_same_query!(
     article_menus,
-    article_seo,
+    article_seos,
     articles,
     menu_items,
     menus,
     permissions,
     role_permissions,
     roles,
+    sessions,
     users,
 );

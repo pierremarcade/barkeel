@@ -1,5 +1,5 @@
 use crate::config::application::Config;
-use crate::app::models::user::{ User, UserCreate, UserEdit };
+use crate::app::models::user::{ User, UserForm, UserFormEdit };
 use crate::db::schema::users::dsl::*;
 use diesel::prelude::*;
 use std::sync::Arc;
@@ -107,13 +107,13 @@ pub async fn new(headers: HeaderMap, State(config): State<Arc<Config>>) -> impl 
 
     let mut context = Context::new();
     let config_ref = config.as_ref();
-    context.insert("data",&UserCreate::new().build_form(config_ref, headers, "/users"));
+    context.insert("data",&UserForm::new().build_form(config_ref, headers, "/users"));
 
     let rendered = tera.render("user/new.html", &context).unwrap();
     Response{status_code: StatusCode::OK, content_type: "text/html", datas: rendered}
 }
 
-pub async fn create(headers: HeaderMap, State(config): State<Arc<Config>>, Form(payload): Form<UserEdit>) -> Redirect {
+pub async fn create(headers: HeaderMap, State(config): State<Arc<Config>>, Form(payload): Form<UserFormEdit>) -> Redirect {
     if csrf_token_is_valid(headers, config.clone(), payload.csrf_token) {
         let _inserted_record: User = diesel::insert_into(users)
             .values((name.eq(payload.name), email.eq(payload.email), password.eq(payload.password), role_id.eq(payload.role_id)))
@@ -140,7 +140,7 @@ pub async fn edit(headers: HeaderMap, Path(param_id): Path<i32>, State(config): 
     Response{status_code: StatusCode::OK, content_type: "text/html", datas: rendered}
 }
 
-pub async fn update(headers: HeaderMap, State(config): State<Arc<Config>>, Path(param_id): Path<i32>, Form(payload): Form<UserEdit>) -> Redirect {
+pub async fn update(headers: HeaderMap, State(config): State<Arc<Config>>, Path(param_id): Path<i32>, Form(payload): Form<UserFormEdit>) -> Redirect {
     if csrf_token_is_valid(headers, config.clone(), payload.csrf_token) {
         let _updated_record: User = diesel::update(users)
             .filter(id.eq(param_id))
