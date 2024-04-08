@@ -11,7 +11,7 @@ use std::sync::Arc;
 use crate::db::schema::users::dsl::{users};
 use crate::db::schema::sessions::dsl::{sessions, session_token};
 use diesel::prelude::*;
-const USER_COOKIE_NAME: &str = "unique_id";
+const USER_COOKIE_NAME: &str = "session_token";
 
 #[derive(Clone)]
 pub(crate) struct AuthState(Option<(String, Option<User>, Arc<Config>)>);
@@ -54,7 +54,6 @@ pub(crate) async fn auth(
             .header("Location", "/login")
             .body(Body::empty())
             .unwrap();
-        
     }
 
     next.run(request).await
@@ -83,8 +82,9 @@ impl AuthState {
 
     pub fn redirect_to_login(&self) -> Response<Body> {
         Response::builder()
+            .status(StatusCode::SEE_OTHER)
             .header("Location", "/login")
-            .header("Set-Cookie", "unique_id=; Max-Age=0")
+            .header("Set-Cookie", "session_token=; Max-Age=0")
             .body(Body::empty())
             .unwrap()
     }

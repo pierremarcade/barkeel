@@ -24,7 +24,7 @@ fn set_cookie_response(session_tok: &str, max_age: &str) -> AxumResponse {
     AxumResponse::builder()
         .status(StatusCode::SEE_OTHER)
         .header("Location", "/")
-        .header("Set-Cookie", format!("unique_id={}; Max-Age={}", session_tok, max_age))
+        .header("Set-Cookie", format!("session_token={}; Max-Age={}", session_tok, max_age))
         .body(Body::empty())
         .unwrap()
 }
