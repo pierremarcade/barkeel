@@ -12,5 +12,4 @@ pub struct Article {
     pub content: String,
     pub published_at: NaiveDateTime,
     pub author_id: Option<i32>,
-
 }

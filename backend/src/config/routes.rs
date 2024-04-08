@@ -22,11 +22,13 @@ pub fn routes() -> Router<Arc<Config>> {
             .route("/", get(index_controller::index))
             .route("/login", get(auth_controller::get::login))
             .route("/login", post(auth_controller::post::login))
-            // .route("/books", get(book_controller::index))
-            // .route("/books/new", get(book_controller::new))
-            // .route("/books/:id", get(book_controller::show))
-            // .route("/books/:id", delete(book_controller::delete))
-            // .route("/books/:id/edit", get(book_controller::edit))
+            .route("/articles", get(article_controller::index))
+            .route("/articles/new", get(article_controller::new))
+            .route("/articles/:id", get(article_controller::show))
+            .route("/articles/:id", delete(article_controller::delete))
+            .route("/articles/:id/edit", get(article_controller::edit))
+            .route("/articles", post(article_controller::create))
+            .route("/articles/:id", patch(article_controller::update))
             
             .layer(
                 ServiceBuilder::new()
