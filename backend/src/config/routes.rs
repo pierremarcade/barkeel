@@ -1,13 +1,11 @@
 use axum::{ 
     routing::{get, post, patch, delete}, 
     Router,
-    error_handling::HandleErrorLayer,
-    middleware
+    error_handling::HandleErrorLayer
 };
 use std::sync::Arc;
 use crate::config::application::Config;
 use crate::app::controllers::*;
-use crate::app::middlewares::*;
 use std::time::Duration;
 use tower::ServiceBuilder;
 
@@ -35,7 +33,6 @@ pub fn routes() -> Router<Arc<Config>> {
                     .layer(HandleErrorLayer::new(error_controller::handle_timeout_error))
                     .timeout(Duration::from_secs(30))
             )
-            // /.route_layer(middleware::from_fn(csrf::unique_id_middleware))
             .fallback(error_controller::handler_404)
             .route("/public/*path", get(index_controller::handle_assets))
 }

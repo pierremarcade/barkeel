@@ -30,35 +30,32 @@ pub(crate) async fn auth(
                 .ok()
                 .and_then(|cookie| cookie.parse::<cookie::Cookie>().ok())
         })
-        .find_map(|cookie| {
-            println!("{}", cookie.name());
-            (cookie.name() == USER_COOKIE_NAME).then(move || cookie.value().to_owned())
-        })
-        .and_then(|cookie_value| cookie_value.parse::<String>().ok());
-
+        .filter(|cookie| cookie.name() == USER_COOKIE_NAME)
+        .map(|cookie| cookie.value().to_owned())
+        .next();
     let is_logged_in = session_tok.is_some();
 
-    // Récupérer le chemin de la requête
     let path = request.uri().path();
 
-    // Rediriger en fonction de l'état de connexion et du chemin de la requête
-    if is_logged_in && path == "/login" {
-        return Response::builder()
+    if is_logged_in {
+        let mut auth_state = AuthState(session_tok.map(|v| (v, None, config)));
+        if auth_state.get_user().await.is_none() {
+            return auth_state.redirect_to_login();
+        } else if path == "/login" {
+            return Response::builder()
             .status(StatusCode::FOUND)
             .header("Location", "/")
             .body(Body::empty())
             .unwrap();
+        }
     } else if !is_logged_in && path != "/login" && !path.starts_with("/public") {
-        // Supposons que toutes les routes commençant par "/public" sont accessibles sans authentification
         return Response::builder()
-            .status(StatusCode::FOUND)
+        .status(StatusCode::FOUND)
             .header("Location", "/login")
             .body(Body::empty())
             .unwrap();
+        
     }
-
-    request.extensions_mut()
-        .insert(AuthState(session_tok.map(|v| (v, None, config))));
 
     next.run(request).await
 }
@@ -82,5 +79,13 @@ impl AuthState {
             }
         }
         store.as_ref()
+    }
+
+    pub fn redirect_to_login(&self) -> Response<Body> {
+        Response::builder()
+            .header("Location", "/login")
+            .header("Set-Cookie", "unique_id=; Max-Age=0")
+            .body(Body::empty())
+            .unwrap()
     }
 }
