@@ -2,6 +2,8 @@ use diesel::prelude::*;
 use barkeel_derives::FormBuilder;
 use serde::{Deserialize, Serialize};
 
+use chrono::serde::ts_seconds_option;
+
 use chrono::NaiveDateTime;
 
 #[derive(Serialize, Deserialize, Queryable, FormBuilder, Clone)]
@@ -9,7 +11,9 @@ use chrono::NaiveDateTime;
 pub struct Article {
     pub id: i32,
     pub title: String,
+    #[form_builder(type_="textarea")]
     pub content: String,
+    #[serde(with = "ts_seconds_option")]
     pub published_at: NaiveDateTime,
     pub author_id: Option<i32>,
 }

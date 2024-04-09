@@ -28,7 +28,7 @@ pub fn routes() -> Router<Arc<Config>> {
             .route("/articles/:id", delete(article_controller::delete))
             .route("/articles/:id/edit", get(article_controller::edit))
             .route("/articles", post(article_controller::create))
-            .route("/articles/:id", patch(article_controller::update))
+            .route("/articles/:id", post(article_controller::update))
             
             .layer(
                 ServiceBuilder::new()
