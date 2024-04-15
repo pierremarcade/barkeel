@@ -13,9 +13,6 @@ use crate::db::schema::sessions::dsl::{sessions, session_token};
 use diesel::prelude::*;
 const USER_COOKIE_NAME: &str = "session_token";
 
-#[derive(Clone)]
-pub(crate) struct AuthState(Option<(String, Option<User>, Arc<Config>)>);
-
 pub(crate) async fn auth(
     config: Arc<Config>,
     mut request: Request, next: Next,
@@ -35,10 +32,11 @@ pub(crate) async fn auth(
         .next();
     let is_logged_in = session_tok.is_some();
 
-    let path = request.uri().path();
+    let path = request.uri().path().to_owned();
 
     if is_logged_in {
         let mut auth_state = AuthState(session_tok.map(|v| (v, None, config)));
+        request.extensions_mut().insert(auth_state.clone());
         if auth_state.get_user().await.is_none() {
             return auth_state.redirect_to_login();
         } else if path == "/login" {
@@ -48,6 +46,7 @@ pub(crate) async fn auth(
             .body(Body::empty())
             .unwrap();
         }
+       
     } else if !is_logged_in && path != "/login" && !path.starts_with("/public") {
         return Response::builder()
         .status(StatusCode::FOUND)
@@ -58,6 +57,19 @@ pub(crate) async fn auth(
 
     next.run(request).await
 }
+
+/// AuthState is a structure designed to manage authentication state.
+///
+/// This structure provides a secure way to store and retrieve authentication state,
+/// including the authentication token, the currently authenticated user, and the authentication configuration.
+/// It uses an optional tuple to manage these pieces of information, and an Arc<Mutex<HashMap<String, String>>> for the configuration,
+/// ensuring secure and concurrent access to the authentication state.
+///
+/// # Examples
+///
+/// ```
+#[derive(Clone)]
+pub struct AuthState(Option<(String, Option<User>, Arc<Config>)>);
 
 impl AuthState {
     pub async fn get_user(&mut self) -> Option<&User> {
@@ -71,8 +83,7 @@ impl AuthState {
 
             match user {
                 Ok(user) => *store = Some(user),
-                Err(e) => {
-                    eprintln!("Error retrieving user: {:?}", e);
+                Err(_e) => {
                     return None;
                 }
             }

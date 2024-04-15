@@ -1,17 +1,22 @@
 
-use axum::{  extract::{ State, Path}, response:: { Html, IntoResponse }, http::{header, HeaderMap, StatusCode} };
+use axum::{ Extension, extract::{ State, Path}, response:: { Html, IntoResponse }, http::{header, HeaderMap, StatusCode} };
 use tera::{Context, Tera};
 use crate::config::application::Config;
+use crate::app::middlewares::auth::AuthState;
 use std::sync::Arc;
 
 static THEME_CSS: &str = include_str!("../../public/css/main.css");
 static FAVICON: &str = include_str!("../../public/img/favicon.svg");
 
-pub async fn index(State(config): State<Arc<Config>>) -> impl IntoResponse {
+pub async fn index(Extension(mut current_user): Extension<AuthState>, State(config): State<Arc<Config>>) -> impl IntoResponse {
     let tera: &Tera = &config.template;
     let mut tera = tera.clone();
     tera.add_raw_template("index.html", include_str!("../views/index.html")).unwrap();
-    let rendered = tera.render("index.html", &Context::new()).unwrap();
+    let mut context = Context::new();
+    if let Some(user) = current_user.get_user().await {
+        context.insert("username", &user.email);
+    }
+    let rendered = tera.render("index.html", &context).unwrap();
     Html(rendered)
 }
 

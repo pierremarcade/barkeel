@@ -20,11 +20,11 @@ fn redirect_response(location: &str) -> AxumResponse {
         .unwrap()
 }
 
-fn set_cookie_response(session_tok: &str, max_age: &str) -> AxumResponse {
+fn set_cookie_response(session_tok: &str) -> AxumResponse {
     AxumResponse::builder()
         .status(StatusCode::SEE_OTHER)
         .header("Location", "/")
-        .header("Set-Cookie", format!("session_token={}; Max-Age={}", session_tok, max_age))
+        .header("Set-Cookie", format!("session_token={}", session_tok))
         .body(Body::empty())
         .unwrap()
 }
@@ -38,6 +38,10 @@ pub mod get {
         let rendered = tera.render("login.html", &Context::new()).unwrap();
         Response{status_code: StatusCode::OK, content_type: "text/html", datas: rendered}
     }
+
+    pub async fn logout() -> impl IntoResponse {
+        set_cookie_response("")
+    }
 }
 
 pub mod post {
@@ -49,15 +53,11 @@ pub mod post {
                     return redirect_response("/login");
                 }
                 let session_tok = new_session(&config, user.id).await;
-                set_cookie_response(&session_tok, "999999")
+                set_cookie_response(&session_tok)
             },
             _ => redirect_response("/login")
         }
     }
-}
-
-pub async fn logout_response() -> impl axum::response::IntoResponse {
-    set_cookie_response("", "0")
 }
 
 pub async fn new_session(

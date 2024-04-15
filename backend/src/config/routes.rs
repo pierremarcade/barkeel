@@ -20,6 +20,7 @@ pub fn routes() -> Router<Arc<Config>> {
             // .route("/books/:id", patch(book_controller::update))
             // .route("/books", post(book_controller::create))
             .route("/", get(index_controller::index))
+            .route("/logout", get(auth_controller::get::logout))
             .route("/login", get(auth_controller::get::login))
             .route("/login", post(auth_controller::post::login))
             .route("/articles", get(article_controller::index))

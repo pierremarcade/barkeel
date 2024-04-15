@@ -15,10 +15,12 @@
       </button>
     </div>
     <div class="hidden lg:flex lg:gap-x-12">
-      <a href="/users" class="text-sm font-semibold leading-6 ">Users</a>
+      <a href="/articles" class="text-sm font-semibold leading-6 ">Articles</a>
     </div>
     <div class="hidden lg:flex lg:flex-1 lg:justify-end">
-      <a href="#" class="text-sm font-semibold leading-6">Log in <span aria-hidden="true">&rarr;</span></a>
+      {% if username %}
+        <a href="/logout" class="text-sm font-semibold leading-6">Log out</a>
+      {% endif %}
     </div>
   </nav>
   <!-- Mobile menu, show/hide based on menu open state. -->
@@ -41,13 +43,12 @@
       <div class="mt-6 flow-root">
         <div class="-my-6 divide-y divide-gray-500/25">
           <div class="space-y-2 py-6">
-            <a href="#" class="-mx-3 block rounded-lg px-3 py-2 text-base font-semibold leading-7 hover:bg-gray-800">Product</a>
-            <a href="#" class="-mx-3 block rounded-lg px-3 py-2 text-base font-semibold leading-7 hover:bg-gray-800">Features</a>
-            <a href="#" class="-mx-3 block rounded-lg px-3 py-2 text-base font-semibold leading-7 hover:bg-gray-800">Marketplace</a>
-            <a href="#" class="-mx-3 block rounded-lg px-3 py-2 text-base font-semibold leading-7 hover:bg-gray-800">Company</a>
+            <a href="/articles" class="text-sm font-semibold leading-6 ">Articles</a>
           </div>
           <div class="py-6">
-            <a href="#" class="-mx-3 block rounded-lg px-3 py-2.5 text-base font-semibold leading-7 hover:bg-gray-800">Log in</a>
+            {% if username %}
+              <a href="/logout" class="-mx-3 block rounded-lg px-3 py-2.5 text-base font-semibold leading-7 hover:bg-gray-800">Log out</a>
+            {% endif %}
           </div>
         </div>
       </div>
