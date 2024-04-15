@@ -17,24 +17,18 @@ pub(crate) async fn auth(
     config: Arc<Config>,
     mut request: Request, next: Next,
 ) -> axum::response::Response {
-    let session_tok = request
-        .headers()
-        .get_all("Cookie")
-        .iter()
-        .filter_map(|cookie| {
-            cookie
-                .to_str()
-                .ok()
-                .and_then(|cookie| cookie.parse::<cookie::Cookie>().ok())
+    let session_toks: Vec<_> = request.headers().get_all("Cookie").iter().filter_map(|cookie| {
+            cookie.to_str().ok().and_then(|cookie| cookie.parse::<cookie::Cookie>().ok())
         })
         .filter(|cookie| cookie.name() == USER_COOKIE_NAME)
         .map(|cookie| cookie.value().to_owned())
-        .next();
-    let is_logged_in = session_tok.is_some();
+        .collect();
+    let is_logged_in = !session_toks.is_empty();
 
     let path = request.uri().path().to_owned();
 
     if is_logged_in {
+        let session_tok = session_toks.first().map(|v| v.clone());
         let mut auth_state = AuthState(session_tok.map(|v| (v, None, config)));
         request.extensions_mut().insert(auth_state.clone());
         if auth_state.get_user().await.is_none() {
