@@ -1,6 +1,6 @@
 
 use axum::{ Extension, extract::{ State, Path}, response:: { Html, IntoResponse }, http::{header, HeaderMap, StatusCode} };
-use tera::{Context, Tera};
+use tera::Tera;
 use crate::config::application::Config;
 use crate::app::middlewares::auth::AuthState;
 use std::sync::Arc;

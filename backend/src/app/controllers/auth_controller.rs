@@ -1,10 +1,10 @@
 use crate::config::application::Config;
 use crate::app::models::user::User;
 use crate::app::models::session::Session;
-use crate::app::models::auth::Credentials;
+use crate::app::models::auth::{Credentials, CredentialsForm};
 use std::sync::Arc;
 use tera::{Context, Tera};
-use axum::{extract::State, response::{IntoResponse, Response as AxumResponse}, http::StatusCode, Form, body::Body};
+use axum::{extract::State, response::{IntoResponse, Response as AxumResponse}, http::{ HeaderMap, StatusCode }, Form, body::Body};
 use crate::app::utils::response::Response;
 use barkeel_lib::session::CSRFManager;
 use diesel::prelude::*;
@@ -31,11 +31,14 @@ fn set_cookie_response(session_tok: &str) -> AxumResponse {
 
 pub mod get {
     use super::*;
-    pub async fn login(State(config): State<Arc<Config>>) -> impl IntoResponse {
+    pub async fn login(headers: HeaderMap, State(config): State<Arc<Config>>) -> impl IntoResponse {
         let tera: &Tera = &config.template;
         let mut tera = tera.clone();
         tera.add_raw_template("login.html", include_str!("../views/login.html")).unwrap();
-        let rendered = tera.render("login.html", &Context::new()).unwrap();
+        let mut context = Context::new();
+        let config_ref = config.as_ref();
+        context.insert("data", &CredentialsForm::new().build_form(config_ref, headers, "/login"));
+        let rendered = tera.render("login.html", &context).unwrap();
         Response{status_code: StatusCode::OK, content_type: "text/html", datas: rendered}
     }
 
