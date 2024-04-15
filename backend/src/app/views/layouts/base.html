@@ -10,7 +10,9 @@
   </head>
   <body>
     <div class="bg-white">
-      {% include "header.html" %}
+      {% if username %}
+        {% include "header.html" %}
+      {% endif %}
       <div class="relative isolate pt-14">
         <div class="py-24 sm:py-32 lg:pb-40">
           <div class="mx-auto max-w-7xl px-6 lg:px-8">
@@ -18,7 +20,9 @@
           </div>
         </div>
       </div>
-      {% include "footer.html" %}
+      {% if username %}
+        {% include "footer.html" %}
+      {% endif %}
     </div>
   </body>
 </html>

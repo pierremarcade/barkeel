@@ -4,18 +4,16 @@ use tera::{Context, Tera};
 use crate::config::application::Config;
 use crate::app::middlewares::auth::AuthState;
 use std::sync::Arc;
+use crate::app::utils::template::prepare_tera_context;
 
 static THEME_CSS: &str = include_str!("../../public/css/main.css");
 static FAVICON: &str = include_str!("../../public/img/favicon.svg");
 
-pub async fn index(Extension(mut current_user): Extension<AuthState>, State(config): State<Arc<Config>>) -> impl IntoResponse {
+pub async fn index(Extension(current_user): Extension<AuthState>, State(config): State<Arc<Config>>) -> impl IntoResponse {
     let tera: &Tera = &config.template;
     let mut tera = tera.clone();
     tera.add_raw_template("index.html", include_str!("../views/index.html")).unwrap();
-    let mut context = Context::new();
-    if let Some(user) = current_user.get_user().await {
-        context.insert("username", &user.email);
-    }
+    let context = prepare_tera_context(current_user).await;
     let rendered = tera.render("index.html", &context).unwrap();
     Html(rendered)
 }

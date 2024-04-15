@@ -4,11 +4,13 @@ use crate::db::schema::articles::dsl::*;
 use diesel::prelude::*;
 use std::sync::Arc;
 use tera::{Context, Tera};
-use axum::{ extract::{Path, State, Query}, response::{ IntoResponse, Redirect }, http::{ HeaderMap, StatusCode }, Form};
+use axum::{ Extension, extract::{Path, State, Query}, response::{ IntoResponse, Redirect }, http::{ HeaderMap, StatusCode }, Form};
 use crate::app::utils::{ get_content_type, csrf_token_is_valid, response::Response, pagination::{ PaginationQuery, Pagination } };
 use crate::app::controllers::error_controller;
+use crate::app::middlewares::auth::AuthState;
+use crate::app::utils::template::prepare_tera_context;
 
-pub async fn index(Query(pagination_query): Query<PaginationQuery>, headers: HeaderMap, State(config): State<Arc<Config>>) -> impl IntoResponse {
+pub async fn index(Extension(current_user): Extension<AuthState>, Query(pagination_query): Query<PaginationQuery>, headers: HeaderMap, State(config): State<Arc<Config>>) -> impl IntoResponse {
     let total_results: i64 = get_total(config.clone());
     let pagination = Pagination::new(pagination_query, total_results);
     match articles.limit(pagination.per_page as i64).offset(pagination.offset as i64).load::<Article>(&mut config.database.pool.get().unwrap()) {
@@ -16,7 +18,7 @@ pub async fn index(Query(pagination_query): Query<PaginationQuery>, headers: Hea
             if get_content_type(headers) == "application/json" {
                 render_json(config, results)
             } else {    
-                render_html(config, results, pagination)
+                render_html(current_user, config, results, pagination).await
             }
         },
         Err(err) => {
@@ -25,7 +27,7 @@ pub async fn index(Query(pagination_query): Query<PaginationQuery>, headers: Hea
     }
 }
 
-fn render_html(config: Arc<Config>, results: Vec<Article>, pagination: Pagination) -> Response<'static> {
+async fn render_html(current_user: AuthState, config: Arc<Config>, results: Vec<Article>, pagination: Pagination) -> Response<'static> {
     let tera: &Tera = &config.template;
     let mut tera = tera.clone();
     let template_path = "article/index.html";
@@ -37,7 +39,7 @@ fn render_html(config: Arc<Config>, results: Vec<Article>, pagination: Paginatio
             return error_controller::handler_error(config, StatusCode::BAD_REQUEST, err.to_string());
         }
     }
-    let mut context = Context::new();
+    let mut context = prepare_tera_context(current_user).await;
     context.insert("title", "Article");
     context.insert("base_url", "/articles");
     context.insert("description", "A list of all the articles.");
@@ -61,15 +63,14 @@ fn render_html(config: Arc<Config>, results: Vec<Article>, pagination: Paginatio
 }
 
 fn render_json(config: Arc<Config>, results: Vec<Article>) -> Response<'static> {
-    let rendered =  match  serde_json::to_string(&results) {
+    match  serde_json::to_string(&results) {
         Ok(serialized) => {
             return Response{status_code: StatusCode::OK, content_type: "application/json", datas: serialized};
         },
         Err(err) => {
             return error_controller::handler_error(config, StatusCode::BAD_REQUEST, err.to_string());
         }
-    };
-    rendered
+    }
 }
 
 fn get_total(config: Arc<Config>) -> i64 {
