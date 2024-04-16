@@ -11,42 +11,46 @@ use std::sync::Arc;
 use crate::db::schema::users::dsl::{users};
 use crate::db::schema::sessions::dsl::{sessions, session_token};
 use diesel::prelude::*;
+use cookie::Cookie;
 const USER_COOKIE_NAME: &str = "session_token";
 
 pub(crate) async fn auth(
     config: Arc<Config>,
     mut request: Request, next: Next,
 ) -> axum::response::Response {
-    let session_toks: Vec<_> = request.headers().get_all("Cookie").iter().filter_map(|cookie| {
-            cookie.to_str().ok().and_then(|cookie| cookie.parse::<cookie::Cookie>().ok())
-        })
-        .filter(|cookie| cookie.name() == USER_COOKIE_NAME)
-        .map(|cookie| cookie.value().to_owned())
+    let cookie_header = request.headers().get("Cookie").unwrap();
+    let cookies: Vec<Cookie> = cookie_header
+        .to_str()
+        .unwrap_or_default()
+        .split(';')
+        .filter_map(|s| s.trim().parse::<Cookie>().ok())
         .collect();
-    let is_logged_in = !session_toks.is_empty();
-
+    let session_cookie = cookies.iter().find(|cookie| cookie.name() == USER_COOKIE_NAME);
     let path = request.uri().path().to_owned();
-
-    if is_logged_in {
-        let session_tok = session_toks.first().map(|v| v.clone());
-        let mut auth_state = AuthState(session_tok.map(|v| (v, None, config)));
-        request.extensions_mut().insert(auth_state.clone());
-        if auth_state.get_user().await.is_none() {
-            return auth_state.redirect_to_login();
-        } else if path == "/login" {
-            return Response::builder()
-            .status(StatusCode::FOUND)
-            .header("Location", "/")
-            .body(Body::empty())
-            .unwrap();
-        }
-       
-    } else if !is_logged_in && path != "/login" && !path.starts_with("/public") {
-        return Response::builder()
-        .status(StatusCode::FOUND)
-            .header("Location", "/login")
-            .body(Body::empty())
-            .unwrap();
+    match session_cookie {
+        Some(cookie) => {
+            let mut auth_state = AuthState(Some((cookie.value().to_string(), None, config)));
+            request.extensions_mut().insert(auth_state.clone());
+            request.extensions_mut().insert(auth_state.clone());
+            if auth_state.get_user().await.is_none() {
+                return auth_state.redirect_to_login();
+            } else if path == "/login" {
+                return Response::builder()
+                .status(StatusCode::FOUND)
+                .header("Location", "/")
+                .body(Body::empty())
+                .unwrap();
+            }
+        },
+        None => {
+            if path != "/login" && !path.starts_with("/public") {
+                return Response::builder()
+                .status(StatusCode::FOUND)
+                    .header("Location", "/login")
+                    .body(Body::empty())
+                    .unwrap();
+            }
+        },
     }
 
     next.run(request).await
