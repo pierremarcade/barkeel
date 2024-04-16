@@ -3,7 +3,7 @@ use crate::app::models::article::{ Article, ArticleForm, ArticleFormEdit };
 use crate::db::schema::articles::dsl::*;
 use diesel::prelude::*;
 use std::sync::Arc;
-use tera::{Context, Tera};
+use tera::Tera;
 use axum::{ Extension, extract::{Path, State, Query}, response::{ IntoResponse, Redirect }, http::{ HeaderMap, StatusCode }, Form};
 use crate::app::utils::{ get_content_type, csrf_token_is_valid, response::Response, pagination::{ PaginationQuery, Pagination } };
 use crate::app::controllers::error_controller;
@@ -83,13 +83,13 @@ fn get_total(config: Arc<Config>) -> i64 {
     }
 }
 
-pub async fn show(Path(param_id): Path<i32>, State(config): State<Arc<Config>>) -> impl IntoResponse {
+pub async fn show(Extension(current_user): Extension<AuthState>, Path(param_id): Path<i32>, State(config): State<Arc<Config>>) -> impl IntoResponse {
     let tera: &Tera = &config.template;
     let mut tera = tera.clone();
     match articles.find(param_id).first::<Article>(&mut config.database.pool.get().unwrap()) {
         Ok(result) => {
             tera.add_raw_template("article/show.html", include_str!("../views/article/show.html")).unwrap();
-            let mut context = Context::new();
+            let mut context = prepare_tera_context(current_user).await;
             context.insert("data", &result);
             context.insert("title", "Article");
             context.insert("description", "Article's Detail");
@@ -102,12 +102,12 @@ pub async fn show(Path(param_id): Path<i32>, State(config): State<Arc<Config>>) 
     }
 }
 
-pub async fn new(headers: HeaderMap, State(config): State<Arc<Config>>) -> impl IntoResponse {
+pub async fn new(Extension(current_user): Extension<AuthState>, headers: HeaderMap, State(config): State<Arc<Config>>) -> impl IntoResponse {
     let tera: &Tera = &config.template;
     let mut tera = tera.clone();
     tera.add_raw_template("article/new.html", include_str!("../views/article/new.html")).unwrap();
 
-    let mut context = Context::new();
+    let mut context = prepare_tera_context(current_user).await;
     let config_ref = config.as_ref();
     context.insert("data",&ArticleForm::new().build_form(config_ref, headers, "/articles"));
 
@@ -125,7 +125,7 @@ pub async fn create(headers: HeaderMap, State(config): State<Arc<Config>>, Form(
     Redirect::to("/articles") 
 }
 
-pub async fn edit(headers: HeaderMap, Path(param_id): Path<i32>, State(config): State<Arc<Config>>) -> impl IntoResponse {
+pub async fn edit(Extension(current_user): Extension<AuthState>, headers: HeaderMap, Path(param_id): Path<i32>, State(config): State<Arc<Config>>) -> impl IntoResponse {
     let tera: &Tera = &config.template;
     let mut tera = tera.clone();
     tera.add_raw_template("article/edit.html", include_str!("../views/article/edit.html")).unwrap();
@@ -134,7 +134,7 @@ pub async fn edit(headers: HeaderMap, Path(param_id): Path<i32>, State(config): 
         .first::<Article>(&mut config.database.pool.get().unwrap())
         .expect("Error loading data");
 
-    let mut context = Context::new();
+    let mut context = prepare_tera_context(current_user).await;
     let config_ref = config.as_ref();
     context.insert("data", &result.build_form(config_ref, headers, format!("/articles/{}", param_id).as_str()));
 
