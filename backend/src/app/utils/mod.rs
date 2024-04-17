@@ -30,7 +30,7 @@ pub fn csrf_token_is_valid(headers: HeaderMap, config: Arc<Config>, csrf_token: 
                             return true;
                         }
                     },
-                    _ =>  return false
+                    _ =>  {  }
                 }
             }
         }

@@ -1,7 +1,7 @@
 document.addEventListener('DOMContentLoaded', function() {
     changeDateTimeLocalFormat();
     handleSelectAndRadioElements();
-    
+
     var editorElements = document.querySelectorAll('.editor');
     editorElements.forEach(function(editorElement) {
         var editorId = editorElement.id;
@@ -25,9 +25,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     [{ 'align': [] }],
                     ['clean']
                 ]
-            },
-            content: initialContent
+            }
         });
+        if (initialContent !== '') {
+            quill.root.innerHTML = initialContent;
+        }
+        
         quill.on('text-change', function(delta, oldDelta, source) {
             if (source === 'user') {
                 textarea.value = quill.root.innerHTML;
@@ -39,18 +42,21 @@ document.addEventListener('DOMContentLoaded', function() {
 
 function changeDateTimeLocalFormat() {
     const form = document.querySelector('form');
-    console.log(form);
+    const datetimeFields = form.querySelectorAll('input[type="datetime-local"]');
+    datetimeFields.forEach(function(field) {
+        console.log(field.id)
+        var datetime_field = document.querySelector(`input[data-datetime="${field.id}"]`);
+        field.value = datetime_field.value;
+    });
     form.addEventListener('submit', function(event) {
-        
         event.preventDefault();
-        const datetimeFields = form.querySelectorAll('input[type="datetime-local"]');
         datetimeFields.forEach(function(field) {
+            var datetime_field = document.querySelector(`input[data-datetime="${field.id}"]`);
             let date = new Date(field.value);
-            console.log(date.toISOString())
-            field.value = date.toISOString();
-            console.log(field.value)
+            datetime_field.value = date.toISOString().slice(0, 19);
+            console.log(datetime_field.value)
         });
-        //form.submit();
+        form.submit();
     });
 }
 
@@ -105,7 +111,7 @@ function populateSelectOptions(selectElement, data) {
 }
 
 function populateRadioOptions(radioElement, data) {
-    radioElement.innerHTML = ''; // Vider le contenu actuel
+    radioElement.innerHTML = '';
     Object.keys(data).forEach(function(key) {
         var name = radioElement.getAttribute('data-name');
         var value = data[key][radioElement.getAttribute('data-id')];
@@ -113,7 +119,7 @@ function populateRadioOptions(radioElement, data) {
         var selected = radioElement.getAttribute('data-selected');
 
         var radioHtml = createRadioInput(name, value, labelText, selected);
-        radioElement.innerHTML += radioHtml; // Ajouter le nouveau radio
+        radioElement.innerHTML += radioHtml;
     });
 }
 

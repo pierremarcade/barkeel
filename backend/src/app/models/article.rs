@@ -11,6 +11,8 @@ pub struct Article {
     pub title: String,
     #[form_builder(type_="textarea")]
     pub content: String,
+    #[exclude]
     pub published_at: NaiveDateTime,
+    #[exclude]
     pub author_id: Option<i32>,
 }

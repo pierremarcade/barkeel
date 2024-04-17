@@ -4,6 +4,7 @@ use crate::db::schema::articles::dsl::*;
 use diesel::prelude::*;
 use std::sync::Arc;
 use tera::Tera;
+use chrono::Utc;
 use axum::{ Extension, extract::{Path, State, Query}, response::{ IntoResponse, Redirect }, http::{ HeaderMap, StatusCode }, Form};
 use crate::app::utils::{ get_content_type, csrf_token_is_valid, response::Response, pagination::{ PaginationQuery, Pagination } };
 use crate::app::controllers::error_controller;
@@ -115,12 +116,14 @@ pub async fn new(Extension(current_user): Extension<AuthState>, headers: HeaderM
     Response{status_code: StatusCode::OK, content_type: "text/html", datas: rendered}
 }
 
-pub async fn create(headers: HeaderMap, State(config): State<Arc<Config>>, Form(payload): Form<ArticleFormEdit>) -> Redirect {
+pub async fn create(Extension(mut current_user): Extension<AuthState>, headers: HeaderMap, State(config): State<Arc<Config>>, Form(payload): Form<ArticleFormEdit>) -> Redirect {
     if csrf_token_is_valid(headers, config.clone(), payload.csrf_token) {
-        let _inserted_record: Article = diesel::insert_into(articles)
-            .values((title.eq(payload.title), content.eq(payload.content), published_at.eq(payload.published_at), author_id.eq(payload.author_id)))
-            .get_result(&mut config.database.pool.get().unwrap())
-            .expect("Error inserting data");
+        if let Some(user) = current_user.get_user().await {
+            let _inserted_record: Article = diesel::insert_into(articles)
+                .values((title.eq(payload.title), content.eq(payload.content), published_at.eq(Utc::now().naive_utc()), author_id.eq(user.id)))
+                .get_result(&mut config.database.pool.get().unwrap())
+                .expect("Error inserting data");
+        }
     }
     Redirect::to("/articles") 
 }
@@ -146,7 +149,7 @@ pub async fn update(headers: HeaderMap, State(config): State<Arc<Config>>, Path(
     if csrf_token_is_valid(headers, config.clone(), payload.csrf_token) {
         let _updated_record: Article = diesel::update(articles)
             .filter(id.eq(param_id))
-            .set((title.eq(payload.title), content.eq(payload.content), published_at.eq(payload.published_at), author_id.eq(payload.author_id)))
+            .set((title.eq(payload.title), content.eq(payload.content)))
             .get_result(&mut config.database.pool.get().unwrap())
             .expect("Error updating data");
     }
