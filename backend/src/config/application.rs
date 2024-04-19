@@ -63,10 +63,8 @@ impl Loader {
         let config = Arc::new(Config { database: database.clone(), template: tera, csrf_manager });
         let cors = CorsLayer::new().allow_origin(Any);
 
-        let app = NormalizePathLayer::trim_trailing_slash().layer(routes::routes() .with_state(config.clone())
-        .layer(cors).layer(axum::middleware::from_fn(move |req, next| {
-            crate::app::middlewares::auth::auth(config.clone(), req, next)
-        })));
+        let app = NormalizePathLayer::trim_trailing_slash().layer(routes::routes(config.clone()).with_state(config.clone())
+        .layer(cors));
         
         let host = std::env::var("HOST")?;
         let listener = tokio::net::TcpListener::bind(host).await?;

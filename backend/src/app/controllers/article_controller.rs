@@ -107,11 +107,9 @@ pub async fn new(Extension(current_user): Extension<AuthState>, headers: HeaderM
     let tera: &Tera = &config.template;
     let mut tera = tera.clone();
     tera.add_raw_template("article/new.html", include_str!("../views/article/new.html")).unwrap();
-
     let mut context = prepare_tera_context(current_user).await;
     let config_ref = config.as_ref();
     context.insert("data",&ArticleForm::new().build_form(config_ref, headers, "/articles"));
-
     let rendered = tera.render("article/new.html", &context).unwrap();
     Response{status_code: StatusCode::OK, content_type: "text/html", datas: rendered}
 }
@@ -136,11 +134,9 @@ pub async fn edit(Extension(current_user): Extension<AuthState>, headers: Header
         .find(param_id)
         .first::<Article>(&mut config.database.pool.get().unwrap())
         .expect("Error loading data");
-
     let mut context = prepare_tera_context(current_user).await;
     let config_ref = config.as_ref();
     context.insert("data", &result.build_form(config_ref, headers, format!("/articles/{}", param_id).as_str()));
-
     let rendered = tera.render("article/edit.html", &context).unwrap();
     Response{status_code: StatusCode::OK, content_type: "text/html", datas: rendered}
 }

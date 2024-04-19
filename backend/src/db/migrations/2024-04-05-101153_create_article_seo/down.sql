@@ -1,1 +1,1 @@
-DROP TABLE article_seos;
+DROP TABLE article_metas;

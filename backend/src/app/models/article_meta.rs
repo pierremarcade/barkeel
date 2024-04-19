@@ -1,0 +1,13 @@
+use diesel::prelude::*;
+use barkeel_derives::FormBuilder;
+use serde::{Deserialize, Serialize};
+
+
+#[derive(Serialize, Deserialize, Queryable, FormBuilder, Clone)]
+#[diesel(table_name = crate::db::schema::article_metas)]
+pub struct ArticleMeum {
+    pub article_id: i32,
+    pub key: Option<String>,
+    pub value: Option<String>,
+
+}
