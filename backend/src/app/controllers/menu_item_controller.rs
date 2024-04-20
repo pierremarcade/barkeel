@@ -1,0 +1,160 @@
+use crate::config::application::Config;
+use crate::app::models::menu_item::{ MenuItem, MenuItemForm, MenuItemFormEdit };
+use crate::db::schema::menu_items::dsl::*;
+use diesel::prelude::*;
+use std::sync::Arc;
+use tera::{Context, Tera};
+use axum::{ extract::{Path, State, Query}, response::{ IntoResponse, Redirect }, http::{ HeaderMap, StatusCode }, Form};
+use crate::app::utils::{ get_content_type, csrf_token_is_valid, response::Response, pagination::{ PaginationQuery, Pagination } };
+use crate::app::controllers::error_controller;
+
+pub async fn index(Query(pagination_query): Query<PaginationQuery>, headers: HeaderMap, State(config): State<Arc<Config>>) -> impl IntoResponse {
+    let total_results: i64 = get_total(config.clone());
+    let pagination = Pagination::new(pagination_query, total_results);
+    match menu_items.limit(pagination.per_page as i64).offset(pagination.offset as i64).load::<MenuItem>(&mut config.database.pool.get().unwrap()) {
+        Ok(results) => {
+            if get_content_type(headers) == "application/json" {
+                render_json(config, results)
+            } else {    
+                render_html(config, results, pagination)
+            }
+        },
+        Err(err) => {
+            error_controller::handler_error(config, StatusCode::BAD_REQUEST, err.to_string())
+        }
+    }
+}
+
+fn render_html(config: Arc<Config>, results: Vec<MenuItem>, pagination: Pagination) -> Response<'static> {
+    let tera: &Tera = &config.template;
+    let mut tera = tera.clone();
+    let template_path = "menu_item/index.html";
+    let template_content = include_str!("../views/menu_item/index.html");
+    let result = tera.add_raw_template(template_path, template_content);
+    match result {
+        Ok(_) => {},
+        Err(err) => {
+            return error_controller::handler_error(config, StatusCode::BAD_REQUEST, err.to_string());
+        }
+    }
+    let mut context = Context::new();
+    context.insert("title", "MenuItem");
+    context.insert("base_url", "/menu_items");
+    context.insert("description", "A list of all the menu_items.");
+    context.insert("datas", &results);
+    context.insert("total_pages", &pagination.total_pages);
+    context.insert("current_page", &pagination.current_page);
+    context.insert("current_page_string", &pagination.current_page.to_string());
+    context.insert("offset", &pagination.offset);
+    context.insert("per_page", &pagination.per_page);
+    context.insert("page_numbers", &pagination.generate_page_numbers());
+
+    let rendered = tera.render("menu_item/index.html", &context);
+    match rendered {
+        Ok(result) => {
+            Response{status_code: StatusCode::OK, content_type: "text/html", datas: result}
+        },
+        Err(err) => {
+            error_controller::handler_error(config, StatusCode::BAD_REQUEST, err.to_string())
+        }
+    }
+}
+
+fn render_json(config: Arc<Config>, results: Vec<MenuItem>) -> Response<'static> {
+    match  serde_json::to_string(&results) {
+        Ok(serialized) => {
+            return Response{status_code: StatusCode::OK, content_type: "application/json", datas: serialized};
+        },
+        Err(err) => {
+            return error_controller::handler_error(config, StatusCode::BAD_REQUEST, err.to_string());
+        }
+    }
+}
+
+fn get_total(config: Arc<Config>) -> i64 {
+    match menu_items.count().get_result(&mut config.database.pool.get().unwrap()) {
+        Ok(count) => count,
+        Err(e) => {
+            eprintln!("Error counting menu_items: {}", e);
+            0 
+        }
+    }
+}
+
+pub async fn show(Path(param_id): Path<i32>, State(config): State<Arc<Config>>) -> impl IntoResponse {
+    let tera: &Tera = &config.template;
+    let mut tera = tera.clone();
+    match menu_items.find(param_id).first::<MenuItem>(&mut config.database.pool.get().unwrap()) {
+        Ok(result) => {
+            tera.add_raw_template("menu_item/show.html", include_str!("../views/menu_item/show.html")).unwrap();
+            let mut context = Context::new();
+            context.insert("data", &result);
+            context.insert("title", "MenuItem");
+            context.insert("description", "MenuItem's Detail");
+            let rendered = tera.render("menu_item/show.html", &context).unwrap();
+            Response{status_code: StatusCode::OK, content_type: "text/html", datas: rendered}
+        },
+        _ => {
+            error_controller::render_404(config)
+        }
+    }
+}
+
+pub async fn new(headers: HeaderMap, State(config): State<Arc<Config>>) -> impl IntoResponse {
+    let tera: &Tera = &config.template;
+    let mut tera = tera.clone();
+    tera.add_raw_template("menu_item/new.html", include_str!("../views/menu_item/new.html")).unwrap();
+
+    let mut context = Context::new();
+    let config_ref = config.as_ref();
+    context.insert("data",&MenuItemCreate::new().build_form(config_ref, headers, "/menu_items"));
+
+    let rendered = tera.render("menu_item/new.html", &context).unwrap();
+    Response{status_code: StatusCode::OK, content_type: "text/html", datas: rendered}
+}
+
+pub async fn create(headers: HeaderMap, State(config): State<Arc<Config>>, Form(payload): Form<MenuItemEdit>) -> Redirect {
+    if csrf_token_is_valid(headers, config.clone(), payload.csrf_token) {
+        let _inserted_record: MenuItem = diesel::insert_into(menu_items)
+            .values((menu_id.eq(payload.menu_id), label.eq(payload.label), link.eq(payload.link), position.eq(payload.position)))
+            .get_result(&mut config.database.pool.get().unwrap())
+            .expect("Error inserting data");
+    }
+    Redirect::to("/menu_items") 
+}
+
+pub async fn edit(headers: HeaderMap, Path(param_id): Path<i32>, State(config): State<Arc<Config>>) -> impl IntoResponse {
+    let tera: &Tera = &config.template;
+    let mut tera = tera.clone();
+    tera.add_raw_template("menu_item/edit.html", include_str!("../views/menu_item/edit.html")).unwrap();
+    let result = menu_items
+        .find(param_id)
+        .first::<MenuItem>(&mut config.database.pool.get().unwrap())
+        .expect("Error loading data");
+
+    let mut context = Context::new();
+    let config_ref = config.as_ref();
+    context.insert("data", &result.build_form(config_ref, headers, format!("/menu_items/{}", param_id).as_str()));
+
+    let rendered = tera.render("menu_item/edit.html", &context).unwrap();
+    Response{status_code: StatusCode::OK, content_type: "text/html", datas: rendered}
+}
+
+pub async fn update(headers: HeaderMap, State(config): State<Arc<Config>>, Path(param_id): Path<i32>, Form(payload): Form<MenuItemEdit>) -> Redirect {
+    if csrf_token_is_valid(headers, config.clone(), payload.csrf_token) {
+        let _updated_record: MenuItem = diesel::update(menu_items)
+            .filter(id.eq(param_id))
+            .set((menu_id.eq(payload.menu_id), label.eq(payload.label), link.eq(payload.link), position.eq(payload.position)))
+            .get_result(&mut config.database.pool.get().unwrap())
+            .expect("Error updating data");
+    }
+    Redirect::to("/menu_items") 
+}
+
+pub async fn delete(Path(param_id): Path<i32>, State(config): State<Arc<Config>>) -> Redirect {
+    diesel::delete(menu_items)
+        .filter(id.eq(param_id))
+        .execute(&mut config.database.pool.get().unwrap())
+        .expect("Error deleting data");
+    Redirect::to("/menu_items") 
+}

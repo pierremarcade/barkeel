@@ -72,13 +72,6 @@ diesel::table! {
 }
 
 diesel::table! {
-    sessions (session_token) {
-        session_token -> Varchar,
-        user_id -> Nullable<Int4>,
-    }
-}
-
-diesel::table! {
     users (id) {
         id -> Int4,
         #[max_length = 255]
@@ -88,6 +81,7 @@ diesel::table! {
         #[max_length = 255]
         password -> Varchar,
         role_id -> Nullable<Int4>,
+        session_token -> Nullable<Varchar>,
     }
 }
 
@@ -98,7 +92,6 @@ diesel::joinable!(articles -> users (author_id));
 diesel::joinable!(menu_items -> menus (menu_id));
 diesel::joinable!(role_permissions -> permissions (permission_id));
 diesel::joinable!(role_permissions -> roles (role_id));
-diesel::joinable!(sessions -> users (user_id));
 diesel::joinable!(users -> roles (role_id));
 
 diesel::allow_tables_to_appear_in_same_query!(
@@ -110,6 +103,5 @@ diesel::allow_tables_to_appear_in_same_query!(
     permissions,
     role_permissions,
     roles,
-    sessions,
     users,
 );

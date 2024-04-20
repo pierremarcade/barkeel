@@ -3,7 +3,7 @@ use barkeel_derives::FormBuilder;
 use serde::{Deserialize, Serialize};
 
 
-#[derive(Serialize, Deserialize, Selectable, Identifiable, PartialEq, Queryable, FormBuilder, Clone)]
+#[derive(Serialize, Deserialize, Queryable, FormBuilder, Clone)]
 #[diesel(table_name = crate::db::schema::users)]
 pub struct User {
     pub id: i32,
@@ -11,5 +11,6 @@ pub struct User {
     pub email: String,
     pub password: String,
     pub role_id: Option<i32>,
+    pub session_token: Option<String>,
 
 }

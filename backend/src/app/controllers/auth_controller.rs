@@ -1,6 +1,5 @@
 use crate::config::application::Config;
 use crate::app::models::user::User;
-use crate::app::models::session::Session;
 use crate::app::models::auth::{Credentials, CredentialsForm};
 use std::sync::Arc;
 use tera::{Context, Tera};
@@ -9,7 +8,6 @@ use crate::app::utils::response::Response;
 use barkeel_lib::session::CSRFManager;
 use diesel::prelude::*;
 use crate::db::schema::users::dsl::*;
-use crate::db::schema::sessions::dsl::*;
 use bcrypt::verify;
 
 fn redirect_response(location: &str) -> AxumResponse {
@@ -69,10 +67,11 @@ pub async fn new_session(
 ) -> String {
     let csrf_manager = CSRFManager::new();
     let session_tok = csrf_manager.generate_csrf_token();
-    let _inserted_record: Session = diesel::insert_into(sessions)
-        .values((session_token.eq(session_tok.clone()), user_id.eq(other_user_id)))
-        .get_result(&mut config.database.pool.get().unwrap())
-        .expect("Error inserting data");
+    let _updated_record: User = diesel::update(users)
+            .filter(id.eq(other_user_id))
+            .set(session_token.eq(session_tok.clone()))
+            .get_result(&mut config.database.pool.get().unwrap())
+            .expect("Error updating data");
 
     session_tok
 }

@@ -8,8 +8,7 @@ use axum::{
     response::Response
 };
 use std::sync::Arc;
-use crate::db::schema::users::dsl::{users};
-use crate::db::schema::sessions::dsl::{sessions, session_token};
+use crate::db::schema::users::dsl::*;
 use diesel::prelude::*;
 use cookie::Cookie;
 const USER_COOKIE_NAME: &str = "session_token";
@@ -22,7 +21,6 @@ pub(crate) async fn auth(
 
     match cookie_header {
         Some(cookie_header) => {
-            let cookie_header = request.headers().get("Cookie").unwrap();
             let cookies: Vec<Cookie> = cookie_header
                 .to_str()
                 .unwrap_or_default()
@@ -86,10 +84,8 @@ impl AuthState {
         let (session_tok, store, config) = self.0.as_mut()?;
         if store.is_none() {
             let user = users
-                .inner_join(sessions)
                 .filter(session_token.eq(session_tok.clone()))
-                .select(User::as_select())
-                .get_result(&mut config.database.pool.get().unwrap());
+                .first::<User>(&mut config.database.pool.get().unwrap());
 
             match user {
                 Ok(user) => *store = Some(user),
