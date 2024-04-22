@@ -107,13 +107,13 @@ pub async fn new(headers: HeaderMap, State(config): State<Arc<Config>>) -> impl 
 
     let mut context = Context::new();
     let config_ref = config.as_ref();
-    context.insert("data",&MenuCreate::new().build_form(config_ref, headers, "/menus"));
+    context.insert("data",&MenuForm::new().build_form(config_ref, headers, "/menus"));
 
     let rendered = tera.render("menu/new.html", &context).unwrap();
     Response{status_code: StatusCode::OK, content_type: "text/html", datas: rendered}
 }
 
-pub async fn create(headers: HeaderMap, State(config): State<Arc<Config>>, Form(payload): Form<MenuEdit>) -> Redirect {
+pub async fn create(headers: HeaderMap, State(config): State<Arc<Config>>, Form(payload): Form<MenuFormEdit>) -> Redirect {
     if csrf_token_is_valid(headers, config.clone(), payload.csrf_token) {
         let _inserted_record: Menu = diesel::insert_into(menus)
             .values(name.eq(payload.name))
@@ -140,7 +140,7 @@ pub async fn edit(headers: HeaderMap, Path(param_id): Path<i32>, State(config): 
     Response{status_code: StatusCode::OK, content_type: "text/html", datas: rendered}
 }
 
-pub async fn update(headers: HeaderMap, State(config): State<Arc<Config>>, Path(param_id): Path<i32>, Form(payload): Form<MenuEdit>) -> Redirect {
+pub async fn update(headers: HeaderMap, State(config): State<Arc<Config>>, Path(param_id): Path<i32>, Form(payload): Form<MenuFormEdit>) -> Redirect {
     if csrf_token_is_valid(headers, config.clone(), payload.csrf_token) {
         let _updated_record: Menu = diesel::update(menus)
             .filter(id.eq(param_id))
