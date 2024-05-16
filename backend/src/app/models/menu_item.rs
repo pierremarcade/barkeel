@@ -5,6 +5,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Queryable, FormBuilder, Clone)]
 #[diesel(table_name = crate::db::schema::menu_items)]
+#[diesel(belongs_to(Menu))]
 pub struct MenuItem {
     pub id: i32,
     pub menu_id: Option<i32>,
