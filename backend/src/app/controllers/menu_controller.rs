@@ -4,7 +4,7 @@ use crate::db::schema::menus::dsl::*;
 use diesel::prelude::*;
 use std::sync::Arc;
 use tera::Tera;
-use axum::{  Extension, extract::{Path, State, Query}, response::{ IntoResponse, Redirect }, http::{ HeaderMap, StatusCode }, Form};
+use axum::{ Extension, extract::{Path, State, Query}, response::{ IntoResponse, Redirect }, http::{ HeaderMap, StatusCode }, Form };
 use crate::app::utils::{ get_content_type, csrf_token_is_valid, response::Response, pagination::{ PaginationQuery, Pagination } };
 use crate::app::controllers::error_controller;
 use crate::app::middlewares::auth::AuthState;

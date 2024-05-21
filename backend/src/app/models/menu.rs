@@ -9,5 +9,5 @@ use serde::{Deserialize, Serialize};
 pub struct Menu {
     pub id: i32,
     pub name: String,
-
+    pub href: String,
 }
