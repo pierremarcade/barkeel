@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {  useQuery } from "@tanstack/react-query";
 import { getMenus } from "@/components/Menus/menus.api";
 
 
@@ -7,5 +7,6 @@ export const useMenus = () => {
         queryKey: ['menus'],
         queryFn: getMenus
     })
-    return { menus:data, refetch }
+    const menus = Array.isArray(data)? data : [];
+    return { menus, refetch }
 }

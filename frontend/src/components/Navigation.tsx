@@ -3,6 +3,7 @@ import { usePathname } from 'next/navigation'
 import clsx from 'clsx'
 
 import { navigation } from '@/lib/navigation'
+import {useMenus} from "@/components/Menus/menus.queries";
 
 export function Navigation({
   className,
@@ -12,20 +13,20 @@ export function Navigation({
   onLinkClick?: React.MouseEventHandler<HTMLAnchorElement>
 }) {
   let pathname = usePathname()
-
+  const { menus } = useMenus()
   return (
     <nav className={clsx('text-base lg:text-sm', className)}>
       <ul role="list" className="space-y-9">
-        {navigation.map((section) => (
-          <li key={section.title}>
+        {menus?.map((section) => (
+          <li key={section.name}>
             <h2 className="font-display font-medium text-slate-900 dark:text-white">
-              {section.title}
+              {section.name}
             </h2>
             <ul
               role="list"
               className="mt-2 space-y-2 border-l-2 border-slate-100 lg:mt-4 lg:space-y-4 lg:border-slate-200 dark:border-slate-800"
             >
-              {section.links.map((link) => (
+              {section.links?.map((link) => (
                 <li key={link.href} className="relative">
                   <Link
                     href={link.href}
@@ -37,7 +38,7 @@ export function Navigation({
                         : 'text-slate-500 before:hidden before:bg-slate-300 hover:text-slate-600 hover:before:block dark:text-slate-400 dark:before:bg-slate-700 dark:hover:text-slate-300',
                     )}
                   >
-                    {link.title}
+                    {link.label}
                   </Link>
                 </li>
               ))}

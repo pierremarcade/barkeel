@@ -1,15 +1,21 @@
 export interface IMenuItem{
     id:number,
-    name:string,
+    label:string,
+    href:string
 }
 
-export const getMenus = async ():Promise<IMenuItem[]> =>{
+export interface IMenu{
+    id:number,
+    name:string,
+    links?:Array<IMenuItem>,
+}
 
-    const res:Response = await fetch(`${process.env.API_HOST}/menus`)
+export const getMenus = async ():Promise<IMenu[]> =>{
+    const res:Response = await fetch(`${process.env.NEXT_PUBLIC_API_HOST}/menus`)
 
     if(res.ok){
         return await res.json()
     }
 
-    throw new Error('Posts could not be fetched');
+    throw new Error('Menus could not be fetched');
 }

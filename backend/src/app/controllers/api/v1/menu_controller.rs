@@ -1,16 +1,17 @@
-use axum::{ extract::{ Path, State}, response::Json };
+use axum::{ extract::{Path, State}, response::{ Json, IntoResponse }, http::StatusCode };
 use crate::config::application::Config;
 use crate::app::models::menu::Menu;
 use crate::db::schema::menus::dsl::*;
+use crate::app::utils::{ response::Response };
 use diesel::prelude::*;
 use std::sync::Arc;
 
-pub async fn index(State(config): State<Arc<Config>>) -> Json<String> {
+pub async fn index(State(config): State<Arc<Config>>) -> impl IntoResponse  {
     let results = menus
         .load::<Menu>(&mut config.database.pool.get().unwrap())
         .expect("Error loading datas");
     let serialized = serde_json::to_string(&results).unwrap();
-    Json(serialized)
+    return Response{status_code: StatusCode::OK, content_type: "application/json", datas: serialized};
 }
 
 pub async fn show(Path(param_id): Path<i32>, State(config): State<Arc<Config>>) -> Json<String> {
@@ -23,7 +24,7 @@ pub async fn show(Path(param_id): Path<i32>, State(config): State<Arc<Config>>) 
 
 pub async fn create(Json(payload): Json<Menu>, State(config): State<Arc<Config>>) -> Json<String> {
     let inserted_record: Menu = diesel::insert_into(menus)
-        .values((name.eq(payload.name), href.eq(payload.href)))
+        .values(name.eq(payload.name))
         .get_result(&mut config.database.pool.get().unwrap())
         .expect("Error inserting data");
     let serialized = serde_json::to_string(&inserted_record).unwrap();
@@ -33,7 +34,7 @@ pub async fn create(Json(payload): Json<Menu>, State(config): State<Arc<Config>>
 pub async fn update(Path(param_id): Path<i32>, Json(payload): Json<Menu>, State(config): State<Arc<Config>>) -> Json<String> {
     let updated_record: Menu = diesel::update(menus)
         .filter(id.eq(param_id))
-        .set((name.eq(payload.name), href.eq(payload.href)))
+        .set(name.eq(payload.name))
         .get_result(&mut config.database.pool.get().unwrap())
         .expect("Error updating data");
     let serialized = serde_json::to_string(&updated_record).unwrap();
