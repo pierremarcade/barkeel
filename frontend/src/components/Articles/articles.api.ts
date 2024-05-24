@@ -14,3 +14,13 @@ export const getArticles = async ():Promise<IArticle[]> =>{
 
     throw new Error('Menus could not be fetched');
 }
+
+export const getArticle = async (slug:string):Promise<IArticle> =>{
+    const res:Response = await fetch(`${process.env.NEXT_PUBLIC_API_HOST}/article/${slug}`)
+
+    if(res.ok){
+        return await res.json()
+    }
+
+    throw new Error('Menus could not be fetched');
+}

@@ -118,7 +118,7 @@ pub async fn new(Extension(current_user): Extension<AuthState>, headers: HeaderM
 pub async fn create(headers: HeaderMap, State(config): State<Arc<Config>>, Form(payload): Form<MenuItemFormEdit>) -> Redirect {
     if csrf_token_is_valid(headers, config.clone(), payload.csrf_token) {
         let _inserted_record: MenuItem = diesel::insert_into(menu_items)
-            .values((menu_id.eq(payload.menu_id), label.eq(payload.label), link.eq(payload.link), position.eq(payload.position)))
+            .values((menu_id.eq(payload.menu_id), article_id.eq(payload.article_id), label.eq(payload.label), position.eq(payload.position)))
             .get_result(&mut config.database.pool.get().unwrap())
             .expect("Error inserting data");
     }
@@ -146,7 +146,7 @@ pub async fn update(headers: HeaderMap, State(config): State<Arc<Config>>, Path(
     if csrf_token_is_valid(headers, config.clone(), payload.csrf_token) {
         let _updated_record: MenuItem = diesel::update(menu_items)
             .filter(id.eq(param_id))
-            .set((menu_id.eq(payload.menu_id), label.eq(payload.label), link.eq(payload.link), position.eq(payload.position)))
+            .set((menu_id.eq(payload.menu_id), article_id.eq(payload.article_id), label.eq(payload.label), position.eq(payload.position)))
             .get_result(&mut config.database.pool.get().unwrap())
             .expect("Error updating data");
     }

@@ -23,7 +23,7 @@ pub async fn show(Path(param_id): Path<i32>, State(config): State<Arc<Config>>) 
 
 pub async fn create(Json(payload): Json<MenuItem>, State(config): State<Arc<Config>>) -> Json<String> {
     let inserted_record: MenuItem = diesel::insert_into(menu_items)
-        .values((menu_id.eq(payload.menu_id), label.eq(payload.label), link.eq(payload.link), position.eq(payload.position)))
+        .values((menu_id.eq(payload.menu_id), label.eq(payload.label), position.eq(payload.position)))
         .get_result(&mut config.database.pool.get().unwrap())
         .expect("Error inserting data");
     let serialized = serde_json::to_string(&inserted_record).unwrap();
@@ -33,7 +33,7 @@ pub async fn create(Json(payload): Json<MenuItem>, State(config): State<Arc<Conf
 pub async fn update(Path(param_id): Path<i32>, Json(payload): Json<MenuItem>, State(config): State<Arc<Config>>) -> Json<String> {
     let updated_record: MenuItem = diesel::update(menu_items)
         .filter(id.eq(param_id))
-        .set((menu_id.eq(payload.menu_id), label.eq(payload.label), link.eq(payload.link), position.eq(payload.position)))
+        .set((menu_id.eq(payload.menu_id), label.eq(payload.label), position.eq(payload.position)))
         .get_result(&mut config.database.pool.get().unwrap())
         .expect("Error updating data");
     let serialized = serde_json::to_string(&updated_record).unwrap();

@@ -21,18 +21,11 @@ diesel::table! {
         id -> Int4,
         #[max_length = 255]
         title -> Varchar,
+        #[max_length = 255]
+        slug -> Varchar,
         content -> Text,
         published_at -> Timestamp,
         author_id -> Nullable<Int4>,
-    }
-}
-
-
-diesel::table! {
-    menus (id) {
-        id -> Int4,
-        #[max_length = 255]
-        name -> Varchar,
     }
 }
 
@@ -40,11 +33,18 @@ diesel::table! {
     menu_items (id) {
         id -> Int4,
         menu_id -> Nullable<Int4>,
+        article_id -> Nullable<Int4>,
         #[max_length = 255]
         label -> Varchar,
-        #[max_length = 255]
-        link -> Varchar,
         position -> Int4,
+    }
+}
+
+diesel::table! {
+    menus (id) {
+        id -> Int4,
+        #[max_length = 255]
+        name -> Varchar,
     }
 }
 
@@ -90,6 +90,7 @@ diesel::joinable!(article_menus -> articles (article_id));
 diesel::joinable!(article_menus -> menus (menu_id));
 diesel::joinable!(article_metas -> articles (article_id));
 diesel::joinable!(articles -> users (author_id));
+diesel::joinable!(menu_items -> articles (article_id));
 diesel::joinable!(menu_items -> menus (menu_id));
 diesel::joinable!(role_permissions -> permissions (permission_id));
 diesel::joinable!(role_permissions -> roles (role_id));

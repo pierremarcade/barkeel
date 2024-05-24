@@ -6,9 +6,11 @@ use chrono::NaiveDateTime;
 
 #[derive(Serialize, Deserialize, Queryable, FormBuilder, Clone)]
 #[diesel(table_name = crate::db::schema::articles)]
+#[form_builder(label = title, id = id)]
 pub struct Article {
     pub id: i32,
     pub title: String,
+    pub slug: String,
     #[form_builder(type_="textarea")]
     pub content: String,
     #[exclude]
