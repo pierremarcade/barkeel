@@ -1,13 +1,13 @@
 export interface IMenuItem{
     id:number,
     label:string,
-    href:string
+    link:string
 }
 
 export interface IMenu{
     id:number,
     name:string,
-    links?:Array<IMenuItem>,
+    items?:Array<IMenuItem>,
 }
 
 export const getMenus = async ():Promise<IMenu[]> =>{

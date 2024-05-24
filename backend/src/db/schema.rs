@@ -27,6 +27,15 @@ diesel::table! {
     }
 }
 
+
+diesel::table! {
+    menus (id) {
+        id -> Int4,
+        #[max_length = 255]
+        name -> Varchar,
+    }
+}
+
 diesel::table! {
     menu_items (id) {
         id -> Int4,
@@ -36,14 +45,6 @@ diesel::table! {
         #[max_length = 255]
         link -> Varchar,
         position -> Int4,
-    }
-}
-
-diesel::table! {
-    menus (id) {
-        id -> Int4,
-        #[max_length = 255]
-        name -> Varchar,
     }
 }
 

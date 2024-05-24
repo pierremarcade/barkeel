@@ -1,17 +1,41 @@
 use axum::{ extract::{Path, State}, response::{ Json, IntoResponse }, http::StatusCode };
 use crate::config::application::Config;
 use crate::app::models::menu::Menu;
+use crate::app::models::menu_item::MenuItem;
+use serde::Serialize;
+use crate::db::schema::menus;
 use crate::db::schema::menus::dsl::*;
 use crate::app::utils::{ response::Response };
 use diesel::prelude::*;
 use std::sync::Arc;
 
+#[derive(Serialize)]
+struct MenuWithItem {
+    #[serde(flatten)]
+    menu: Menu,
+    items: Vec<MenuItem>,
+}
+
 pub async fn index(State(config): State<Arc<Config>>) -> impl IntoResponse  {
-    let results = menus
-        .load::<Menu>(&mut config.database.pool.get().unwrap())
-        .expect("Error loading datas");
-    let serialized = serde_json::to_string(&results).unwrap();
-    return Response{status_code: StatusCode::OK, content_type: "application/json", datas: serialized};
+    let all_menus = menus::table.select(Menu::as_select()).load(&mut config.database.pool.get().unwrap());
+    match all_menus {
+        Ok(all_menus) => {
+            let menu_items = MenuItem::belonging_to(&all_menus)
+                .select(MenuItem::as_select())
+                .load(&mut config.database.pool.get().unwrap());
+
+            let items_per_menu = menu_items.expect("REASON")
+                .grouped_by(&all_menus)
+                .into_iter()
+                .zip(all_menus)
+                .map(|(items, menu)| MenuWithItem {menu, items})
+                .collect::<Vec<MenuWithItem>>();
+
+            let serialized = serde_json::to_string(&items_per_menu).unwrap();
+            return Response{status_code: StatusCode::OK, content_type: "application/json", datas: serialized};
+        },
+        _ => Response{status_code: StatusCode::OK, content_type: "application/json", datas: "".to_string()},
+    }
 }
 
 pub async fn show(Path(param_id): Path<i32>, State(config): State<Arc<Config>>) -> Json<String> {
@@ -48,3 +72,5 @@ pub async fn delete(Path(param_id): Path<i32>, State(config): State<Arc<Config>>
         .expect("Error deleting data");
     "Data deleted successfully"
 }
+
+
