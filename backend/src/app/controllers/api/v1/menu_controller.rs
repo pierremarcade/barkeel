@@ -2,8 +2,9 @@ use axum::{ extract::{Path, State}, response::{ Json, IntoResponse }, http::Stat
 use crate::config::application::Config;
 use crate::app::models::menu::Menu;
 use crate::app::models::menu_item::MenuItem;
+use crate::app::models::article::ArticleMenu;
 use serde::Serialize;
-use crate::db::schema::menus;
+use crate::db::schema::{ menus, menu_items, articles};
 use crate::db::schema::menus::dsl::*;
 use crate::app::utils::{ response::Response };
 use diesel::prelude::*;
@@ -13,16 +14,18 @@ use std::sync::Arc;
 struct MenuWithItem {
     #[serde(flatten)]
     menu: Menu,
-    items: Vec<MenuItem>,
+    items: Vec<(MenuItem, ArticleMenu)>,
 }
 
 pub async fn index(State(config): State<Arc<Config>>) -> impl IntoResponse  {
     let all_menus = menus::table.select(Menu::as_select()).load(&mut config.database.pool.get().unwrap());
     match all_menus {
         Ok(all_menus) => {
-            let menu_items = MenuItem::belonging_to(&all_menus)
-                .select(MenuItem::as_select())
-                .load(&mut config.database.pool.get().unwrap());
+
+            let menu_items = menu_items::table
+            .inner_join(articles::table)
+            .select((MenuItem::as_select(), ArticleMenu::as_select()))
+            .load::<(MenuItem, ArticleMenu)>(&mut config.database.pool.get().unwrap());
 
             let items_per_menu = menu_items.expect("REASON")
                 .grouped_by(&all_menus)
