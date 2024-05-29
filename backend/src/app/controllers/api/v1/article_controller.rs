@@ -1,4 +1,5 @@
-use axum::{ extract::{Path, State}, response::Json };
+use axum::{ extract::{Path, State}, response::{ Json, IntoResponse }, http::StatusCode };
+use crate::app::utils::{ response::Response };
 use crate::config::application::Config;
 use crate::app::models::article::Article;
 use crate::db::schema::articles::dsl::*;
@@ -13,11 +14,12 @@ pub async fn index(State(config): State<Arc<Config>>) -> Json<String> {
     Json(serialized)
 }
 
-pub async fn show(Path(other_slug): Path<String>, State(config): State<Arc<Config>>) -> Json<String> {
+pub async fn show(Path(other_slug): Path<String>, State(config): State<Arc<Config>>) -> impl IntoResponse {
     let result = articles
         .filter(slug.eq(other_slug))
         .first::<Article>(&mut config.database.pool.get().unwrap())
         .expect("Error loading data");
+
     let serialized = serde_json::to_string(&result).unwrap();
-    Json(serialized)
+    Response{status_code: StatusCode::OK, content_type: "application/json", datas: serialized}
 }

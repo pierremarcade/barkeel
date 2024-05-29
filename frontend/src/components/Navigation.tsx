@@ -2,7 +2,6 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import clsx from 'clsx'
 
-import { navigation } from '@/lib/navigation'
 import {useMenus} from "@/components/Menus/menus.queries";
 import { IMenuItem } from "@/components/Menus/menus.api";
 
