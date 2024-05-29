@@ -1,38 +1,58 @@
 use axum::{ extract::{Path, State}, response::{ Json, IntoResponse }, http::StatusCode };
 use crate::config::application::Config;
 use crate::app::models::menu::Menu;
-use crate::app::models::menu_item::MenuItem;
-use crate::app::models::article::ArticleMenu;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use crate::db::schema::{ menus, menu_items, articles};
 use crate::db::schema::menus::dsl::*;
 use crate::app::utils::{ response::Response };
 use diesel::prelude::*;
 use std::sync::Arc;
+use std::collections::HashMap;
 
 #[derive(Serialize)]
-struct MenuWithItem {
+struct MenuWithItem<'a> {
     #[serde(flatten)]
     menu: Menu,
-    items: Vec<(MenuItem, ArticleMenu)>,
+    items: Vec<&'a MenuItemWithArticle>,
+}
+
+#[derive(Serialize, Deserialize)]
+#[derive(Queryable)]
+struct MenuItemWithArticle{
+    pub id: i32,
+    pub menu_id: Option<i32>,
+    pub article_id: Option<i32>,
+    pub label: String,
+    pub slug: String,
 }
 
 pub async fn index(State(config): State<Arc<Config>>) -> impl IntoResponse  {
     let all_menus = menus::table.select(Menu::as_select()).load(&mut config.database.pool.get().unwrap());
     match all_menus {
         Ok(all_menus) => {
+            let menu_items_with_articles = menu_items::table
+              .inner_join(articles::table)
+              .select((menu_items::id, menu_items::menu_id, menu_items::article_id, menu_items::label, articles::slug))
+              .load::<MenuItemWithArticle>(&mut config.database.pool.get().unwrap())
+              .expect("Failed to load menu items");
 
-            let menu_items = menu_items::table
-            .inner_join(articles::table)
-            .select((MenuItem::as_select(), ArticleMenu::as_select()))
-            .load::<(MenuItem, ArticleMenu)>(&mut config.database.pool.get().unwrap());
+              let mut grouped_menu_items = HashMap::new();
+              for item in &menu_items_with_articles {
+                  if let Some(menu_id) = item.menu_id {
+                    if !grouped_menu_items.contains_key(&menu_id) {
+                        grouped_menu_items.insert(menu_id, Vec::new());
+                    }
+                      grouped_menu_items.get_mut(&menu_id).unwrap().push(item);
+                  }
+              }
 
-            let items_per_menu = menu_items.expect("REASON")
-                .grouped_by(&all_menus)
-                .into_iter()
-                .zip(all_menus)
-                .map(|(items, menu)| MenuWithItem {menu, items})
-                .collect::<Vec<MenuWithItem>>();
+            let items_per_menu: Vec<MenuWithItem> = grouped_menu_items.into_iter().map(|(menu_id, items)| {
+                let menu = all_menus.iter().find(|menu| menu.id == menu_id).unwrap();
+                MenuWithItem { 
+                    menu: menu.clone(), 
+                    items: items.to_vec() 
+                }
+            }).collect();
 
             let serialized = serde_json::to_string(&items_per_menu).unwrap();
             return Response{status_code: StatusCode::OK, content_type: "application/json", datas: serialized};

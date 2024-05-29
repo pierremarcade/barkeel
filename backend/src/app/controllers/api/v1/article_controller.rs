@@ -13,9 +13,9 @@ pub async fn index(State(config): State<Arc<Config>>) -> Json<String> {
     Json(serialized)
 }
 
-pub async fn show(Path(article_id): Path<i32>, State(config): State<Arc<Config>>) -> Json<String> {
+pub async fn show(Path(other_slug): Path<String>, State(config): State<Arc<Config>>) -> Json<String> {
     let result = articles
-        .find(article_id)
+        .filter(slug.eq(other_slug))
         .first::<Article>(&mut config.database.pool.get().unwrap())
         .expect("Error loading data");
     let serialized = serde_json::to_string(&result).unwrap();

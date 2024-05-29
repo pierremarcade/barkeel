@@ -1,5 +1,5 @@
 import {  useQuery } from "@tanstack/react-query";
-import { getArticles } from "@/components/Articles/articles.api";
+import { getArticles, getArticle } from "@/components/Articles/articles.api";
 
 
 export const useArticles = () => {
@@ -9,4 +9,12 @@ export const useArticles = () => {
     })
     const articles = Array.isArray(data)? data : [];
     return { articles, refetch }
+}
+
+export const useArticle = (slug:string) => {
+    const { data, refetch } = useQuery({
+        queryKey: ['article'],
+        queryFn: () => getArticle(slug),
+    })
+    return { data, refetch }
 }

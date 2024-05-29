@@ -1,10 +1,11 @@
-export interface IMenuItem{
-    id:number,
+export interface IMenuItem {
+    id:Number,
+    menu_id:Number,
     label:string,
-    link:string
+    slug:string
 }
 
-export interface IMenu{
+export interface IMenu {
     id:number,
     name:string,
     items?:Array<IMenuItem>,
