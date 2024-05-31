@@ -20,6 +20,7 @@
     "clsx": "^2.1.0",
     "fast-glob": "^3.2.12",
     "flexsearch": "^0.7.31",
+    "highlight.js": "^11.9.0",
     "js-yaml": "^4.1.0",
     "next": "^14.2.2",
     "next-themes": "^0.2.1",

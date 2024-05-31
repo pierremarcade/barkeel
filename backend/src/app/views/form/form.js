@@ -1,6 +1,57 @@
 document.addEventListener('DOMContentLoaded', function() {
     changeDateTimeLocalFormat();
     handleSelectAndRadioElements();
+    const Block = Quill.import('blots/block');
+    const Container = Quill.import('blots/container');
+    const Break = Quill.import('blots/break');
+    const TextBlot = Quill.import('blots/text');
+    const Cursor = Quill.import('blots/cursor');
+
+    class CodeBlockCusContainer extends Container {
+        static create(value) {
+            const domNode = super.create(value) ;
+            domNode.setAttribute('spellcheck', 'false');
+            domNode.setAttribute('class', 'prism-code ql-code-block-container ');
+            if (value) {
+            value.forEach(child => {
+                if (child instanceof TextBlot || child instanceof Break || child instanceof Cursor) {
+                    // Création d'un nouveau node <code>
+                    let codeNode = document.createElement('code');
+
+                        codeNode.appendChild(document.createTextNode(child.value));
+              
+                    // Copie du contenu du child dans le codeNode
+                    
+                    
+                    // Remplacement du child par le codeNode
+                    this.domNode.replaceWith(codeNode);
+                }
+            });
+        }
+            return domNode;
+        }
+    }
+    
+    class CodeBlock extends Block {
+        static TAB = '  ';
+      
+        static register() {
+          Quill.register(CodeBlockCusContainer);
+        }
+    }
+
+
+    CodeBlockCusContainer.blotName = 'code-block-container';
+    CodeBlockCusContainer.tagName = 'pre';
+    CodeBlockCusContainer.allowedChildren = [CodeBlock];
+
+    CodeBlock.blotName = 'code-block';
+    CodeBlock.className = 'ql-code-block';
+    CodeBlock.tagName = 'DIV';
+    CodeBlock.allowedChildren = [TextBlot, Break, Cursor];
+    CodeBlock.requiredContainer = CodeBlockCusContainer;
+      
+    Quill.register(CodeBlock);
 
     var editorElements = document.querySelectorAll('.editor');
     editorElements.forEach(function(editorElement) {
@@ -10,7 +61,7 @@ document.addEventListener('DOMContentLoaded', function() {
         var quill = new Quill(editorElement, {
             theme: 'snow',
             modules: {
-                syntax: true, 
+                syntax: true,
                 toolbar: [
                     ['bold', 'italic', 'underline', 'strike'],
                     ['blockquote', 'code-block'],
@@ -23,14 +74,14 @@ document.addEventListener('DOMContentLoaded', function() {
                     [{ 'color': [] }, { 'background': [] }],
                     [{ 'font': [] }],
                     [{ 'align': [] }],
-                    ['clean']
-                ]
+                    ['clean'],
+                ],
+               
             }
         });
         if (initialContent !== '') {
             quill.root.innerHTML = initialContent;
         }
-        
         quill.on('text-change', function(delta, oldDelta, source) {
             if (source === 'user') {
                 textarea.value = quill.root.innerHTML;

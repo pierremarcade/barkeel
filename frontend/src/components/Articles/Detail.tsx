@@ -1,14 +1,23 @@
 'use client'
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useArticle } from "./articles.queries";
+import hljs from 'highlight.js';
 
 interface DetailProps {
   slug: string;
 }
 
+hljs.registerLanguage('javascript', require('highlight.js/lib/languages/javascript'));
+
 const Detail: React.FC<DetailProps> = ({ slug }) => {
   const { data, isLoading, isError, error } = useArticle(slug);
+
+  useEffect(() => {
+    if (!isLoading &&!isError && data) {
+      hljs.highlightAll();
+    }
+  }, [isLoading, isError, data]);
 
   if (isLoading) {
     return <div>Loading...</div>; 
@@ -17,7 +26,7 @@ const Detail: React.FC<DetailProps> = ({ slug }) => {
   if (isError ||!data) {
     return <div>Error loading article: {error?.message}</div>; 
   }
-
+  
   return (
     <div className="min-w-0 max-w-2xl flex-auto px-4 py-16 lg:max-w-none lg:pl-8 lg:pr-0 xl:px-16">
       <header className="mb-9 space-y-1">
