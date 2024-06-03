@@ -7,27 +7,18 @@ document.addEventListener('DOMContentLoaded', function() {
     const TextBlot = Quill.import('blots/text');
     const Cursor = Quill.import('blots/cursor');
 
-    class CodeBlockCusContainer extends Container {
+    class CodeBlockContainer extends Container {
         static create(value) {
             const domNode = super.create(value) ;
             domNode.setAttribute('spellcheck', 'false');
             domNode.setAttribute('class', 'prism-code ql-code-block-container ');
-            if (value) {
-            value.forEach(child => {
-                if (child instanceof TextBlot || child instanceof Break || child instanceof Cursor) {
-                    // Création d'un nouveau node <code>
-                    let codeNode = document.createElement('code');
-
-                        codeNode.appendChild(document.createTextNode(child.value));
-              
-                    // Copie du contenu du child dans le codeNode
-                    
-                    
-                    // Remplacement du child par le codeNode
-                    this.domNode.replaceWith(codeNode);
-                }
-            });
+            return domNode;
         }
+    }
+
+    class CodeBlockCusContainer extends Container {
+        static create(value) {
+            const domNode = super.create(value) ;
             return domNode;
         }
     }
@@ -36,14 +27,20 @@ document.addEventListener('DOMContentLoaded', function() {
         static TAB = '  ';
       
         static register() {
+          Quill.register(CodeBlockContainer);
           Quill.register(CodeBlockCusContainer);
         }
     }
 
+    CodeBlockContainer.blotName = 'code-block-container';
+    CodeBlockContainer.tagName = 'pre';
+    CodeBlockContainer.allowedChildren = [CodeBlockCusContainer, CodeBlock];
 
-    CodeBlockCusContainer.blotName = 'code-block-container';
-    CodeBlockCusContainer.tagName = 'pre';
+
+    CodeBlockCusContainer.blotName = 'code-block-container-b';
+    CodeBlockCusContainer.tagName = 'code';
     CodeBlockCusContainer.allowedChildren = [CodeBlock];
+    CodeBlockCusContainer.requiredContainer = CodeBlockContainer;
 
     CodeBlock.blotName = 'code-block';
     CodeBlock.className = 'ql-code-block';

@@ -2,6 +2,7 @@
 @import './prism.css';
 @import 'tailwindcss/components';
 @import 'tailwindcss/utilities';
+@import 'highlight.js/styles/default.min.css';
 
 @layer base {
   [inert] ::-webkit-scrollbar {

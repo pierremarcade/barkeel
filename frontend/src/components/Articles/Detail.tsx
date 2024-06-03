@@ -2,20 +2,19 @@
 
 import React, { useEffect } from 'react';
 import { useArticle } from "./articles.queries";
-import hljs from 'highlight.js';
+
 
 interface DetailProps {
   slug: string;
 }
 
-hljs.registerLanguage('javascript', require('highlight.js/lib/languages/javascript'));
 
 const Detail: React.FC<DetailProps> = ({ slug }) => {
   const { data, isLoading, isError, error } = useArticle(slug);
 
   useEffect(() => {
     if (!isLoading &&!isError && data) {
-      hljs.highlightAll();
+      // hljs.highlightAll();
     }
   }, [isLoading, isError, data]);
 
