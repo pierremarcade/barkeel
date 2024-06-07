@@ -36,7 +36,6 @@ document.addEventListener('DOMContentLoaded', function() {
     CodeBlockContainer.tagName = 'pre';
     CodeBlockContainer.allowedChildren = [CodeBlockCusContainer, CodeBlock];
 
-
     CodeBlockCusContainer.blotName = 'code-block-container-b';
     CodeBlockCusContainer.tagName = 'code';
     CodeBlockCusContainer.allowedChildren = [CodeBlock];

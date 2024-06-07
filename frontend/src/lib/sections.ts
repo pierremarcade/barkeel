@@ -40,14 +40,7 @@ function isH3Node(node: Node): node is H3Node {
 }
 
 function getNodeText(node: Node) {
-  let text = ''
-  for (let child of node.children ?? []) {
-    if (child.type === 'text') {
-      text += child.attributes.content
-    }
-    text += getNodeText(child)
-  }
-  return text
+  return node.attributes.content
 }
 
 export type Subsection = H3Node['attributes'] & {
@@ -67,7 +60,6 @@ export function collectSections(
   slugify = slugifyWithCounter(),
 ) {
   let sections: Array<Section> = []
-
   for (let node of nodes) {
     if (isH2Node(node) || isH3Node(node)) {
       let title = getNodeText(node)
