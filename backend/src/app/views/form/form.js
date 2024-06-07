@@ -28,24 +28,19 @@ document.addEventListener('DOMContentLoaded', function() {
       
         static register() {
           Quill.register(CodeBlockContainer);
-          Quill.register(CodeBlockCusContainer);
         }
     }
 
     CodeBlockContainer.blotName = 'code-block-container';
     CodeBlockContainer.tagName = 'pre';
-    CodeBlockContainer.allowedChildren = [CodeBlockCusContainer, CodeBlock];
+    CodeBlockContainer.allowedChildren = [CodeBlock];
 
-    CodeBlockCusContainer.blotName = 'code-block-container-b';
-    CodeBlockCusContainer.tagName = 'code';
-    CodeBlockCusContainer.allowedChildren = [CodeBlock];
-    CodeBlockCusContainer.requiredContainer = CodeBlockContainer;
 
     CodeBlock.blotName = 'code-block';
     CodeBlock.className = 'ql-code-block';
     CodeBlock.tagName = 'DIV';
     CodeBlock.allowedChildren = [TextBlot, Break, Cursor];
-    CodeBlock.requiredContainer = CodeBlockCusContainer;
+    CodeBlock.requiredContainer = CodeBlockContainer;
       
     Quill.register(CodeBlock);
 
