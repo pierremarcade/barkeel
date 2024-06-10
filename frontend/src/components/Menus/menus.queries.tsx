@@ -1,7 +1,6 @@
 import {  useQuery } from "@tanstack/react-query";
 import { getMenus } from "@/components/Menus/menus.api";
 
-
 export const useMenus = () => {
     const { data, refetch } = useQuery({
         queryKey: ['menus'],

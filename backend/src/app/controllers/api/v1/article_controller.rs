@@ -15,6 +15,7 @@ struct ArticleWithMenu{
     pub title: String,
     pub slug: String,
     pub content: String,
+    pub homepage: bool,
     pub name: String
 }
 
@@ -30,7 +31,7 @@ pub async fn show(Path(other_slug): Path<String>, State(config): State<Arc<Confi
     let result =  menu_items::table
         .inner_join(articles::table)
         .inner_join(menus::table)
-        .select((articles::id, articles::title, articles::slug, articles::content, menus::name))
+        .select((articles::id, articles::title, articles::slug, articles::content, articles::homepage, menus::name))
         .filter(slug.eq(other_slug))
         .first::<ArticleWithMenu>(&mut config.database.pool.get().unwrap())
         .expect("Error loading data");

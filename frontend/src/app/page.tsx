@@ -1,5 +1,7 @@
+
 import Detail from "@/components/Articles/Detail";
+import React from 'react';
 
 export default function Page() {
-    return <p>Dashboard Page</p>;
+    return <Detail slug="getting-started" />;
 }

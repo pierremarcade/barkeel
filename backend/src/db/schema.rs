@@ -26,6 +26,7 @@ diesel::table! {
         content -> Text,
         published_at -> Timestamp,
         author_id -> Nullable<Int4>,
+        homepage -> Bool,
     }
 }
 

@@ -23,6 +23,7 @@ struct MenuItemWithArticle{
     pub menu_id: Option<i32>,
     pub article_id: Option<i32>,
     pub label: String,
+    pub homepage: bool,
     pub slug: String,
 }
 
@@ -32,7 +33,7 @@ pub async fn index(State(config): State<Arc<Config>>) -> impl IntoResponse  {
         Ok(all_menus) => {
             let menu_items_with_articles = menu_items::table
                 .inner_join(articles::table)
-                .select((menu_items::id, menu_items::menu_id, menu_items::article_id, menu_items::label, articles::slug))
+                .select((menu_items::id, menu_items::menu_id, menu_items::article_id, menu_items::label, articles::homepage, articles::slug))
                 .order(menu_items::position.asc())
                 .load::<MenuItemWithArticle>(&mut config.database.pool.get().unwrap())
                 .expect("Failed to load menu items");

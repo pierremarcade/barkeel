@@ -118,7 +118,7 @@ pub async fn create(Extension(mut current_user): Extension<AuthState>, headers: 
     if csrf_token_is_valid(headers, config.clone(), payload.csrf_token) {
         if let Some(user) = current_user.get_user().await {
             let _inserted_record: Article = diesel::insert_into(articles)
-                .values((title.eq(payload.title), slug.eq(payload.slug),content.eq(payload.content), published_at.eq(Utc::now().naive_utc()), author_id.eq(user.id)))
+                .values((title.eq(payload.title), slug.eq(payload.slug),content.eq(payload.content), published_at.eq(Utc::now().naive_utc()), author_id.eq(user.id), homepage.eq(payload.homepage)))
                 .get_result(&mut config.database.pool.get().unwrap())
                 .expect("Error inserting data");
         }
@@ -145,7 +145,7 @@ pub async fn update(headers: HeaderMap, State(config): State<Arc<Config>>, Path(
     if csrf_token_is_valid(headers, config.clone(), payload.csrf_token) {
         let _updated_record: Article = diesel::update(articles)
             .filter(id.eq(param_id))
-            .set((title.eq(payload.title), slug.eq(payload.slug), content.eq(payload.content)))
+            .set((title.eq(payload.title), slug.eq(payload.slug), content.eq(payload.content), homepage.eq(payload.homepage)))
             .get_result(&mut config.database.pool.get().unwrap())
             .expect("Error updating data");
     }

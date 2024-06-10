@@ -17,6 +17,8 @@ pub struct Article {
     pub published_at: NaiveDateTime,
     #[exclude]
     pub author_id: Option<i32>,
+    #[form_builder(type_="checkbox")]
+    pub homepage: bool,
 }
 
 #[derive(Serialize, Deserialize, Queryable, Selectable)]

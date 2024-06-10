@@ -2,7 +2,8 @@ export interface IMenuItem {
     id:Number,
     menu_id:Number,
     label:string,
-    slug:string
+    slug:string,
+    homepage:boolean
 }
 
 export interface IMenu {

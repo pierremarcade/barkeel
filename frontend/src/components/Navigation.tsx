@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import clsx from 'clsx'
 
-import {useMenus} from "@/components/Menus/menus.queries";
+import { useMenus } from "@/components/Menus/menus.queries";
 import { IMenuItem } from "@/components/Menus/menus.api";
 
 export function Navigation({
@@ -14,7 +14,6 @@ export function Navigation({
 }) {
   let pathname = usePathname()
   const { menus } = useMenus()
-  console.log(menus)
   return (
     <nav className={clsx('text-base lg:text-sm', className)}>
       <ul role="list" className="space-y-9">
@@ -31,11 +30,11 @@ export function Navigation({
                 return (
                   <li key={item.slug} className="relative">
                     <Link
-                      href={item.slug}
+                      href={item.homepage ? '/' : item.slug}
                       onClick={onLinkClick}
                       className={clsx(
                         'block w-full pl-3.5 before:pointer-events-none before:absolute before:-left-1 before:top-1/2 before:h-1.5 before:w-1.5 before:-translate-y-1/2 before:rounded-full',
-                        `/${item.slug}` === pathname
+                        `/${item.slug}` === pathname || (item.homepage && `/` === pathname)
                          ? 'font-semibold text-sky-500 before:bg-sky-500'
                           : 'text-slate-500 before:hidden before:bg-slate-300 hover:text-slate-600 hover:before:block dark:text-slate-400 dark:before:bg-slate-700 dark:hover:text-slate-300',
                       )}

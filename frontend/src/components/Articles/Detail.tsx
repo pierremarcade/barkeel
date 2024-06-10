@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { useArticle } from "./articles.queries";
 import { DocsLayout } from '@/components/DocsLayout'
 
@@ -41,10 +41,10 @@ const Detail: React.FC<DetailProps> = ({ slug }) => {
 
   return (
     <DocsLayout
-    children={<div dangerouslySetInnerHTML={{ __html: data.content }} />}
-    frontmatter={{ title: data.title, name: data.name }}
-    nodes={nodes}
-  />
+      children={<div dangerouslySetInnerHTML={{ __html: data.content }} />}
+      frontmatter={{ title: data.title, name: data.name }}
+      nodes={nodes}
+    />
   );
 };
 
