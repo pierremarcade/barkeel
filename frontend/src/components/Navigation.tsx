@@ -14,6 +14,7 @@ export function Navigation({
 }) {
   let pathname = usePathname()
   const { menus } = useMenus()
+  console.log(menus)
   return (
     <nav className={clsx('text-base lg:text-sm', className)}>
       <ul role="list" className="space-y-9">

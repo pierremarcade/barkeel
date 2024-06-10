@@ -15,17 +15,9 @@ document.addEventListener('DOMContentLoaded', function() {
             return domNode;
         }
     }
-
-    class CodeBlockCusContainer extends Container {
-        static create(value) {
-            const domNode = super.create(value) ;
-            return domNode;
-        }
-    }
     
     class CodeBlock extends Block {
         static TAB = '  ';
-      
         static register() {
           Quill.register(CodeBlockContainer);
         }
@@ -34,7 +26,6 @@ document.addEventListener('DOMContentLoaded', function() {
     CodeBlockContainer.blotName = 'code-block-container';
     CodeBlockContainer.tagName = 'pre';
     CodeBlockContainer.allowedChildren = [CodeBlock];
-
 
     CodeBlock.blotName = 'code-block';
     CodeBlock.className = 'ql-code-block';
@@ -48,6 +39,10 @@ document.addEventListener('DOMContentLoaded', function() {
     editorElements.forEach(function(editorElement) {
         var editorId = editorElement.id;
         var textarea = document.querySelector(`textarea[data-editor-id="${editorId}"]`);
+        textarea.querySelectorAll('h1, h2, h3, h4, h5, h6').forEach(function(titleElement) {
+            var slug = createSlug(titleElement.textContent); // Assurez-vous que cette fonction est définie quelque part
+            titleElement.id = slug;
+        });
         var initialContent = textarea ? textarea.value : '';
         var quill = new Quill(editorElement, {
             theme: 'snow',
@@ -74,6 +69,11 @@ document.addEventListener('DOMContentLoaded', function() {
             quill.root.innerHTML = initialContent;
         }
         quill.on('text-change', function(delta, oldDelta, source) {
+            var root = quill.root
+            root.querySelectorAll('h1, h2, h3, h4, h5, h6').forEach(function(titleElement) {
+                var slug = createSlug(titleElement.textContent); // Assurez-vous que cette fonction est définie quelque part
+                titleElement.id = slug;
+            });
             if (source === 'user') {
                 textarea.value = quill.root.innerHTML;
             }
@@ -86,17 +86,22 @@ function changeDateTimeLocalFormat() {
     const form = document.querySelector('form');
     const datetimeFields = form.querySelectorAll('input[type="datetime-local"]');
     datetimeFields.forEach(function(field) {
-        console.log(field.id)
         var datetime_field = document.querySelector(`input[data-datetime="${field.id}"]`);
         field.value = datetime_field.value;
     });
+
     form.addEventListener('submit', function(event) {
         event.preventDefault();
+        console.log(form)
+        form.querySelectorAll('h1, h2, h3, h4, h5, h6').forEach(function(titleElement) {
+            var slug = createSlug(titleElement.textContent);
+            titleElement.setAttribute('id', slug);
+        });
+
         datetimeFields.forEach(function(field) {
             var datetime_field = document.querySelector(`input[data-datetime="${field.id}"]`);
             let date = new Date(field.value);
             datetime_field.value = date.toISOString().slice(0, 19);
-            console.log(datetime_field.value)
         });
         form.submit();
     });
@@ -174,4 +179,8 @@ function createRadioInput(name, value, labelText, selected) {
                 class="block text-sm font-medium leading-6 text-gray-900">${labelText}</label>
         </div>
     `;
+}
+
+function createSlug(text) {
+    return text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
 }

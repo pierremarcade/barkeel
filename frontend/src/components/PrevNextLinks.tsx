@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import clsx from 'clsx'
 
-import { navigation } from '@/lib/navigation'
+import {useMenus} from "@/components/Menus/menus.queries";
 
 function ArrowIcon(props: React.ComponentPropsWithoutRef<'svg'>) {
   return (
@@ -15,14 +15,15 @@ function ArrowIcon(props: React.ComponentPropsWithoutRef<'svg'>) {
 }
 
 function PageLink({
-  title,
-  href,
+  label,
+  slug,
   dir = 'next',
   ...props
-}: Omit<React.ComponentPropsWithoutRef<'div'>, 'dir' | 'title'> & {
-  title: string
-  href: string
+}: Omit<React.ComponentPropsWithoutRef<'div'>, 'dir' | 'label'> & {
+  label: string
+  slug: string
   dir?: 'previous' | 'next'
+  className?: string
 }) {
   return (
     <div {...props}>
@@ -31,13 +32,13 @@ function PageLink({
       </dt>
       <dd className="mt-1">
         <Link
-          href={href}
+          href={slug}
           className={clsx(
             'flex items-center gap-x-1 text-base font-semibold text-slate-500 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300',
             dir === 'previous' && 'flex-row-reverse',
           )}
         >
-          {title}
+          {label}
           <ArrowIcon
             className={clsx(
               'h-4 w-4 flex-none fill-current',
@@ -51,12 +52,19 @@ function PageLink({
 }
 
 export function PrevNextLinks() {
+  const { menus } = useMenus()
   let pathname = usePathname()
-  let allLinks = navigation.flatMap((section) => section.links)
-  let linkIndex = allLinks.findIndex((link) => link.href === pathname)
+  let allLinks = menus.map(section => 
+    section.items?.map(item => ({
+      slug: item.slug,
+      label: item.label
+    }))
+  ).flat();
+
+  let linkIndex = allLinks.findIndex((link) => `/${link?.slug}` === pathname)
   let previousPage = linkIndex > -1 ? allLinks[linkIndex - 1] : null
   let nextPage = linkIndex > -1 ? allLinks[linkIndex + 1] : null
-
+  
   if (!nextPage && !previousPage) {
     return null
   }

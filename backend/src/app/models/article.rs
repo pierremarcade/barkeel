@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 
 use chrono::NaiveDateTime;
 
-#[derive(Serialize, Deserialize, Queryable, FormBuilder, Selectable, Clone)]
+#[derive(Serialize, Deserialize, Identifiable, Queryable, FormBuilder, Selectable, Clone)]
 #[diesel(table_name = crate::db::schema::articles)]
 #[form_builder(label = title, id = id)]
 pub struct Article {

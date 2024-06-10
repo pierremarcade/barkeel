@@ -3,6 +3,7 @@ export interface IArticle {
     id: number;
     title: string;
     slug: string;
+    name: string;
     content: string;
     published_at: string;
     author_id: number;

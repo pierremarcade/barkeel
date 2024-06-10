@@ -2,12 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useArticle } from "./articles.queries";
-import { IArticle } from "./articles.api";
-
 import { DocsLayout } from '@/components/DocsLayout'
-import { collectSections } from '@/lib/sections'
-import { nodeServerAppPaths } from 'next/dist/build/webpack/plugins/pages-manifest-plugin';
-
 
 interface DetailProps {
   slug: string;
@@ -35,12 +30,6 @@ function extractHeadings(content: string): any[] {
 const Detail: React.FC<DetailProps> = ({ slug }) => {
   const {  data, isLoading, isError, error } = useArticle(slug);
 
-  useEffect(() => {
-    if (!isLoading &&!isError && data) {
-     
-    }
-  }, [isLoading, isError, data]);
-
   if (isLoading) {
     return <div>Loading...</div>; 
   }
@@ -53,7 +42,7 @@ const Detail: React.FC<DetailProps> = ({ slug }) => {
   return (
     <DocsLayout
     children={<div dangerouslySetInnerHTML={{ __html: data.content }} />}
-    frontmatter={{ title: data.title }}
+    frontmatter={{ title: data.title, name: data.name }}
     nodes={nodes}
   />
   );
