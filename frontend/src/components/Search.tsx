@@ -22,7 +22,8 @@ import { Dialog } from '@headlessui/react'
 import clsx from 'clsx'
 import { type Result } from '@/markdoc/search.mjs'
 
-import { navigation } from '@/lib/navigation'
+import { useMenus } from "@/components/Menus/menus.queries";
+import { getSearchArticles, IArticle } from "@/components/Articles/articles.api";
 
 type EmptyObject = Record<string, never>
 
@@ -87,20 +88,26 @@ function useAutocomplete({
         navigate,
       },
       getSources({ query }) {
-        return import('@/markdoc/search.mjs').then(({ search }) => {
-          return [
+        return new Promise(async (resolve) => {
+          const result = await getSearchArticles(query);
+          const search = result.map((item) => ({
+            url: item.slug,
+            title: item.title,
+            pageTitle: item.section_name,
+          }))
+          resolve([
             {
               sourceId: 'documentation',
               getItems() {
-                return search(query, { limit: 5 })
+                return search;
               },
               getItemUrl({ item }) {
-                return item.url
+                return item.url;
               },
               onSelect: navigate,
             },
-          ]
-        })
+          ]);
+        });
       },
     }),
   )
@@ -160,10 +167,10 @@ function SearchResult({
   query: string
 }) {
   let id = useId()
-
-  let sectionTitle = navigation.find((section) =>
-    section.links.find((link) => link.href === result.url.split('#')[0]),
-  )?.title
+  const { menus } = useMenus()
+  let sectionTitle = menus.find((section) =>
+    section.items?.find((link) => link.slug === result.url.split('#')[0]),
+  )?.name
   let hierarchy = [sectionTitle, result.pageTitle].filter(
     (x): x is string => typeof x === 'string',
   )

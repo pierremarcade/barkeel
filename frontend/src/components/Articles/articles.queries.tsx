@@ -1,5 +1,5 @@
 import {  useQuery } from "@tanstack/react-query";
-import { getArticles, getArticle } from "@/components/Articles/articles.api";
+import { getSearchArticles, getArticles, getArticle } from "@/components/Articles/articles.api";
 
 export const useArticles = () => {
     const { data, refetch } = useQuery({
@@ -10,6 +10,22 @@ export const useArticles = () => {
     return { articles, refetch }
 }
 
+export const useSearchArticles = (query:string) => {
+  const { data,  refetch } = useQuery({
+    queryKey: ['articles-search', query],
+    queryFn: async () => {
+      const data = await getSearchArticles(query)
+        return data.map((item) => ({
+          url: item.slug,
+          title: item.title,
+          pageTitle: item.section_name,
+        }))
+    },
+  })
+  const articles = Array.isArray(data)? data : [];
+  return { articles, refetch }
+}
+
 export const useArticle = (slug:string) => {
     const {  isLoading, isError, data, error, refetch } = useQuery({
         queryKey: ['article', slug],
@@ -18,6 +34,5 @@ export const useArticle = (slug:string) => {
           return data
         },
       });
-
     return { isLoading, isError, data, error, refetch }
 }

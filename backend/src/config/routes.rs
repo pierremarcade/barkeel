@@ -49,6 +49,7 @@ pub fn routes(config: Arc<Config>) -> Router<Arc<Config>> {
             .route("/login", post(auth_controller::post::login))
             .route("/api/v1/articles", get(api::v1::article_controller::index))
             .route("/api/v1/articles/:slug", get(api::v1::article_controller::show))
+            .route("/api/v1/articles/search/:query", get(api::v1::article_controller::search))
             .route("/api/v1/menus", get(api::v1::menu_controller::index))
             .layer(
                 ServiceBuilder::new()

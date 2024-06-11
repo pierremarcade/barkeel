@@ -42,7 +42,7 @@ const Detail: React.FC<DetailProps> = ({ slug }) => {
   return (
     <DocsLayout
       children={<div dangerouslySetInnerHTML={{ __html: data.content }} />}
-      frontmatter={{ title: data.title, name: data.name }}
+      frontmatter={{ title: data.title, section_name: data.section_name }}
       nodes={nodes}
     />
   );

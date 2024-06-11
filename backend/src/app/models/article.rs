@@ -20,10 +20,3 @@ pub struct Article {
     #[form_builder(type_="checkbox")]
     pub homepage: bool,
 }
-
-#[derive(Serialize, Deserialize, Queryable, Selectable)]
-#[diesel(table_name = crate::db::schema::articles)]
-pub struct ArticleMenu {
-    pub id: i32,
-    pub slug: String,
-}
