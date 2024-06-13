@@ -5,6 +5,7 @@ export interface IArticle {
     section_name: string;
     content: string;
     homepage: boolean;
+    description: string;
     published_at: string;
     author_id: number;
 }

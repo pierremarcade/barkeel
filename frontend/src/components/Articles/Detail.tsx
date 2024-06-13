@@ -4,6 +4,7 @@ import React from 'react';
 import { useArticle } from "./articles.queries";
 import { DocsLayout } from '@/components/DocsLayout'
 
+
 interface DetailProps {
   slug: string;
 }
