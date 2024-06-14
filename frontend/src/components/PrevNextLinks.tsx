@@ -17,11 +17,13 @@ function ArrowIcon(props: React.ComponentPropsWithoutRef<'svg'>) {
 function PageLink({
   label,
   slug,
+  homepage,
   dir = 'next',
   ...props
 }: Omit<React.ComponentPropsWithoutRef<'div'>, 'dir' | 'label'> & {
   label: string
-  slug: string
+  slug: string,
+  homepage: boolean
   dir?: 'previous' | 'next'
   className?: string
 }) {
@@ -32,7 +34,7 @@ function PageLink({
       </dt>
       <dd className="mt-1">
         <Link
-          href={slug}
+          href={homepage ? '/' : slug}
           className={clsx(
             'flex items-center gap-x-1 text-base font-semibold text-slate-500 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300',
             dir === 'previous' && 'flex-row-reverse',
@@ -57,11 +59,11 @@ export function PrevNextLinks() {
   let allLinks = menus.map(section => 
     section.items?.map(item => ({
       slug: item.slug,
-      label: item.label
+      label: item.label,
+      homepage: item.homepage
     }))
   ).flat();
-
-  let linkIndex = allLinks.findIndex((link) => `/${link?.slug}` === pathname)
+  let linkIndex = allLinks.findIndex((link) => `/${link?.homepage === true ? '' : link?.slug}` === pathname)
   let previousPage = linkIndex > -1 ? allLinks[linkIndex - 1] : null
   let nextPage = linkIndex > -1 ? allLinks[linkIndex + 1] : null
   
