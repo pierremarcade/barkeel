@@ -82,6 +82,33 @@ document.addEventListener('DOMContentLoaded', function() {
 
 });
 
+function autocomplete() {
+    const autocompleteFields = document.querySelectorAll('.autocomplete');
+    autocompleteFields.forEach(field => {
+        field.addEventListener('input', function() {
+            const url = this.getAttribute('data-url');
+            const finalUrl = new URL(url).href + encodeURIComponent(this.value);
+            fetch(finalUrl)
+               .then(response => response.json())
+               .then(suggestions => {
+                suggestions.forEach(suggestion => {
+                    const item = document.createElement('li');
+                    item.textContent = suggestion;
+                    item.classList.add('p-2', 'hover:bg-gray-100', 'cursor-pointer');
+                    item.addEventListener('click', function() {
+                        multiSelectInput.value += ', ' + this.textContent;
+                        multiSelectSuggestionsList.style.display = 'none';
+                    });
+                    multiSelectSuggestionsList.appendChild(item);
+                });
+                })
+               .catch(error => {
+                    console.error('Erreur lors de la requête:', error);
+                });
+        });
+    });
+}
+
 function changeDateTimeLocalFormat() {
     const form = document.querySelector('form');
     const datetimeFields = form.querySelectorAll('input[type="datetime-local"]');
