@@ -2,47 +2,10 @@ use axum::{ extract::{Path, State}, response::IntoResponse, http::StatusCode };
 use crate::app::utils::{ response::Response };
 use crate::config::application::Config;
 use crate::db::schema::{ menus, menu_items, articles, article_metas};
+use crate::app::models::article::{ArticleWithMenu, ArticleWithMenuAndMeta};
 use crate::db::schema::articles::dsl::*;
-use serde::{Deserialize, Serialize};
 use diesel::prelude::*;
 use std::sync::Arc;
-
-#[derive(Serialize, Deserialize)]
-#[derive(Debug, Queryable)]
-struct ArticleWithMenu{
-    pub id: i32,
-    pub title: String,
-    pub slug: String,
-    pub content: String,
-    pub homepage: bool,
-    pub section_name: String
-}
-
-#[derive(Serialize, Deserialize)]
-struct ArticleWithMenuAndMeta{
-    pub id: i32,
-    pub title: String,
-    pub slug: String,
-    pub content: String,
-    pub homepage: bool,
-    pub section_name: String,
-    pub description: Option<String>,
-}
-
-impl ArticleWithMenuAndMeta {
-    pub fn new(result: (i32, String, String, String, bool, String, Option<String>)) -> Self {
-        let ( other_id, other_title, other_slug, other_content, other_homepage, other_name, other_description) = result.clone();
-        ArticleWithMenuAndMeta {
-            id: other_id,
-            title: other_title,
-            slug: other_slug,
-            content: other_content,
-            homepage: other_homepage,
-            section_name: other_name,
-            description: other_description
-        }
-    }
-}
 
 pub async fn index(State(config): State<Arc<Config>>) -> impl IntoResponse {
     let results = menu_items::table
@@ -56,7 +19,7 @@ pub async fn index(State(config): State<Arc<Config>>) -> impl IntoResponse {
 }
 
 pub async fn show(Path(other_slug): Path<String>, State(config): State<Arc<Config>>) -> impl IntoResponse {
-    let (meta_desc, title_desc) = diesel::alias!(article_metas as meta_desc, article_metas as title_desc);
+    let (meta_desc, _title_desc) = diesel::alias!(article_metas as meta_desc, article_metas as title_desc);
     let result =  menu_items::table
         .inner_join(articles::table)
         .inner_join(menus::table)
@@ -68,7 +31,6 @@ pub async fn show(Path(other_slug): Path<String>, State(config): State<Arc<Confi
     let serialized = serde_json::to_string(&ArticleWithMenuAndMeta::new(result)).unwrap();
     Response{status_code: StatusCode::OK, content_type: "application/json", datas: serialized}
 }
-
 
 pub async fn search(Path(query): Path<String>, State(config): State<Arc<Config>>) -> impl IntoResponse {
     let results = menu_items::table
