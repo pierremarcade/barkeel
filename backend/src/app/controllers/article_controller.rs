@@ -1,7 +1,6 @@
 use crate::config::application::Config;
 use crate::app::models::article::{ Article, ArticleForm, ArticleFormEdit };
 use crate::db::schema::{ menus, menu_items, articles };
-use crate::app::models::article::ArticleWithMenu;
 use crate::db::schema::articles::dsl::*;
 use diesel::prelude::*;
 use std::sync::Arc;
@@ -87,20 +86,15 @@ fn get_total(config: Arc<Config>) -> i64 {
 }
 
 pub async fn search(Path(query): Path<String>, State(config): State<Arc<Config>>) -> impl IntoResponse {
-    let results = menu_items::table
-        .inner_join(articles::table)
-        .inner_join(menus::table)
-        .select((articles::id, articles::title, articles::slug, articles::content, articles::homepage, menus::name))
+    let results = articles::table
         .filter(articles::title.ilike(format!("%{}%", query.clone())))
         .or_filter(articles::content.ilike(format!("%{}%", query.clone())))
-        .or_filter(menus::name.ilike(format!("%{}%", query.clone())))
         .limit(10)
-        .load::<ArticleWithMenu>(&mut config.database.pool.get().unwrap())
+        .load::<Article>(&mut config.database.pool.get().unwrap())
         .expect("Error loading datas");
     let serialized = serde_json::to_string(&results).unwrap();
     Response{status_code: StatusCode::OK, content_type: "application/json", datas: serialized}
 }
-
 
 pub async fn show(Extension(current_user): Extension<AuthState>, Path(param_id): Path<i32>, State(config): State<Arc<Config>>) -> impl IntoResponse {
     let tera: &Tera = &config.template;

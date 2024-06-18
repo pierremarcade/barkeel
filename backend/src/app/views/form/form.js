@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', function() {
-    changeDateTimeLocalFormat();
+    beforeSubmit();
     handleSelectAndRadioElements();
     autocomplete();
 
@@ -90,6 +90,7 @@ function autocomplete() {
     autocompleteSelectedItems.forEach(function(element) {
         element.innerHTML = '';
     });
+    const itemsSelected = [];
     autocompleteFields.forEach(field => {
         field.addEventListener('input', function() {
             const id = this.getAttribute('id');
@@ -111,23 +112,31 @@ function autocomplete() {
             } else {
                 multiSelectSuggestionsList.style.display = "none";
             }
-            
         });
-        
     });
     const multiSelectSuggestionsList = form.querySelector(`.autocomplete-list`);
     multiSelectSuggestionsList.addEventListener('click', function(event) {
         if (event.target.tagName.toLowerCase()!== 'li') return;
-        const parentElementDataId = event.target.parentElement.getAttribute('data-id');
-        const selectedItemContainer = form.querySelector(`#${parentElementDataId}Selected`);
+        multiSelectSuggestionsList.style.display = "none";
         const selectedId = event.target.getAttribute('id');
-        const hiddenInput = document.createElement('input');
-
-        const removeBtn = document.createElement('button');
+        if (itemsSelected.includes(selectedId)) {
+            return;
+        }
+        itemsSelected.push(selectedId);
+        const parentElementDataId = event.target.parentElement.getAttribute('data-id');
+        const checkbox = document.createElement('input');
+        checkbox.id = `${selectedId}-autocomplete-selected`;
+        checkbox.setAttribute("type", "checkbox");
+        checkbox.setAttribute("style", "display:none");
+        checkbox.setAttribute("name", `${parentElementDataId}`);
+        checkbox.setAttribute("value", selectedId);
+        checkbox.setAttribute("checked", 'checked');
+        const selectedItemContainer = form.querySelector(`#${parentElementDataId}Selected`);
+        const removeBtn = document.createElement('span');
         removeBtn.className = `
             remove-from-list
             inline-flex 
-            items-center 
+            items-center
             gap-x-1.5 
             rounded-md 
             bg-indigo-600 
@@ -145,52 +154,29 @@ function autocomplete() {
             `;
         removeBtn.textContent = event.target.textContent;
         removeBtn.appendChild(crossSvg());
-
-        selectedItemContainer.appendChild(removeBtn)
-        // const selectedId = event.target.dataset.id;
-        // const selectedContainer = form.querySelector(`#${id}Selected`);
-        // const existingText = textField.value;
-        // const newText = `${existingText}${event.target.textContent}, `;
-        // textField.value = newText.trim();
-
-        // const hiddenInput = document.createElement('input');
-        // hiddenInput.type = 'hidden';
-        // hiddenInput.name = `${id}_selected`;
-        // hiddenInput.value = selectedId;
-        // form.appendChild(hiddenInput);
-
-        // const removeButton = document.createElement('button');
-        // removeButton.textContent = 'X';
-        // removeButton.classList.add('remove-button');
-        // textField.parentNode.insertBefore(removeButton, textField.nextSibling);
-
-        // removeButton.addEventListener('click', function() {
-        //     const valueArray = textField.value.split(', ');
-        //     const newValue = valueArray.filter(text => text!== event.target.textContent).join(', ');
-        //     textField.value = newValue;
-        //     hiddenInput.remove();
-        //     removeButton.remove(); 
-        // });
-    });
-
-    const removeFromList = form.querySelector(`.remove-from-list`);
-    removeFromList.addEventListener('click', function() {
-
+        selectedItemContainer.appendChild(removeBtn);
+        selectedItemContainer.appendChild(checkbox);
+        removeBtn.addEventListener('click', function() {
+            selectedItemContainer.removeChild(checkbox);
+            selectedItemContainer.removeChild(removeBtn);
+            itemsSelected = itemsSelected.filter(element => element!== selectedId);
+        });
     });
 }
 
 function crossSvg() {
     let svgIcon = document.createElementNS("http://www.w3.org/2000/svg", "svg");
     svgIcon.setAttribute("viewBox", "0 0 24 24");
-    svgIcon.setAttribute("width", "24");
-    svgIcon.setAttribute("height", "24");
+    svgIcon.setAttribute("width", "15");
+    svgIcon.setAttribute("height", "15");
+    svgIcon.setAttribute("className", "-mr-0.5 h-5 w-5 cursor-pointer");
     let path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-    path.setAttribute("d", "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2z");
+    path.setAttribute("d", "M22.245,4.015c0.313,0.313,0.313,0.826,0,1.139l-6.276,6.27c-0.313,0.312-0.313,0.826,0,1.14l6.273,6.272  c0.313,0.313,0.313,0.826,0,1.14l-2.285,2.277c-0.314,0.312-0.828,0.312-1.142,0l-6.271-6.271c-0.313-0.313-0.828-0.313-1.141,0  l-6.276,6.267c-0.313,0.313-0.828,0.313-1.141,0l-2.282-2.28c-0.313-0.313-0.313-0.826,0-1.14l6.278-6.269  c0.313-0.312,0.313-0.826,0-1.14L1.709,5.147c-0.314-0.313-0.314-0.827,0-1.14l2.284-2.278C4.308,1.417,4.821,1.417,5.135,1.73  L11.405,8c0.314,0.314,0.828,0.314,1.141,0.001l6.276-6.267c0.312-0.312,0.826-0.312,1.141,0L22.245,4.015z");
     svgIcon.appendChild(path);
     return svgIcon;
 }
 
-function changeDateTimeLocalFormat() {
+function beforeSubmit() {
     const form = document.querySelector('form');
     const datetimeFields = form.querySelectorAll('input[type="datetime-local"]');
     datetimeFields.forEach(function(field) {
