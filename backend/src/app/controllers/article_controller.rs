@@ -1,6 +1,6 @@
 use crate::config::application::Config;
 use crate::app::models::article::{ Article, ArticleForm, ArticleFormEdit };
-use crate::db::schema::{ menus, menu_items, articles };
+use crate::db::schema::articles;
 use crate::db::schema::articles::dsl::*;
 use diesel::prelude::*;
 use std::sync::Arc;
@@ -80,7 +80,7 @@ fn get_total(config: Arc<Config>) -> i64 {
         Ok(count) => count,
         Err(e) => {
             eprintln!("Error counting articles: {}", e);
-            0 
+            0
         }
     }
 }
