@@ -2,7 +2,7 @@
   "name": "barkeel_web",
   "version": "1.0.0",
   "description": "Rust Framework",
-  "main": "index.js",
+  "main": "src/public/js/main.js",
   "scripts": {
     "build:css": "npx postcss src/assets/css/main.css -o src/public/css/main.css",
     "build:js": "npx rollup --config rollup.config.mjs "
