@@ -5,8 +5,8 @@ import { Highlight } from 'prism-react-renderer'
 
 import { Button } from '@/components/Button'
 import { HeroBackground } from '@/components/HeroBackground'
-import blurCyanImage from '@/images/blur-cyan.png'
-import blurIndigoImage from '@/images/blur-indigo.png'
+import blurCyanImage from '@/images/blur-cyan.webp'
+import blurIndigoImage from '@/images/blur-indigo.webp'
 
 const codeLanguage = 'rust'
 const code = `pub async fn show(Path(param_id): Path<i32>, State(config): State<Arc<Config>>) -> Json<String> {

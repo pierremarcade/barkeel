@@ -23,7 +23,7 @@ export const getSearchArticles = async (query:string):Promise<IArticle[]> =>{
     if(res.ok){
         return await res.json()
     }
-    throw new Error('Menus could not be fetched');
+    throw new Error('Articles could not be fetched');
 }
 
 export const getArticle = async (slug:string):Promise<IArticle> =>{
@@ -31,5 +31,6 @@ export const getArticle = async (slug:string):Promise<IArticle> =>{
     if(res.ok){
         return await res.json()
     }
-    throw new Error('Menus could not be fetched');
+   
+    throw new Error('Article could not be fetched');
 }

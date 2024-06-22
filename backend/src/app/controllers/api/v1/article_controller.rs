@@ -20,16 +20,23 @@ pub async fn index(State(config): State<Arc<Config>>) -> impl IntoResponse {
 
 pub async fn show(Path(other_slug): Path<String>, State(config): State<Arc<Config>>) -> impl IntoResponse {
     let (meta_desc, _title_desc) = diesel::alias!(article_metas as meta_desc, article_metas as title_desc);
-    let result =  menu_items::table
-        .inner_join(articles::table)
-        .inner_join(menus::table)
-        .left_join(meta_desc.on(meta_desc.field(article_metas::article_id).eq(articles::id).and(meta_desc.field(article_metas::key).eq("description"))))
-        .select((articles::id, articles::title, articles::slug, articles::content, articles::homepage, menus::name, meta_desc.field(article_metas::value).nullable()))
-        .filter(slug.eq(other_slug))
-        .first::<(i32, String, String, String, bool, String, Option<String>)>(&mut config.database.pool.get().unwrap())
-        .expect("Error loading data");
-    let serialized = serde_json::to_string(&ArticleWithMenuAndMeta::new(result)).unwrap();
-    Response{status_code: StatusCode::OK, content_type: "application/json", datas: serialized}
+    
+    match menu_items::table
+    .inner_join(articles::table)
+    .inner_join(menus::table)
+    .left_join(meta_desc.on(meta_desc.field(article_metas::article_id).eq(articles::id).and(meta_desc.field(article_metas::key).eq("description"))))
+    .select((articles::id, articles::title, articles::slug, articles::content, articles::homepage, menus::name, meta_desc.field(article_metas::value).nullable()))
+    .filter(slug.eq(other_slug))
+    .first::<(i32, String, String, String, bool, String, Option<String>)>(&mut config.database.pool.get().unwrap()) {
+        Ok(result) => {
+            let serialized = serde_json::to_string(&ArticleWithMenuAndMeta::new(result)).unwrap();
+            Response{status_code: StatusCode::OK, content_type: "application/json", datas: serialized}
+        },
+        _ => {
+            let serialized = "Not found".to_string();
+            Response{status_code: StatusCode::NOT_FOUND, content_type: "application/json", datas: serialized}
+        }
+    }  
 }
 
 pub async fn search(Path(query): Path<String>, State(config): State<Arc<Config>>) -> impl IntoResponse {

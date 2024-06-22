@@ -3,7 +3,7 @@
 import React from 'react';
 import { useArticle } from "./articles.queries";
 import { DocsLayout } from '@/components/DocsLayout'
-
+import { notFound } from "next/navigation"
 
 interface DetailProps {
   slug: string;
@@ -35,17 +35,18 @@ const Detail: React.FC<DetailProps> = ({ slug }) => {
     return <div>Loading...</div>; 
   }
 
-  if (isError ||!data) {
-    return <div>Error loading article: {error?.message}</div>; 
+  if (isError || !data) {
+    notFound();
   }
   const nodes = extractHeadings(data.content);
 
   return (
     <DocsLayout
-      children={<div dangerouslySetInnerHTML={{ __html: data.content }} />}
       frontmatter={{ title: data.title, section_name: data.section_name }}
       nodes={nodes}
-    />
+    >
+      <div dangerouslySetInnerHTML={{ __html: data.content }} />
+    </DocsLayout>
   );
 };
 
