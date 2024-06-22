@@ -1,4 +1,4 @@
-import { fetchData } from './utils.js';
+import { fetchData, crossSvg } from './utils.js';
 
 export function beforeSubmit() {
     const form = document.querySelector('form');
