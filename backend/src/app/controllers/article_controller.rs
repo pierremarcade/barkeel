@@ -1,7 +1,6 @@
 use crate::config::application::Config;
 use crate::app::models::article::{ Article, ArticleForm, ArticleFormEdit };
-use crate::db::schema::articles;
-use crate::db::schema::articles::dsl::*;
+use crate::db::schema::articles::{self, dsl::*};
 use diesel::prelude::*;
 use std::sync::Arc;
 use tera::Tera;

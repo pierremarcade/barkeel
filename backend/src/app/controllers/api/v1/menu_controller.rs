@@ -1,31 +1,11 @@
 use axum::{ extract::{Path, State}, response::{ Json, IntoResponse }, http::StatusCode };
 use crate::config::application::Config;
-use crate::app::models::menu::Menu;
-use serde::{Deserialize, Serialize};
-use crate::db::schema::{ menus, menu_items, articles};
-use crate::db::schema::menus::dsl::*;
+use crate::app::models::menu::{Menu, MenuWithItem, MenuItemWithArticle};
+use crate::db::schema::{ menus:: { self, dsl::* }, menu_items, articles};
 use crate::app::utils::{ response::Response };
 use diesel::prelude::*;
 use std::sync::Arc;
 use std::collections::BTreeMap;
-
-#[derive(Serialize)]
-struct MenuWithItem<'a> {
-    #[serde(flatten)]
-    menu: Menu,
-    items: Vec<&'a MenuItemWithArticle>,
-}
-
-#[derive(Serialize, Deserialize)]
-#[derive(Queryable)]
-struct MenuItemWithArticle{
-    pub id: i32,
-    pub menu_id: Option<i32>,
-    pub article_id: Option<i32>,
-    pub label: String,
-    pub homepage: bool,
-    pub slug: String,
-}
 
 pub async fn index(State(config): State<Arc<Config>>) -> impl IntoResponse  {
     let all_menus = menus::table.select(Menu::as_select()).order(menus::id.asc()).load(&mut config.database.pool.get().unwrap());
@@ -89,12 +69,10 @@ pub async fn update(Path(param_id): Path<i32>, Json(payload): Json<Menu>, State(
     Json(serialized)
 }
 
-pub async fn delete(Path(param_id): Path<i32>, State(config): State<Arc<Config>>) -> &'static str {
+pub async fn delete(Path(param_id): Path<i32>, State(config): State<Arc<Config>>) -> impl IntoResponse {
     diesel::delete(menus)
         .filter(id.eq(param_id))
         .execute(&mut config.database.pool.get().unwrap())
         .expect("Error deleting data");
-    "Data deleted successfully"
+    Response{status_code: StatusCode::NOT_FOUND, content_type: "application/json", datas: "Data deleted successfully".to_string()}
 }
-
-
