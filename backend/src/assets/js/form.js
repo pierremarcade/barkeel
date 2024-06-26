@@ -70,53 +70,56 @@ export function autocomplete() {
         });
     });
     const multiSelectSuggestionsList = form.querySelector(`.autocomplete-list`);
-    multiSelectSuggestionsList.addEventListener('click', function(event) {
-        if (event.target.tagName.toLowerCase()!== 'li') return;
-        multiSelectSuggestionsList.style.display = "none";
-        const selectedId = event.target.getAttribute('id');
-        if (itemsSelected.includes(selectedId)) {
-            return;
-        }
-        itemsSelected.push(selectedId);
-        const parentElementDataId = event.target.parentElement.getAttribute('data-id');
-        const checkbox = document.createElement('input');
-        checkbox.id = `${selectedId}-autocomplete-selected`;
-        checkbox.setAttribute("type", "checkbox");
-        checkbox.setAttribute("style", "display:none");
-        checkbox.setAttribute("name", `${parentElementDataId}`);
-        checkbox.setAttribute("value", selectedId);
-        checkbox.setAttribute("checked", 'checked');
-        const selectedItemContainer = form.querySelector(`#${parentElementDataId}Selected`);
-        const removeBtn = document.createElement('span');
-        removeBtn.className = `
-            remove-from-list
-            inline-flex 
-            items-center
-            gap-x-1.5 
-            rounded-md 
-            bg-indigo-600 
-            px-3 
-            py-2 
-            text-sm 
-            font-semibold 
-            text-white 
-            shadow-sm 
-            hover:bg-indigo-500 
-            focus-visible:outline 
-            focus-visible:outline-2 
-            focus-visible:outline-offset-2 
-            focus-visible:outline-indigo-600
-            `;
-        removeBtn.textContent = event.target.textContent;
-        removeBtn.appendChild(crossSvg());
-        selectedItemContainer.appendChild(removeBtn);
-        selectedItemContainer.appendChild(checkbox);
-        removeBtn.addEventListener('click', function() {
-            selectedItemContainer.removeChild(checkbox);
-            selectedItemContainer.removeChild(removeBtn);
-            itemsSelected = itemsSelected.filter(element => element!== selectedId);
+    if (multiSelectSuggestionsList) {
+        multiSelectSuggestionsList.addEventListener('click', function(event) {
+            if (event.target.tagName.toLowerCase()!== 'li') return;
+            multiSelectSuggestionsList.style.display = "none";
+            const selectedId = event.target.getAttribute('id');
+            if (itemsSelected.includes(selectedId)) {
+                return;
+            }
+            itemsSelected.push(selectedId);
+            const parentElementDataId = event.target.parentElement.getAttribute('data-id');
+            const checkbox = document.createElement('input');
+            checkbox.id = `${selectedId}-autocomplete-selected`;
+            checkbox.setAttribute("type", "checkbox");
+            checkbox.setAttribute("style", "display:none");
+            checkbox.setAttribute("name", `${parentElementDataId}`);
+            checkbox.setAttribute("value", selectedId);
+            checkbox.setAttribute("checked", 'checked');
+            const selectedItemContainer = form.querySelector(`#${parentElementDataId}Selected`);
+            const removeBtn = document.createElement('span');
+            removeBtn.className = `
+                remove-from-list
+                inline-flex 
+                items-center
+                gap-x-1.5 
+                rounded-md 
+                bg-indigo-600 
+                px-3 
+                py-2 
+                text-sm 
+                font-semibold 
+                text-white 
+                shadow-sm 
+                hover:bg-indigo-500 
+                focus-visible:outline 
+                focus-visible:outline-2 
+                focus-visible:outline-offset-2 
+                focus-visible:outline-indigo-600
+                `;
+            removeBtn.textContent = event.target.textContent;
+            removeBtn.appendChild(crossSvg());
+            selectedItemContainer.appendChild(removeBtn);
+            selectedItemContainer.appendChild(checkbox);
+            removeBtn.addEventListener('click', function() {
+                selectedItemContainer.removeChild(checkbox);
+                selectedItemContainer.removeChild(removeBtn);
+                itemsSelected = itemsSelected.filter(element => element!== selectedId);
+            });
         });
-    });
+    }
+    
 }
 
 function createRadioInput(name, value, labelText, selected) {
