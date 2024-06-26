@@ -1,25 +1,29 @@
-import { fetchData, crossSvg } from './utils.js';
+import { fetchData, crossSvg, createSlug } from './utils.js';
 
 export function beforeSubmit() {
     const form = document.querySelector('form');
-    const datetimeFields = form.querySelectorAll('input[type="datetime-local"]');
-    datetimeFields.forEach(function(field) {
-        var datetime_field = document.querySelector(`input[data-datetime="${field.id}"]`);
-        field.value = datetime_field.value;
-    });
-    form.addEventListener('submit', function(event) {
-        event.preventDefault();
-        form.querySelectorAll('h1, h2, h3, h4, h5, h6').forEach(function(titleElement) {
-            var slug = createSlug(titleElement.textContent);
-            titleElement.setAttribute('id', slug);
-        });
+    if (form) {
+        const datetimeFields = form.querySelectorAll('input[type="datetime-local"]');
         datetimeFields.forEach(function(field) {
             var datetime_field = document.querySelector(`input[data-datetime="${field.id}"]`);
-            let date = new Date(field.value);
-            datetime_field.value = date.toISOString().slice(0, 19);
+            if (datetime_field) {
+                field.value = datetime_field.value;
+            }
         });
-        form.submit();
-    });
+        form.addEventListener('submit', function(event) {
+            event.preventDefault();
+            form.querySelectorAll('h1, h2, h3, h4, h5, h6').forEach(function(titleElement) {
+                var slug = createSlug(titleElement.textContent);
+                titleElement.setAttribute('id', slug);
+            });
+            datetimeFields.forEach(function(field) {
+                var datetime_field = document.querySelector(`input[data-datetime="${field.id}"]`);
+                let date = new Date(field.value);
+                datetime_field.value = date.toISOString().slice(0, 19);
+            });
+            form.submit();
+        });
+    }
 }
 
 export function handleSelectAndRadioElements() {
@@ -40,86 +44,89 @@ export function handleSelectAndRadioElements() {
 export function autocomplete() {
     const autocompleteFields = document.querySelectorAll('.autocomplete');
     const form = document.querySelector('form');
-    
-    const autocompleteSelectedItems = document.querySelectorAll('.autocomplete-selected-items');
-    autocompleteSelectedItems.forEach(function(element) {
-        element.innerHTML = '';
-    });
-    let itemsSelected = [];
-    autocompleteFields.forEach(field => {
-        field.addEventListener('input', function() {
-            const id = this.getAttribute('id');
-            const multiSelectSuggestionsList = form.querySelector(`#${id}List`);
-            
-            multiSelectSuggestionsList.innerHTML = '';
-            multiSelectSuggestionsList.style.display = "block";
-            if (this.value.length >= 3) {
-                multiSelectSuggestionsList.style.display = "block";
-                fetchData(`${this.getAttribute('data-url')}/${this.value}`, function(data) {
-                    Object.keys(data).forEach(function(key) {
-                        const item = document.createElement('li');
-                        item.textContent = data[key][field.getAttribute('data-label')];
-                        item.setAttribute('id', data[key][field.getAttribute('data-id')]);
-                        item.classList.add('p-2', 'hover:bg-gray-100', 'cursor-pointer');
-                        multiSelectSuggestionsList.appendChild(item);
-                    });
-                });
-            } else {
-                multiSelectSuggestionsList.style.display = "none";
-            }
+    if (form) {
+        const autocompleteSelectedItems = document.querySelectorAll('.autocomplete-selected-items');
+        autocompleteSelectedItems.forEach(function(element) {
+            element.innerHTML = '';
         });
-    });
-    const multiSelectSuggestionsList = form.querySelector(`.autocomplete-list`);
-    if (multiSelectSuggestionsList) {
-        multiSelectSuggestionsList.addEventListener('click', function(event) {
-            if (event.target.tagName.toLowerCase()!== 'li') return;
-            multiSelectSuggestionsList.style.display = "none";
-            const selectedId = event.target.getAttribute('id');
-            if (itemsSelected.includes(selectedId)) {
-                return;
-            }
-            itemsSelected.push(selectedId);
-            const parentElementDataId = event.target.parentElement.getAttribute('data-id');
-            const checkbox = document.createElement('input');
-            checkbox.id = `${selectedId}-autocomplete-selected`;
-            checkbox.setAttribute("type", "checkbox");
-            checkbox.setAttribute("style", "display:none");
-            checkbox.setAttribute("name", `${parentElementDataId}`);
-            checkbox.setAttribute("value", selectedId);
-            checkbox.setAttribute("checked", 'checked');
-            const selectedItemContainer = form.querySelector(`#${parentElementDataId}Selected`);
-            const removeBtn = document.createElement('span');
-            removeBtn.className = `
-                remove-from-list
-                inline-flex 
-                items-center
-                gap-x-1.5 
-                rounded-md 
-                bg-indigo-600 
-                px-3 
-                py-2 
-                text-sm 
-                font-semibold 
-                text-white 
-                shadow-sm 
-                hover:bg-indigo-500 
-                focus-visible:outline 
-                focus-visible:outline-2 
-                focus-visible:outline-offset-2 
-                focus-visible:outline-indigo-600
-                `;
-            removeBtn.textContent = event.target.textContent;
-            removeBtn.appendChild(crossSvg());
-            selectedItemContainer.appendChild(removeBtn);
-            selectedItemContainer.appendChild(checkbox);
-            removeBtn.addEventListener('click', function() {
-                selectedItemContainer.removeChild(checkbox);
-                selectedItemContainer.removeChild(removeBtn);
-                itemsSelected = itemsSelected.filter(element => element!== selectedId);
+        let itemsSelected = [];
+        autocompleteFields.forEach(field => {
+            field.addEventListener('input', function() {
+                const id = this.getAttribute('id');
+                const multiSelectSuggestionsList = form.querySelector(`#${id}List`);
+                if (multiSelectSuggestionsList) {
+                    multiSelectSuggestionsList.innerHTML = '';
+                    multiSelectSuggestionsList.style.display = "block";
+                    if (this.value.length >= 3) {
+                        multiSelectSuggestionsList.style.display = "block";
+                        fetchData(`${this.getAttribute('data-url')}/${this.value}`, function(data) {
+                            Object.keys(data).forEach(function(key) {
+                                const item = document.createElement('li');
+                                item.textContent = data[key][field.getAttribute('data-label')];
+                                item.setAttribute('id', data[key][field.getAttribute('data-id')]);
+                                item.classList.add('p-2', 'hover:bg-gray-100', 'cursor-pointer');
+                                multiSelectSuggestionsList.appendChild(item);
+                            });
+                        });
+                    } else {
+                        multiSelectSuggestionsList.style.display = "none";
+                    }
+                }
             });
         });
+        const multiSelectSuggestionsList = form.querySelector(`.autocomplete-list`);
+        if (multiSelectSuggestionsList) {
+            multiSelectSuggestionsList.addEventListener('click', function(event) {
+                if (event.target.tagName.toLowerCase()!== 'li') return;
+                multiSelectSuggestionsList.style.display = "none";
+                const selectedId = event.target.getAttribute('id');
+                if (itemsSelected.includes(selectedId)) {
+                    return;
+                }
+                itemsSelected.push(selectedId);
+                const parentElementDataId = event.target.parentElement.getAttribute('data-id');
+                const checkbox = document.createElement('input');
+                checkbox.id = `${selectedId}-autocomplete-selected`;
+                checkbox.setAttribute("type", "checkbox");
+                checkbox.setAttribute("style", "display:none");
+                checkbox.setAttribute("name", `${parentElementDataId}`);
+                checkbox.setAttribute("value", selectedId);
+                checkbox.setAttribute("checked", 'checked');
+                const selectedItemContainer = form.querySelector(`#${parentElementDataId}Selected`);
+                if (selectedItemContainer) {
+                    const removeBtn = document.createElement('span');
+                    removeBtn.className = `
+                        remove-from-list
+                        inline-flex 
+                        items-center
+                        gap-x-1.5 
+                        rounded-md 
+                        bg-indigo-600 
+                        px-3 
+                        py-2 
+                        text-sm 
+                        font-semibold 
+                        text-white 
+                        shadow-sm 
+                        hover:bg-indigo-500 
+                        focus-visible:outline 
+                        focus-visible:outline-2 
+                        focus-visible:outline-offset-2 
+                        focus-visible:outline-indigo-600
+                        `;
+                    removeBtn.textContent = event.target.textContent;
+                    removeBtn.appendChild(crossSvg());
+                    selectedItemContainer.appendChild(removeBtn);
+                    selectedItemContainer.appendChild(checkbox);
+                    removeBtn.addEventListener('click', function() {
+                        selectedItemContainer.removeChild(checkbox);
+                        selectedItemContainer.removeChild(removeBtn);
+                        itemsSelected = itemsSelected.filter(element => element!== selectedId);
+                    });     
+                }
+            });
+        }
     }
-    
 }
 
 function createRadioInput(name, value, labelText, selected) {

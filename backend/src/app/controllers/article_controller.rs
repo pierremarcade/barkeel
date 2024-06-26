@@ -120,7 +120,8 @@ pub async fn new(Extension(current_user): Extension<AuthState>, headers: HeaderM
     tera.add_raw_template("article/new.html", include_str!("../views/article/new.html")).unwrap();
     let mut context = prepare_tera_context(current_user).await;
     let config_ref = config.as_ref();
-    context.insert("data",&ArticleForm::new().build_form(config_ref, headers, "/articles"));
+    let article_from = ArticleForm::new();
+    context.insert("data",&article_from.build_form(config_ref, headers, "/articles"));
     let rendered = tera.render("article/new.html", &context).unwrap();
     Response{status_code: StatusCode::OK, content_type: "text/html", datas: rendered}
 }

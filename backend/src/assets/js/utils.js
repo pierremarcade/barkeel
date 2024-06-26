@@ -1,4 +1,3 @@
-
 export function crossSvg() {
     let svgIcon = document.createElementNS("http://www.w3.org/2000/svg", "svg");
     svgIcon.setAttribute("viewBox", "0 0 24 24");
