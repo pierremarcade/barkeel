@@ -6,6 +6,11 @@ pub struct PaginationQuery {
     pub per_page: Option<usize>,
 }
 
+pub trait PaginationTrait {
+    fn new(pagination_query: PaginationQuery, total_results: i64) -> Self;
+    fn generate_page_numbers(&self) -> Vec<String>;
+}
+
 pub struct Pagination {
     pub current_page: usize,
     pub per_page: usize,
@@ -14,8 +19,8 @@ pub struct Pagination {
     pub total_results: i64,
 }
 
-impl Pagination {
-    pub fn new(pagination_query: PaginationQuery, total_results: i64) -> Self {
+impl PaginationTrait for Pagination {
+    fn new(pagination_query: PaginationQuery, total_results: i64) -> Self {
         let current_page = pagination_query.page.unwrap_or(1);
         let per_page = pagination_query.per_page.unwrap_or(10);
         let offset = (current_page - 1) * per_page;
@@ -28,7 +33,7 @@ impl Pagination {
             total_results,
         }
     }
-    pub fn generate_page_numbers(&self) -> Vec<String> {
+    fn generate_page_numbers(&self) -> Vec<String> {
         let mut page_numbers = Vec::new();
         if self.total_pages <= 10 {
             for i in 1..=self.total_pages {

@@ -9,6 +9,7 @@ use crate::app::utils::{ get_content_type, csrf_token_is_valid, response::Respon
 use crate::app::controllers::error_controller;
 use crate::app::middlewares::auth::AuthState;
 use crate::app::utils::template::prepare_tera_context;
+use crate::app::utils::pagination::PaginationTrait;
 
 pub async fn index(Extension(current_user): Extension<AuthState>, Query(pagination_query): Query<PaginationQuery>, headers: HeaderMap, State(config): State<Arc<Config>>) -> impl IntoResponse {
     let total_results: i64 = get_total(config.clone());
