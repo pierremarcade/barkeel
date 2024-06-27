@@ -6,13 +6,14 @@ use barkeel_lib::mailer::Email;
 use std::error::Error;
 use async_trait::async_trait;
 use serde_json::Map;
+use std::env;
 
 #[derive(DelayedJob)]
 pub struct Mail;
 
 #[async_trait]
 impl JobTrait for Mail {
-    async fn perform(&self, args: Option<Vec<Value>>) -> Result<(), Box<dyn Error>> {
+    async fn perform(&self, args: Option<Vec<serde_json::Value>>) -> Result<(), Box<dyn Error>> {
         if let Some(args) = args {
             let mut email = Email {
                 from: String::from("default@example.com"),
@@ -21,7 +22,7 @@ impl JobTrait for Mail {
                 body: String::from("Default Body"),
             };
             for arg in args {
-                let map: Map<String, Value> = serde_json::from_value(arg).expect("Failed to parse argument");
+                let map: Map<String, serde_json::Value> = serde_json::from_value(arg).expect("Failed to parse argument");
             
                 for (key, value) in map {
                     match key.as_str() {
