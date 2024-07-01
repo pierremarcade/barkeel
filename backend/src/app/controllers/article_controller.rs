@@ -1,16 +1,16 @@
 use crate::config::application::Config;
 use crate::app::models::article::{ Article, ArticleForm, ArticleFormEdit };
 use crate::db::schema::articles::{self, dsl::*};
-use diesel::prelude::*;
-use std::sync::Arc;
-use tera::Tera;
-use chrono::Utc;
-use axum::{ Extension, extract::{Path, State, Query}, response::{ IntoResponse, Redirect }, http::{ HeaderMap, StatusCode }, Form};
 use crate::app::utils::{ get_content_type, csrf_token_is_valid, response::Response, pagination::{ PaginationQuery, Pagination } };
 use crate::app::controllers::error_controller;
 use crate::app::middlewares::auth::AuthState;
 use crate::app::utils::template::prepare_tera_context;
 use crate::app::utils::pagination::PaginationTrait;
+use diesel::prelude::*;
+use std::sync::Arc;
+use tera::Tera;
+use chrono::Utc;
+use axum::{ Extension, extract::{Path, State, Query}, response::{ IntoResponse, Redirect }, http::{ HeaderMap, StatusCode }, Form};
 
 pub async fn index(Extension(current_user): Extension<AuthState>, Query(pagination_query): Query<PaginationQuery>, headers: HeaderMap, State(config): State<Arc<Config>>) -> impl IntoResponse {
     let total_results: i64 = get_total(config.clone());
@@ -118,12 +118,12 @@ pub async fn show(Extension(current_user): Extension<AuthState>, Path(param_id):
 pub async fn new(Extension(current_user): Extension<AuthState>, headers: HeaderMap, State(config): State<Arc<Config>>) -> impl IntoResponse {
     let tera: &Tera = &config.template;
     let mut tera = tera.clone();
-    tera.add_raw_template("article/new.html", include_str!("../views/article/new.html")).unwrap();
+    tera.add_raw_template("article/form.html", include_str!("../views/article/form.html")).unwrap();
     let mut context = prepare_tera_context(current_user).await;
     let config_ref = config.as_ref();
     let article_from = ArticleForm::new();
     context.insert("data",&article_from.build_form(config_ref, headers, "/articles"));
-    let rendered = tera.render("article/new.html", &context).unwrap();
+    let rendered = tera.render("article/form.html", &context).unwrap();
     Response{status_code: StatusCode::OK, content_type: "text/html", datas: rendered}
 }
 
@@ -142,7 +142,7 @@ pub async fn create(Extension(mut current_user): Extension<AuthState>, headers: 
 pub async fn edit(Extension(current_user): Extension<AuthState>, headers: HeaderMap, Path(param_id): Path<i32>, State(config): State<Arc<Config>>) -> impl IntoResponse {
     let tera: &Tera = &config.template;
     let mut tera = tera.clone();
-    tera.add_raw_template("article/edit.html", include_str!("../views/article/edit.html")).unwrap();
+    tera.add_raw_template("article/form.html", include_str!("../views/article/form.html")).unwrap();
     let result = articles
         .find(param_id)
         .first::<Article>(&mut config.database.pool.get().unwrap())
@@ -150,7 +150,7 @@ pub async fn edit(Extension(current_user): Extension<AuthState>, headers: Header
     let mut context = prepare_tera_context(current_user).await;
     let config_ref = config.as_ref();
     context.insert("data", &result.build_form(config_ref, headers, format!("/articles/{}", param_id).as_str()));
-    let rendered = tera.render("article/edit.html", &context).unwrap();
+    let rendered = tera.render("article/form.html", &context).unwrap();
     Response{status_code: StatusCode::OK, content_type: "text/html", datas: rendered}
 }
 

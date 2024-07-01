@@ -106,13 +106,13 @@ pub async fn show(Extension(current_user): Extension<AuthState>, Path(param_id):
 pub async fn new(Extension(current_user): Extension<AuthState>, headers: HeaderMap, State(config): State<Arc<Config>>) -> impl IntoResponse {
     let tera: &Tera = &config.template;
     let mut tera = tera.clone();
-    tera.add_raw_template("menu/new.html", include_str!("../views/menu/new.html")).unwrap();
+    tera.add_raw_template("menu/form.html", include_str!("../views/menu/form.html")).unwrap();
 
     let mut context = prepare_tera_context(current_user).await;
     let config_ref = config.as_ref();
     context.insert("data",&MenuForm::new().build_form(config_ref, headers, "/menus"));
 
-    let rendered = tera.render("menu/new.html", &context).unwrap();
+    let rendered = tera.render("menu/form.html", &context).unwrap();
     Response{status_code: StatusCode::OK, content_type: "text/html", datas: rendered}
 }
 
@@ -129,7 +129,7 @@ pub async fn create(headers: HeaderMap, State(config): State<Arc<Config>>, Form(
 pub async fn edit(Extension(current_user): Extension<AuthState>, headers: HeaderMap, Path(param_id): Path<i32>, State(config): State<Arc<Config>>) -> impl IntoResponse {
     let tera: &Tera = &config.template;
     let mut tera = tera.clone();
-    tera.add_raw_template("menu/edit.html", include_str!("../views/menu/edit.html")).unwrap();
+    tera.add_raw_template("menu/form.html", include_str!("../views/menu/form.html")).unwrap();
     let result = menus
         .find(param_id)
         .first::<Menu>(&mut config.database.pool.get().unwrap())
@@ -139,7 +139,7 @@ pub async fn edit(Extension(current_user): Extension<AuthState>, headers: Header
     let config_ref = config.as_ref();
     context.insert("data", &result.build_form(config_ref, headers, format!("/menus/{}", param_id).as_str()));
 
-    let rendered = tera.render("menu/edit.html", &context).unwrap();
+    let rendered = tera.render("menu/form.html", &context).unwrap();
     Response{status_code: StatusCode::OK, content_type: "text/html", datas: rendered}
 }
 

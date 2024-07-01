@@ -1,3 +1,4 @@
+use crate::config::application::Config;
 use diesel::prelude::*;
 use barkeel_derives::FormBuilder;
 use serde::{Deserialize, Serialize};

@@ -1,3 +1,4 @@
+use crate::config::application::Config;
 use diesel::prelude::*;
 use barkeel_derives::FormBuilder;
 use serde::{Deserialize, Serialize};
@@ -9,12 +10,13 @@ use chrono::NaiveDateTime;
 pub struct Article {
     pub id: i32,
     pub title: String,
+    #[form_builder(type_="file")]
     pub slug: String,
     #[form_builder(type_="textarea")]
     pub content: String,
-    #[exclude]
+    #[form_builder_exclude]
     pub published_at: NaiveDateTime,
-    #[exclude]
+    #[form_builder_exclude]
     pub author_id: Option<i32>,
     pub homepage: bool,
 }

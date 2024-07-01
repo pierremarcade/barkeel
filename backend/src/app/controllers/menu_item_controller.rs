@@ -106,13 +106,13 @@ pub async fn show(Extension(current_user): Extension<AuthState>, Path(param_id):
 pub async fn new(Extension(current_user): Extension<AuthState>, headers: HeaderMap, State(config): State<Arc<Config>>) -> impl IntoResponse {
     let tera: &Tera = &config.template;
     let mut tera = tera.clone();
-    tera.add_raw_template("menu_item/new.html", include_str!("../views/menu_item/new.html")).unwrap();
+    tera.add_raw_template("menu_item/form.html", include_str!("../views/menu_item/form.html")).unwrap();
 
     let mut context = prepare_tera_context(current_user).await;
     let config_ref = config.as_ref();
     context.insert("data",&MenuItemForm::new().build_form(config_ref, headers, "/menu-items"));
 
-    let rendered = tera.render("menu_item/new.html", &context).unwrap();
+    let rendered = tera.render("menu_item/form.html", &context).unwrap();
     Response{status_code: StatusCode::OK, content_type: "text/html", datas: rendered}
 }
 
@@ -129,7 +129,7 @@ pub async fn create(headers: HeaderMap, State(config): State<Arc<Config>>, Form(
 pub async fn edit(Extension(current_user): Extension<AuthState>, headers: HeaderMap, Path(param_id): Path<i32>, State(config): State<Arc<Config>>) -> impl IntoResponse {
     let tera: &Tera = &config.template;
     let mut tera = tera.clone();
-    tera.add_raw_template("menu_item/edit.html", include_str!("../views/menu_item/edit.html")).unwrap();
+    tera.add_raw_template("menu_item/form.html", include_str!("../views/menu_item/form.html")).unwrap();
     let result = menu_items
         .find(param_id)
         .first::<MenuItem>(&mut config.database.pool.get().unwrap())
@@ -139,7 +139,7 @@ pub async fn edit(Extension(current_user): Extension<AuthState>, headers: Header
     let config_ref = config.as_ref();
     context.insert("data", &result.build_form(config_ref, headers, format!("/menu-items/{}", param_id).as_str()));
 
-    let rendered = tera.render("menu_item/edit.html", &context).unwrap();
+    let rendered = tera.render("menu_item/form.html", &context).unwrap();
     Response{status_code: StatusCode::OK, content_type: "text/html", datas: rendered}
 }
 

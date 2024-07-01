@@ -1,3 +1,4 @@
+use crate::config::application::Config;
 use serde::{Deserialize, Serialize};
 use barkeel_derives::FormBuilder;
 

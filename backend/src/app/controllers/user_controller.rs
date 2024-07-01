@@ -104,13 +104,13 @@ pub async fn show(Path(param_id): Path<i32>, State(config): State<Arc<Config>>) 
 pub async fn new(headers: HeaderMap, State(config): State<Arc<Config>>) -> impl IntoResponse {
     let tera: &Tera = &config.template;
     let mut tera = tera.clone();
-    tera.add_raw_template("user/new.html", include_str!("../views/user/new.html")).unwrap();
+    tera.add_raw_template("user/form.html", include_str!("../views/user/form.html")).unwrap();
 
     let mut context = Context::new();
     let config_ref = config.as_ref();
     context.insert("data",&UserForm::new().build_form(config_ref, headers, "/users"));
 
-    let rendered = tera.render("user/new.html", &context).unwrap();
+    let rendered = tera.render("user/form.html", &context).unwrap();
     Response{status_code: StatusCode::OK, content_type: "text/html", datas: rendered}
 }
 
@@ -127,7 +127,7 @@ pub async fn create(headers: HeaderMap, State(config): State<Arc<Config>>, Form(
 pub async fn edit(headers: HeaderMap, Path(param_id): Path<i32>, State(config): State<Arc<Config>>) -> impl IntoResponse {
     let tera: &Tera = &config.template;
     let mut tera = tera.clone();
-    tera.add_raw_template("user/edit.html", include_str!("../views/user/edit.html")).unwrap();
+    tera.add_raw_template("user/form.html", include_str!("../views/user/form.html")).unwrap();
     let result = users
         .find(param_id)
         .first::<User>(&mut config.database.pool.get().unwrap())
@@ -137,7 +137,7 @@ pub async fn edit(headers: HeaderMap, Path(param_id): Path<i32>, State(config): 
     let config_ref = config.as_ref();
     context.insert("data", &result.build_form(config_ref, headers, format!("/users/{}", param_id).as_str()));
 
-    let rendered = tera.render("user/edit.html", &context).unwrap();
+    let rendered = tera.render("user/form.html", &context).unwrap();
     Response{status_code: StatusCode::OK, content_type: "text/html", datas: rendered}
 }
 
