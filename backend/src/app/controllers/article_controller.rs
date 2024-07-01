@@ -10,7 +10,7 @@ use diesel::prelude::*;
 use std::sync::Arc;
 use tera::Tera;
 use chrono::Utc;
-use axum::{ Extension, extract::{Path, State, Query}, response::{ IntoResponse, Redirect }, http::{ HeaderMap, StatusCode }, Form};
+use axum::{ Extension, extract::{Multipart, Path, State, Query}, response::{ IntoResponse, Redirect }, http::{ HeaderMap, StatusCode }, Form};
 
 pub async fn index(Extension(current_user): Extension<AuthState>, Query(pagination_query): Query<PaginationQuery>, headers: HeaderMap, State(config): State<Arc<Config>>) -> impl IntoResponse {
     let total_results: i64 = get_total(config.clone());
@@ -171,4 +171,13 @@ pub async fn delete(Path(param_id): Path<i32>, State(config): State<Arc<Config>>
         .execute(&mut config.database.pool.get().unwrap())
         .expect("Error deleting data");
     Redirect::to("/articles") 
+}
+
+pub async fn upload(mut multipart: Multipart) {
+    while let Some(mut field) = multipart.next_field().await.unwrap() {
+        let name = field.name().unwrap().to_string();
+        let data = field.bytes().await.unwrap();
+
+        println!("Length of `{}` is {} bytes", name, data.len());
+    }
 }

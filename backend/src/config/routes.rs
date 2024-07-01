@@ -43,6 +43,7 @@ pub fn routes(config: Arc<Config>) -> Router<Arc<Config>> {
             .route("/articles", post(article_controller::create))
             .route("/articles/:id", post(article_controller::update))
             .route("/articles/search/:query", get(article_controller::search))
+            .route("/articles/upload", post(article_controller::upload))
             .layer(axum::middleware::from_fn(move |req, next| {
                 crate::app::middlewares::auth::auth(config.clone(), req, next)
             }))

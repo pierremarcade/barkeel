@@ -26,6 +26,33 @@ export function beforeSubmit() {
     }
 }
 
+export function handleFileElements() {
+    const fileInputs = document.querySelectorAll('input[type="file"][data-url]');
+    if (fileInputs) {
+        fileInputs.forEach(input => {
+            input.addEventListener('change', handleFileUpload);
+        });  
+    }
+}
+
+async function handleFileUpload(event) {
+    const files = event.target.files;
+    if (files.length === 0) return;
+    const formData = new FormData();
+    formData.append('file', files[0]);
+    const url = event.target.dataset.url;
+    try {
+        const response = await fetch(url, {
+            method: 'POST',
+            body: formData,
+        });
+        if (!response.ok) throw new Error(`HTTP error status: ${response.status}`);
+        console.log('File uploaded with success');
+    } catch (error) {
+        console.error('An error occured during uploading file :', error);
+    }
+}
+
 export function handleSelectAndRadioElements() {
     var selectElements = document.querySelectorAll('.select');
     var radioElements = document.querySelectorAll('.radio');
@@ -41,7 +68,7 @@ export function handleSelectAndRadioElements() {
     });
 }
 
-export function autocomplete() {
+export function handleAutocompleteElements() {
     const autocompleteFields = document.querySelectorAll('.autocomplete');
     const form = document.querySelector('form');
     if (form) {
