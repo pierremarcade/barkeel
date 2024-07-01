@@ -6,6 +6,8 @@ use crate::app::controllers::error_controller;
 use crate::app::middlewares::auth::AuthState;
 use crate::app::utils::template::prepare_tera_context;
 use crate::app::utils::pagination::PaginationTrait;
+use barkeel_lib::storage::{local_storage::LocalStorage, FileStorage};
+use barkeel_lib::utils::slugify;
 use diesel::prelude::*;
 use std::sync::Arc;
 use tera::Tera;
@@ -131,7 +133,7 @@ pub async fn create(Extension(mut current_user): Extension<AuthState>, headers: 
     if csrf_token_is_valid(headers, config.clone(), payload.csrf_token) {
         if let Some(user) = current_user.get_user().await {
             let _inserted_record: Article = diesel::insert_into(articles)
-                .values((title.eq(payload.title), slug.eq(payload.slug),content.eq(payload.content), published_at.eq(Utc::now().naive_utc()), author_id.eq(user.id), homepage.eq(payload.homepage)))
+                .values((title.eq(payload.title.clone()), slug.eq(slugify(&payload.title.clone())),content.eq(payload.content), published_at.eq(Utc::now().naive_utc()), author_id.eq(user.id), homepage.eq(payload.homepage)))
                 .get_result(&mut config.database.pool.get().unwrap())
                 .expect("Error inserting data");
         }
@@ -158,7 +160,7 @@ pub async fn update(headers: HeaderMap, State(config): State<Arc<Config>>, Path(
     if csrf_token_is_valid(headers, config.clone(), payload.csrf_token) {
         let _updated_record: Article = diesel::update(articles)
             .filter(id.eq(param_id))
-            .set((title.eq(payload.title), slug.eq(payload.slug), content.eq(payload.content), homepage.eq(payload.homepage)))
+            .set((title.eq(payload.title.clone()), slug.eq(slugify(&payload.title.clone())), content.eq(payload.content), homepage.eq(payload.homepage)))
             .get_result(&mut config.database.pool.get().unwrap())
             .expect("Error updating data");
     }
@@ -174,10 +176,10 @@ pub async fn delete(Path(param_id): Path<i32>, State(config): State<Arc<Config>>
 }
 
 pub async fn upload(mut multipart: Multipart) {
-    while let Some(mut field) = multipart.next_field().await.unwrap() {
-        let name = field.name().unwrap().to_string();
+    let local_storage = LocalStorage::new("/home/pierre/images/barkeel");
+    while let Some(field) = multipart.next_field().await.unwrap() {
+        let file_name = field.file_name().unwrap().to_string();
         let data = field.bytes().await.unwrap();
-
-        println!("Length of `{}` is {} bytes", name, data.len());
+        let _ = local_storage.store(&file_name, &data).await;
     }
 }

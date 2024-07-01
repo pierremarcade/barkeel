@@ -10,7 +10,7 @@ use chrono::NaiveDateTime;
 pub struct Article {
     pub id: i32,
     pub title: String,
-    #[form_builder(type_="file")]
+    #[form_builder_exclude]
     pub slug: String,
     #[form_builder(type_="textarea")]
     pub content: String,
