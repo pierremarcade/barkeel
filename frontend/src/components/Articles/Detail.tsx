@@ -1,9 +1,15 @@
 'use client'
 
-import React from 'react';
+import { React, useEffect} from 'react';
 import { useArticle } from "./articles.queries";
 import { DocsLayout } from '@/components/DocsLayout'
 import { notFound } from "next/navigation"
+import 'highlight.js/styles/github-dark.css';
+import hljs from 'highlight.js/lib/core';
+import rust from "highlight.js/lib/languages/rust";
+import javascript  from "highlight.js/lib/languages/javascript";
+hljs.registerLanguage('javascript', javascript);
+hljs.registerLanguage('rust', rust);
 
 interface DetailProps {
   slug: string;
@@ -30,6 +36,14 @@ function extractHeadings(content: string): any[] {
 
 const Detail: React.FC<DetailProps> = ({ slug }) => {
   const {  data, isLoading, isError, error } = useArticle(slug);
+  useEffect(() => {
+    if (data) {
+      document.querySelectorAll("div.ql-code-block").forEach((el) => {
+        hljs.highlightElement(el);
+      });
+    }
+    
+  }, [data]);
 
   if (isLoading) {
     return <div>Loading...</div>; 
