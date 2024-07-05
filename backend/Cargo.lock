@@ -626,6 +626,7 @@ dependencies = [
 name = "barkeel_web"
 version = "0.1.0"
 dependencies = [
+ "Inflector",
  "async-trait",
  "axum",
  "barkeel_derives",

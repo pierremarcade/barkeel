@@ -1,5 +1,5 @@
 use axum::{ 
-    routing::{get, post, patch, delete}, 
+    routing::{get, post, delete}, 
     Router,
     error_handling::HandleErrorLayer
 };
@@ -8,42 +8,32 @@ use crate::config::application::Config;
 use crate::app::controllers::*;
 use std::time::Duration;
 use tower::ServiceBuilder;
+use inflector::Inflector;
+
+
+macro_rules! resource_routes {
+    ($router:ident, $model:ident) => {
+        {
+            let class_name =  stringify!($model).replace("_controller", "").to_string().to_kebab_case().to_plural();
+            $router.route(format!("/{}", class_name).as_str(), get($model::index))
+            .route(format!("/{}/new", class_name).as_str(), get($model::new))
+            .route(format!("/{}/:id", class_name).as_str(), get($model::show))
+            .route(format!("/{}/:id", class_name).as_str(), delete($model::delete))
+            .route(format!("/{}/:id/edit", class_name).as_str(), get($model::edit))
+            .route(format!("/{}", class_name).as_str(), post($model::create))
+            .route(format!("/{}/:id", class_name).as_str(), post($model::update))
+        }  
+    };
+}
 
 //Add here new route
 pub fn routes(config: Arc<Config>) -> Router<Arc<Config>> {
-    Router::new()
-            
-		    // .route("/users", get(user_controller::index))
-            // .route("/users/new", get(user_controller::new))
-            // .route("/users/:id", get(user_controller::show))
-            // .route("/users/:id/edit", get(user_controller::edit))
-            // .route("/books/:id", patch(book_controller::update))
-            
+    let router = Router::new()
             .route("/", get(index_controller::index))
-            .route("/logout", get(auth_controller::get::logout))
-            .route("/menu-items", get(menu_item_controller::index))
-            .route("/menu-items/new", get(menu_item_controller::new))
-            .route("/menu-items/:id", get(menu_item_controller::show))
-            .route("/menu-items/:id", delete(menu_item_controller::delete))
-            .route("/menu-items/:id/edit", get(menu_item_controller::edit))
-            .route("/menu-items", post(menu_item_controller::create))
-            .route("/menu-items/:id", post(menu_item_controller::update))
-            .route("/menus", get(menu_controller::index))
-            .route("/menus/new", get(menu_controller::new))
-            .route("/menus/:id", get(menu_controller::show))
-            .route("/menus/:id", delete(menu_controller::delete))
-            .route("/menus/:id/edit", get(menu_controller::edit))
-            .route("/menus", post(menu_controller::create))
-            .route("/menus/:id", post(menu_controller::update))
-            .route("/articles", get(article_controller::index))
-            .route("/articles/new", get(article_controller::new))
-            .route("/articles/:id", get(article_controller::show))
-            .route("/articles/:id", delete(article_controller::delete))
-            .route("/articles/:id/edit", get(article_controller::edit))
-            .route("/articles", post(article_controller::create))
-            .route("/articles/:id", post(article_controller::update))
-            .route("/articles/search/:query", get(article_controller::search))
-            .route("/articles/upload", post(article_controller::upload))
+            .route("/logout", get(auth_controller::get::logout));
+        let router = resource_routes!(router, menu_item_controller);
+        let router = resource_routes!(router, menu_controller);
+        resource_routes!(router, article_controller)
             .layer(axum::middleware::from_fn(move |req, next| {
                 crate::app::middlewares::auth::auth(config.clone(), req, next)
             }))
@@ -61,3 +51,6 @@ pub fn routes(config: Arc<Config>) -> Router<Arc<Config>> {
             .fallback(error_controller::handler_404)
             .route("/public/*path", get(index_controller::handle_assets))
 }
+
+
+
