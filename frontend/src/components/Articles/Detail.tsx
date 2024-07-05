@@ -1,6 +1,6 @@
 'use client'
 
-import { React, useEffect} from 'react';
+import React, { useEffect } from 'react';
 import { useArticle } from "./articles.queries";
 import { DocsLayout } from '@/components/DocsLayout'
 import { notFound } from "next/navigation"
@@ -38,8 +38,8 @@ const Detail: React.FC<DetailProps> = ({ slug }) => {
   const {  data, isLoading, isError, error } = useArticle(slug);
   useEffect(() => {
     if (data) {
-      document.querySelectorAll("div.ql-code-block").forEach((el) => {
-        hljs.highlightElement(el);
+      document.querySelectorAll("div.ql-code-block").forEach((el: Element) => {
+        hljs.highlightElement(el as HTMLElement);
       });
     }
     

@@ -9,3 +9,8 @@
     display: none;
   }
 }
+
+
+.hljs {
+  background-color: transparent !important;
+}
