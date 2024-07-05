@@ -29,27 +29,27 @@ macro_rules! resource_routes {
 //Add here new route
 pub fn routes(config: Arc<Config>) -> Router<Arc<Config>> {
     let router = Router::new()
-            .route("/", get(index_controller::index))
-            .route("/logout", get(auth_controller::get::logout));
-        let router = resource_routes!(router, menu_item_controller);
-        let router = resource_routes!(router, menu_controller);
+        .route("/", get(index_controller::index))
+        .route("/logout", get(auth_controller::get::logout));
+    let router = resource_routes!(router, menu_item_controller);
+    let router = resource_routes!(router, menu_controller);
         resource_routes!(router, article_controller)
-            .layer(axum::middleware::from_fn(move |req, next| {
-                crate::app::middlewares::auth::auth(config.clone(), req, next)
-            }))
-            .route("/login", get(auth_controller::get::login))
-            .route("/login", post(auth_controller::post::login))
-            .route("/api/v1/articles", get(api::v1::article_controller::index))
-            .route("/api/v1/articles/:slug", get(api::v1::article_controller::show))
-            .route("/api/v1/articles/search/:query", get(api::v1::article_controller::search))
-            .route("/api/v1/menus", get(api::v1::menu_controller::index))
-            .layer(
-                ServiceBuilder::new()
-                    .layer(HandleErrorLayer::new(error_controller::handle_timeout_error))
-                    .timeout(Duration::from_secs(30))
-            )
-            .fallback(error_controller::handler_404)
-            .route("/public/*path", get(index_controller::handle_assets))
+        .layer(axum::middleware::from_fn(move |req, next| {
+            crate::app::middlewares::auth::auth(config.clone(), req, next)
+        }))
+        .route("/login", get(auth_controller::get::login))
+        .route("/login", post(auth_controller::post::login))
+        .route("/api/v1/articles", get(api::v1::article_controller::index))
+        .route("/api/v1/articles/:slug", get(api::v1::article_controller::show))
+        .route("/api/v1/articles/search/:query", get(api::v1::article_controller::search))
+        .route("/api/v1/menus", get(api::v1::menu_controller::index))
+        .layer(
+            ServiceBuilder::new()
+                .layer(HandleErrorLayer::new(error_controller::handle_timeout_error))
+                .timeout(Duration::from_secs(30))
+        )
+        .fallback(error_controller::handler_404)
+        .route("/public/*path", get(index_controller::handle_assets))
 }
 
 
