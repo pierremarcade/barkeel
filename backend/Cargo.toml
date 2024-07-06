@@ -9,9 +9,9 @@ rust-version = "1.79"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+axum =  { version = "0.7", features = ["multipart"] }
 redis = { version = "0.25", features = ["aio", "tokio-comp"] }
 async-trait = "0.1"
-axum =  { version = "0.7", features = ["multipart"] }
 chrono = { version = "0.4", features = ["serde"] }
 serde = "1.0"
 serde_json = "1.0"

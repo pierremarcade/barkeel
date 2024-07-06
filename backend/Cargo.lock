@@ -606,6 +606,7 @@ dependencies = [
  "async-trait",
  "aws-config",
  "aws-sdk-s3",
+ "axum",
  "bytes",
  "chrono",
  "crossbeam-channel",

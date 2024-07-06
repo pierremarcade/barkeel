@@ -5,11 +5,11 @@ use diesel::prelude::*;
 use std::sync::Arc;
 use tera::Tera;
 use axum::{ Extension, extract::{Path, State, Query}, response::{ IntoResponse, Redirect }, http::{ HeaderMap, StatusCode }, Form };
-use crate::app::utils::{ get_content_type, csrf_token_is_valid, response::Response, pagination::{ PaginationQuery, Pagination } };
+use crate::app::utils::{ get_content_type, csrf_token_is_valid, response::Response };
 use crate::app::controllers::error_controller;
 use crate::app::middlewares::auth::AuthState;
 use crate::app::utils::template::prepare_tera_context;
-use crate::app::utils::pagination::PaginationTrait;
+use barkeel_lib::app::pagination::{ PaginationQuery, Pagination, PaginationTrait };
 
 pub async fn index(Extension(current_user): Extension<AuthState>, Query(pagination_query): Query<PaginationQuery>, headers: HeaderMap, State(config): State<Arc<Config>>) -> impl IntoResponse {
     let total_results: i64 = get_total(config.clone());

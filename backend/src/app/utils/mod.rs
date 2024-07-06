@@ -6,7 +6,6 @@ use std::sync::Arc;
 use crate::config::application::Config;
 
 pub mod response;
-pub mod pagination;
 pub mod template;
 
 pub fn get_content_type(headers: HeaderMap) -> String {
