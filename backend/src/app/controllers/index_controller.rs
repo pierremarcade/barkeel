@@ -4,7 +4,7 @@ use tera::Tera;
 use crate::config::application::Config;
 use crate::app::middlewares::auth::AuthState;
 use std::sync::Arc;
-use crate::app::utils::template::prepare_tera_context;
+use crate::app::controllers::prepare_tera_context;
 
 static MAIN_CSS: &str = include_str!("../../public/css/main.css");
 static MAIN_JS: &str = include_str!("../../public/js/main.js");

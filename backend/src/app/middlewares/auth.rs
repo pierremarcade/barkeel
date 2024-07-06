@@ -71,7 +71,6 @@ pub(crate) async fn auth(
 /// It uses an optional tuple to manage these pieces of information, and an Arc<Mutex<HashMap<String, String>>> for the configuration,
 /// ensuring secure and concurrent access to the authentication state.
 ///
-/// # Examples
 ///
 /// ```
 #[derive(Clone)]

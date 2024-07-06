@@ -1,3 +1,5 @@
+use tera::Context;
+use crate::app::middlewares::auth::AuthState;
 
 #[macro_export]
 macro_rules! render_html {
@@ -46,6 +48,15 @@ macro_rules! get_total {
         }  
     };
 }
+
+pub async fn prepare_tera_context(mut current_user: AuthState) -> Context {
+    let mut context = Context::new();
+    if let Some(user) = current_user.get_user().await {
+        context.insert("username", &user);
+    }
+    context
+}
+
 pub mod api;
 pub mod index_controller;
 pub mod error_controller;
