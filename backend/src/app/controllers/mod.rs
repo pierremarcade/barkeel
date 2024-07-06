@@ -1,11 +1,3 @@
-pub mod index_controller;
-pub mod error_controller;
-pub mod user_controller;
-pub mod auth_controller;
-pub mod article_controller;
-pub mod api;
-pub mod menu_item_controller;
-pub mod menu_controller;
 
 #[macro_export]
 macro_rules! render_html {
@@ -54,3 +46,11 @@ macro_rules! get_total {
         }  
     };
 }
+pub mod api;
+pub mod index_controller;
+pub mod error_controller;
+pub mod user_controller;
+pub mod auth_controller;
+pub mod article_controller;
+pub mod menu_item_controller;
+pub mod menu_controller;
