@@ -1,7 +1,7 @@
 use crate::config::application::Config;
 use crate::app::models::user::User;
 use crate::app::models::auth::{Credentials, CredentialsForm};
-use crate::app::utils::response::Response;
+use barkeel_lib::app::http::response::Response;
 use crate::db::schema::users::dsl::*;
 use std::sync::Arc;
 use tera::{Context, Tera};

@@ -5,9 +5,10 @@ use diesel::prelude::*;
 use std::sync::Arc;
 use tera::{Context, Tera};
 use axum::{ extract::{Path, State, Query}, response::{ IntoResponse, Redirect }, http::{ HeaderMap, StatusCode }, Form};
-use crate::app::utils::{ get_content_type, csrf_token_is_valid, response::Response };
+use crate::app::utils::{ get_content_type, csrf_token_is_valid };
 use crate::app::controllers::error_controller;
 use barkeel_lib::app::pagination::{ PaginationQuery, Pagination, PaginationTrait };
+use barkeel_lib::app::http::response::Response;
 
 pub async fn index(Query(pagination_query): Query<PaginationQuery>, headers: HeaderMap, State(config): State<Arc<Config>>) -> impl IntoResponse {
     let total_results: i64 = get_total(config.clone());

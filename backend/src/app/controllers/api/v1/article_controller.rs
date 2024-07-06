@@ -1,5 +1,5 @@
 use axum::{ extract::{Path, State}, response::IntoResponse, http::StatusCode };
-use crate::app::utils::{ response::Response };
+use barkeel_lib::app::http::response::Response;
 use crate::config::application::Config;
 use crate::db::schema::{ menus, menu_items, articles::{self, dsl::*}, article_metas};
 use crate::app::models::article::{ArticleWithMenu, ArticleWithMenuAndMeta};

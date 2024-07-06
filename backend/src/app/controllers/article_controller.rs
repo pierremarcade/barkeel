@@ -1,12 +1,13 @@
 use crate::config::application::Config;
 use crate::app::models::article::{ Article, ArticleForm, ArticleFormEdit };
 use crate::db::schema::articles::{self, dsl::*};
-use crate::app::utils::{ get_content_type, csrf_token_is_valid, response::Response };
+use crate::app::utils::{ get_content_type, csrf_token_is_valid };
 use crate::app::controllers::error_controller;
 use crate::app::middlewares::auth::AuthState;
 use crate::app::utils::template::prepare_tera_context;
 use barkeel_lib::storage::{local_storage::LocalStorage, FileStorage};
 use barkeel_lib::utils::slugify;
+use barkeel_lib::app::http::response::Response;
 use barkeel_lib::app::pagination::{ PaginationQuery, Pagination, PaginationTrait };
 use diesel::prelude::*;
 use std::sync::Arc;

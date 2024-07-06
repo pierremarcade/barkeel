@@ -2,7 +2,7 @@ use axum::{ extract::{Path, State}, response::{ Json, IntoResponse }, http::Stat
 use crate::config::application::Config;
 use crate::app::models::menu::{Menu, MenuWithItem, MenuItemWithArticle};
 use crate::db::schema::{ menus:: { self, dsl::* }, menu_items, articles};
-use crate::app::utils::{ response::Response };
+use barkeel_lib::app::http::response::Response;
 use diesel::prelude::*;
 use std::sync::Arc;
 use std::collections::BTreeMap;
