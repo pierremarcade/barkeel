@@ -7,11 +7,11 @@ use tera::Tera;
 use axum::{  Extension, extract::{Path, State, Query}, response::{ IntoResponse, Redirect }, http::{ HeaderMap, StatusCode }, Form};
 use crate::app::utils::{ get_content_type, csrf_token_is_valid };
 use crate::app::controllers::error_controller;
-use crate::app::middlewares::auth::AuthState;
 use crate::app::utils::template::prepare_tera_context;
+use crate::app::middlewares::auth::AuthState;
 use barkeel_lib::app::pagination::{ PaginationQuery, Pagination, PaginationTrait };
 use barkeel_lib::app::http::response::Response;
-use barkeel_lib::{render_json, get_total};
+use crate::{render_html, render_json, get_total};
 
 pub async fn index(Extension(current_user): Extension<AuthState>, Query(pagination_query): Query<PaginationQuery>, headers: HeaderMap, State(config): State<Arc<Config>>) -> impl IntoResponse {
     let total_results: i64 = get_total!(config, menu_items);
@@ -19,45 +19,24 @@ pub async fn index(Extension(current_user): Extension<AuthState>, Query(paginati
     match menu_items.limit(pagination.per_page as i64).offset(pagination.offset as i64).load::<MenuItem>(&mut config.database.pool.get().unwrap()) {
         Ok(results) => {
             if get_content_type(headers) == "application/json" {
-                render_json!(config, results, error_controller)
-            } else {    
-                render_html(current_user, config, results, pagination).await
+                render_json!(config, results)
+            } else {
+                let mut context = prepare_tera_context(current_user).await;
+                context.insert("title", "MenuItem");
+                context.insert("base_url", "/menu-items");
+                context.insert("description", "A list of all the menu_items.");
+                context.insert("datas", &results);
+                context.insert("total_pages", &pagination.total_pages);
+                context.insert("current_page", &pagination.current_page);
+                context.insert("current_page_string", &pagination.current_page.to_string());
+                context.insert("offset", &pagination.offset);
+                context.insert("per_page", &pagination.per_page);
+                context.insert("page_numbers", &pagination.generate_page_numbers()); 
+                let tera: &mut tera::Tera = &mut config.template.clone();
+                let _ = tera.add_raw_template("menu_item/index.html", include_str!("../views/menu_item/index.html"));
+                let rendered = tera.render("menu_item/index.html", &context);
+                render_html!(config, rendered)
             }
-        },
-        Err(err) => {
-            error_controller::handler_error(config, StatusCode::BAD_REQUEST, err.to_string())
-        }
-    }
-}
-
-async fn render_html(current_user: AuthState, config: Arc<Config>, results: Vec<MenuItem>, pagination: Pagination) -> Response<'static> {
-    let tera: &Tera = &config.template;
-    let mut tera = tera.clone();
-    let template_path = "menu_item/index.html";
-    let template_content = include_str!("../views/menu_item/index.html");
-    let result = tera.add_raw_template(template_path, template_content);
-    match result {
-        Ok(_) => {},
-        Err(err) => {
-            return error_controller::handler_error(config, StatusCode::BAD_REQUEST, err.to_string());
-        }
-    }
-    let mut context = prepare_tera_context(current_user).await;
-    context.insert("title", "MenuItem");
-    context.insert("base_url", "/menu-items");
-    context.insert("description", "A list of all the menu_items.");
-    context.insert("datas", &results);
-    context.insert("total_pages", &pagination.total_pages);
-    context.insert("current_page", &pagination.current_page);
-    context.insert("current_page_string", &pagination.current_page.to_string());
-    context.insert("offset", &pagination.offset);
-    context.insert("per_page", &pagination.per_page);
-    context.insert("page_numbers", &pagination.generate_page_numbers());
-
-    let rendered = tera.render("menu_item/index.html", &context);
-    match rendered {
-        Ok(result) => {
-            Response{status_code: StatusCode::OK, content_type: "text/html", datas: result}
         },
         Err(err) => {
             error_controller::handler_error(config, StatusCode::BAD_REQUEST, err.to_string())

@@ -14,7 +14,7 @@ use std::sync::Arc;
 use tera::Tera;
 use chrono::Utc;
 use axum::{ Extension, extract::{Multipart, Path, State, Query}, response::{ IntoResponse, Redirect }, http::{ HeaderMap, StatusCode }, Form};
-use barkeel_lib::{render_json, get_total};
+use crate::{render_html, render_json, get_total};
 
 pub async fn index(Extension(current_user): Extension<AuthState>, Query(pagination_query): Query<PaginationQuery>, headers: HeaderMap, State(config): State<Arc<Config>>) -> impl IntoResponse {
     let total_results: i64 = get_total!(config, articles);
@@ -22,45 +22,24 @@ pub async fn index(Extension(current_user): Extension<AuthState>, Query(paginati
     match articles.limit(pagination.per_page as i64).offset(pagination.offset as i64).load::<Article>(&mut config.database.pool.get().unwrap()) {
         Ok(results) => {
             if get_content_type(headers) == "application/json" {
-                render_json!(config, results, error_controller)
+                render_json!(config, results)
             } else {    
-                render_html(current_user, config, results, pagination).await
+                let mut context = prepare_tera_context(current_user).await;
+                context.insert("title", "Article");
+                context.insert("base_url", "/articles");
+                context.insert("description", "A list of all the articles.");
+                context.insert("datas", &results);
+                context.insert("total_pages", &pagination.total_pages);
+                context.insert("current_page", &pagination.current_page);
+                context.insert("current_page_string", &pagination.current_page.to_string());
+                context.insert("offset", &pagination.offset);
+                context.insert("per_page", &pagination.per_page);
+                context.insert("page_numbers", &pagination.generate_page_numbers()); 
+                let tera: &mut tera::Tera = &mut config.template.clone();
+                let _ = tera.add_raw_template("article/index.html", include_str!("../views/article/index.html"));
+                let rendered = tera.render("article/index.html", &context);
+                render_html!(config, rendered)
             }
-        },
-        Err(err) => {
-            error_controller::handler_error(config, StatusCode::BAD_REQUEST, err.to_string())
-        }
-    }
-}
-
-async fn render_html(current_user: AuthState, config: Arc<Config>, results: Vec<Article>, pagination: Pagination) -> Response<'static> {
-    let tera: &Tera = &config.template;
-    let mut tera = tera.clone();
-    let template_path = "article/index.html";
-    let template_content = include_str!("../views/article/index.html");
-    let result = tera.add_raw_template(template_path, template_content);
-    match result {
-        Ok(_) => {},
-        Err(err) => {
-            return error_controller::handler_error(config, StatusCode::BAD_REQUEST, err.to_string());
-        }
-    }
-    let mut context = prepare_tera_context(current_user).await;
-    context.insert("title", "Article");
-    context.insert("base_url", "/articles");
-    context.insert("description", "A list of all the articles.");
-    context.insert("datas", &results);
-    context.insert("total_pages", &pagination.total_pages);
-    context.insert("current_page", &pagination.current_page);
-    context.insert("current_page_string", &pagination.current_page.to_string());
-    context.insert("offset", &pagination.offset);
-    context.insert("per_page", &pagination.per_page);
-    context.insert("page_numbers", &pagination.generate_page_numbers());
-
-    let rendered = tera.render("article/index.html", &context);
-    match rendered {
-        Ok(result) => {
-            Response{status_code: StatusCode::OK, content_type: "text/html", datas: result}
         },
         Err(err) => {
             error_controller::handler_error(config, StatusCode::BAD_REQUEST, err.to_string())
