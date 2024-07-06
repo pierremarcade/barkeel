@@ -41,6 +41,7 @@ impl Loader {
         let mut tera = Tera::default();
         tera.add_raw_templates(vec![
             ("base.html", include_str!("../app/views/layouts/base.html")),
+            ("sidebar.html", include_str!("../app/views/layouts/sidebar.html")),
             ("header.html", include_str!("../app/views/layouts/header.html")),
             ("pagination.html", include_str!("../app/views/pagination.html")),
             ("footer.html", include_str!("../app/views/layouts/footer.html")),
