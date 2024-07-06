@@ -11,10 +11,10 @@ use crate::app::middlewares::auth::AuthState;
 use crate::app::utils::template::prepare_tera_context;
 use barkeel_lib::app::pagination::{ PaginationQuery, Pagination, PaginationTrait };
 use barkeel_lib::app::http::response::Response;
-use barkeel_lib::render_json;
+use barkeel_lib::{render_json, get_total};
 
 pub async fn index(Extension(current_user): Extension<AuthState>, Query(pagination_query): Query<PaginationQuery>, headers: HeaderMap, State(config): State<Arc<Config>>) -> impl IntoResponse {
-    let total_results: i64 = get_total(config.clone());
+    let total_results: i64 = get_total!(config, menus);
     let pagination = Pagination::new(pagination_query, total_results);
     match menus.limit(pagination.per_page as i64).offset(pagination.offset as i64).load::<Menu>(&mut config.database.pool.get().unwrap()) {
         Ok(results) => {
@@ -61,16 +61,6 @@ async fn render_html(current_user: AuthState, config: Arc<Config>, results: Vec<
         },
         Err(err) => {
             error_controller::handler_error(config, StatusCode::BAD_REQUEST, err.to_string())
-        }
-    }
-}
-
-fn get_total(config: Arc<Config>) -> i64 {
-    match menus.count().get_result(&mut config.database.pool.get().unwrap()) {
-        Ok(count) => count,
-        Err(e) => {
-            eprintln!("Error counting menus: {}", e);
-            0 
         }
     }
 }
