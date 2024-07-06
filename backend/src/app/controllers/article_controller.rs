@@ -14,6 +14,7 @@ use std::sync::Arc;
 use tera::Tera;
 use chrono::Utc;
 use axum::{ Extension, extract::{Multipart, Path, State, Query}, response::{ IntoResponse, Redirect }, http::{ HeaderMap, StatusCode }, Form};
+use barkeel_lib::render_json;
 
 pub async fn index(Extension(current_user): Extension<AuthState>, Query(pagination_query): Query<PaginationQuery>, headers: HeaderMap, State(config): State<Arc<Config>>) -> impl IntoResponse {
     let total_results: i64 = get_total(config.clone());
@@ -21,7 +22,7 @@ pub async fn index(Extension(current_user): Extension<AuthState>, Query(paginati
     match articles.limit(pagination.per_page as i64).offset(pagination.offset as i64).load::<Article>(&mut config.database.pool.get().unwrap()) {
         Ok(results) => {
             if get_content_type(headers) == "application/json" {
-                render_json(config, results)
+                render_json!(config, results, error_controller)
             } else {    
                 render_html(current_user, config, results, pagination).await
             }
@@ -63,17 +64,6 @@ async fn render_html(current_user: AuthState, config: Arc<Config>, results: Vec<
         },
         Err(err) => {
             error_controller::handler_error(config, StatusCode::BAD_REQUEST, err.to_string())
-        }
-    }
-}
-
-fn render_json(config: Arc<Config>, results: Vec<Article>) -> Response<'static> {
-    match  serde_json::to_string(&results) {
-        Ok(serialized) => {
-            return Response{status_code: StatusCode::OK, content_type: "application/json", datas: serialized};
-        },
-        Err(err) => {
-            return error_controller::handler_error(config, StatusCode::BAD_REQUEST, err.to_string());
         }
     }
 }
