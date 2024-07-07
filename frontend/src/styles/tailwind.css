@@ -14,3 +14,9 @@
 .hljs {
   background-color: transparent !important;
 }
+
+.ql-code-block-container {
+  overflow-x: auto;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
