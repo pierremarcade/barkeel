@@ -1,8 +1,7 @@
 use crate::config::application::Config;
 use crate::app::models::article::{ Article, ArticleForm, ArticleFormEdit };
 use crate::db::schema::articles::{self, dsl::*};
-use crate::app::utils::{ get_content_type, csrf_token_is_valid };
-use crate::app::controllers::{ error_controller, prepare_tera_context };
+use crate::app::controllers::{ get_content_type, is_csrf_token_valid, error_controller, prepare_tera_context };
 use crate::app::middlewares::auth::AuthState;
 use barkeel_lib::storage::{local_storage::LocalStorage, FileStorage};
 use barkeel_lib::utils::slugify;
@@ -89,7 +88,7 @@ pub async fn new(Extension(current_user): Extension<AuthState>, headers: HeaderM
 }
 
 pub async fn create(Extension(mut current_user): Extension<AuthState>, headers: HeaderMap, State(config): State<Arc<Config>>, Form(payload): Form<ArticleFormEdit>) -> Redirect {
-    if csrf_token_is_valid(headers, config.clone(), payload.csrf_token) {
+    if is_csrf_token_valid(headers, config.clone(), payload.csrf_token) {
         if let Some(user) = current_user.get_user().await {
             let _inserted_record: Article = diesel::insert_into(articles)
                 .values((title.eq(payload.title.clone()), slug.eq(slugify(&payload.title.clone())),content.eq(payload.content), published_at.eq(Utc::now().naive_utc()), author_id.eq(user.id), homepage.eq(payload.homepage)))
@@ -116,7 +115,7 @@ pub async fn edit(Extension(current_user): Extension<AuthState>, headers: Header
 }
 
 pub async fn update(headers: HeaderMap, State(config): State<Arc<Config>>, Path(param_id): Path<i32>, Form(payload): Form<ArticleFormEdit>) -> Redirect {
-    if csrf_token_is_valid(headers, config.clone(), payload.csrf_token) {
+    if is_csrf_token_valid(headers, config.clone(), payload.csrf_token) {
         let _updated_record: Article = diesel::update(articles)
             .filter(id.eq(param_id))
             .set((title.eq(payload.title.clone()), slug.eq(slugify(&payload.title.clone())), content.eq(payload.content), homepage.eq(payload.homepage)))
