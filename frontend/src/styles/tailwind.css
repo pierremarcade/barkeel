@@ -15,7 +15,7 @@
   background-color: transparent !important;
 }
 
-.ql-code-block-container {
+.prism-code {
   overflow-x: auto;
   -ms-overflow-style: none;
   scrollbar-width: none;
