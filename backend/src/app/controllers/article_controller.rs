@@ -1,5 +1,5 @@
 use crate::config::application::Config;
-use crate::app::models::article::{ Article, ArticleForm, ArticleFormEdit };
+use crate::app::models::article::{ Article, ArticleForm, FormTrait };
 use crate::db::schema::articles::{self, dsl::*};
 use crate::app::controllers::{ get_content_type, is_csrf_token_valid, error_controller, prepare_tera_context };
 use crate::app::middlewares::auth::AuthState;
@@ -81,13 +81,12 @@ pub async fn new(Extension(current_user): Extension<AuthState>, headers: HeaderM
     tera.add_raw_template("article/form.html", include_str!("../views/article/form.html")).unwrap();
     let mut context = prepare_tera_context(current_user).await;
     let config_ref = config.as_ref();
-    let article_from = ArticleForm::new();
-    context.insert("data",&article_from.build_form(config_ref, headers, "/articles"));
+    context.insert("data",&Article::build_create_form(config_ref, headers, "/articles"));
     let rendered = tera.render("article/form.html", &context).unwrap();
     Response{status_code: StatusCode::OK, content_type: "text/html", datas: rendered}
 }
 
-pub async fn create(Extension(mut current_user): Extension<AuthState>, headers: HeaderMap, State(config): State<Arc<Config>>, Form(payload): Form<ArticleFormEdit>) -> Redirect {
+pub async fn create(Extension(mut current_user): Extension<AuthState>, headers: HeaderMap, State(config): State<Arc<Config>>, Form(payload): Form<ArticleForm>) -> Redirect {
     if is_csrf_token_valid(headers, config.clone(), payload.csrf_token) {
         if let Some(user) = current_user.get_user().await {
             let _inserted_record: Article = diesel::insert_into(articles)
@@ -109,12 +108,12 @@ pub async fn edit(Extension(current_user): Extension<AuthState>, headers: Header
         .expect("Error loading data");
     let mut context = prepare_tera_context(current_user).await;
     let config_ref = config.as_ref();
-    context.insert("data", &result.build_form(config_ref, headers, format!("/articles/{}", param_id).as_str()));
+    context.insert("data", &result.build_edit_form(config_ref, headers, format!("/articles/{}", param_id).as_str()));
     let rendered = tera.render("article/form.html", &context).unwrap();
     Response{status_code: StatusCode::OK, content_type: "text/html", datas: rendered}
 }
 
-pub async fn update(headers: HeaderMap, State(config): State<Arc<Config>>, Path(param_id): Path<i32>, Form(payload): Form<ArticleFormEdit>) -> Redirect {
+pub async fn update(headers: HeaderMap, State(config): State<Arc<Config>>, Path(param_id): Path<i32>, Form(payload): Form<ArticleForm>) -> Redirect {
     if is_csrf_token_valid(headers, config.clone(), payload.csrf_token) {
         let _updated_record: Article = diesel::update(articles)
             .filter(id.eq(param_id))

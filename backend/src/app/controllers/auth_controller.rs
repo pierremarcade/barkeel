@@ -1,6 +1,6 @@
 use crate::config::application::Config;
 use crate::app::models::user::User;
-use crate::app::models::auth::{Credentials, CredentialsForm};
+use crate::app::models::auth::{Credentials, FormTrait};
 use barkeel_lib::app::http::response::Response;
 use crate::db::schema::users::dsl::*;
 use std::sync::Arc;
@@ -35,7 +35,7 @@ pub mod get {
         tera.add_raw_template("login.html", include_str!("../views/login.html")).unwrap();
         let mut context = Context::new();
         let config_ref = config.as_ref();
-        context.insert("data", &CredentialsForm::new().build_form(config_ref, headers, "/login"));
+        context.insert("data", &Credentials::build_create_form(config_ref, headers, "/login"));
         let rendered = tera.render("login.html", &context).unwrap();
         Response{status_code: StatusCode::OK, content_type: "text/html", datas: rendered}
     }

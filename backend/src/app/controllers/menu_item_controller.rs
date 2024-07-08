@@ -1,5 +1,5 @@
 use crate::config::application::Config;
-use crate::app::models::menu_item::{ MenuItem, MenuItemForm, MenuItemFormEdit };
+use crate::app::models::menu_item::{ MenuItem, MenuItemForm, FormTrait };
 use crate::db::schema::menu_items::dsl::*;
 use diesel::prelude::*;
 use std::sync::Arc;
@@ -68,13 +68,13 @@ pub async fn new(Extension(current_user): Extension<AuthState>, headers: HeaderM
 
     let mut context = prepare_tera_context(current_user).await;
     let config_ref = config.as_ref();
-    context.insert("data",&MenuItemForm::new().build_form(config_ref, headers, "/menu-items"));
+    context.insert("data",&MenuItem::build_create_form(config_ref, headers, "/menu-items"));
 
     let rendered = tera.render("menu_item/form.html", &context).unwrap();
     Response{status_code: StatusCode::OK, content_type: "text/html", datas: rendered}
 }
 
-pub async fn create(headers: HeaderMap, State(config): State<Arc<Config>>, Form(payload): Form<MenuItemFormEdit>) -> Redirect {
+pub async fn create(headers: HeaderMap, State(config): State<Arc<Config>>, Form(payload): Form<MenuItemForm>) -> Redirect {
     if is_csrf_token_valid(headers, config.clone(), payload.csrf_token) {
         let _inserted_record: MenuItem = diesel::insert_into(menu_items)
             .values((menu_id.eq(payload.menu_id), article_id.eq(payload.article_id), label.eq(payload.label), position.eq(payload.position)))
@@ -95,13 +95,13 @@ pub async fn edit(Extension(current_user): Extension<AuthState>, headers: Header
 
     let mut context = prepare_tera_context(current_user).await;
     let config_ref = config.as_ref();
-    context.insert("data", &result.build_form(config_ref, headers, format!("/menu-items/{}", param_id).as_str()));
+    context.insert("data", &result.build_edit_form(config_ref, headers, format!("/menu-items/{}", param_id).as_str()));
 
     let rendered = tera.render("menu_item/form.html", &context).unwrap();
     Response{status_code: StatusCode::OK, content_type: "text/html", datas: rendered}
 }
 
-pub async fn update(headers: HeaderMap, State(config): State<Arc<Config>>, Path(param_id): Path<i32>, Form(payload): Form<MenuItemFormEdit>) -> Redirect {
+pub async fn update(headers: HeaderMap, State(config): State<Arc<Config>>, Path(param_id): Path<i32>, Form(payload): Form<MenuItemForm>) -> Redirect {
     if is_csrf_token_valid(headers, config.clone(), payload.csrf_token) {
         let _updated_record: MenuItem = diesel::update(menu_items)
             .filter(id.eq(param_id))

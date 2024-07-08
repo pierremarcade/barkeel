@@ -1,5 +1,5 @@
 use crate::config::application::Config;
-use crate::app::models::user::{ User, UserForm, UserFormEdit };
+use crate::app::models::user::{ User, UserForm, FormTrait };
 use crate::db::schema::users::dsl::*;
 use crate::app::controllers::{ get_content_type, is_csrf_token_valid, error_controller, prepare_tera_context };
 use crate::app::middlewares::auth::AuthState;
@@ -68,13 +68,13 @@ pub async fn new(Extension(current_user): Extension<AuthState>, headers: HeaderM
 
     let mut context = prepare_tera_context(current_user).await;
     let config_ref = config.as_ref();
-    context.insert("data",&UserForm::new().build_form(config_ref, headers, "/users"));
+    context.insert("data",&User::build_create_form(config_ref, headers, "/users"));
 
     let rendered = tera.render("user/form.html", &context).unwrap();
     Response{status_code: StatusCode::OK, content_type: "text/html", datas: rendered}
 }
 
-pub async fn create(headers: HeaderMap, State(config): State<Arc<Config>>, Form(payload): Form<UserFormEdit>) -> Redirect {
+pub async fn create(headers: HeaderMap, State(config): State<Arc<Config>>, Form(payload): Form<UserForm>) -> Redirect {
     if is_csrf_token_valid(headers, config.clone(), payload.csrf_token) {
         let _inserted_record: User = diesel::insert_into(users)
             .values((name.eq(payload.name), email.eq(payload.email), password.eq(payload.password), role_id.eq(payload.role_id), session_token.eq(payload.session_token)))
@@ -95,13 +95,13 @@ pub async fn edit(Extension(current_user): Extension<AuthState>, headers: Header
 
     let mut context = prepare_tera_context(current_user).await;
     let config_ref = config.as_ref();
-    context.insert("data", &result.build_form(config_ref, headers, format!("/users/{}", param_id).as_str()));
+    context.insert("data", &result.build_edit_form(config_ref, headers, format!("/users/{}", param_id).as_str()));
 
     let rendered = tera.render("user/form.html", &context).unwrap();
     Response{status_code: StatusCode::OK, content_type: "text/html", datas: rendered}
 }
 
-pub async fn update(headers: HeaderMap, State(config): State<Arc<Config>>, Path(param_id): Path<i32>, Form(payload): Form<UserFormEdit>) -> Redirect {
+pub async fn update(headers: HeaderMap, State(config): State<Arc<Config>>, Path(param_id): Path<i32>, Form(payload): Form<UserForm>) -> Redirect {
     if is_csrf_token_valid(headers, config.clone(), payload.csrf_token) {
         let _updated_record: User = diesel::update(users)
             .filter(id.eq(param_id))
