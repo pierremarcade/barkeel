@@ -1,5 +1,5 @@
 use crate::config::application::Config;
-use crate::app::models::article::{ Article, ArticleForm, FormTrait };
+use crate::app::models::article::{ Article, ArticleForm };
 use crate::db::schema::articles::{self, dsl::*};
 use crate::app::controllers::{ get_content_type, is_csrf_token_valid, error_controller, prepare_tera_context };
 use crate::app::middlewares::auth::AuthState;

@@ -1,5 +1,5 @@
 use crate::config::application::Config;
-use crate::app::models::menu::{ Menu, MenuForm, FormTrait };
+use crate::app::models::menu::{ Menu, MenuForm };
 use crate::db::schema::menus::dsl::*;
 use crate::app::controllers::{ get_content_type, is_csrf_token_valid, error_controller, prepare_tera_context };
 use crate::app::middlewares::auth::AuthState;

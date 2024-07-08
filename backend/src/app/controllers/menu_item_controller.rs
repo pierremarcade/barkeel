@@ -1,5 +1,5 @@
 use crate::config::application::Config;
-use crate::app::models::menu_item::{ MenuItem, MenuItemForm, FormTrait };
+use crate::app::models::menu_item::{ MenuItem, MenuItemForm };
 use crate::db::schema::menu_items::dsl::*;
 use diesel::prelude::*;
 use std::sync::Arc;
