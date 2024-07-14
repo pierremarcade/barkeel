@@ -9,6 +9,7 @@ use crate::app::controllers::{ get_content_type, is_csrf_token_valid, error_cont
 use crate::app::middlewares::auth::AuthState;
 use barkeel_lib::app::pagination::{ PaginationQuery, Pagination, PaginationTrait };
 use barkeel_lib::app::http::response::Response;
+use validator::{Validate,  ValidationErrors, ValidationError};
 use crate::{render_html, render_json, get_total};
 
 pub async fn index(Extension(current_user): Extension<AuthState>, Query(pagination_query): Query<PaginationQuery>, headers: HeaderMap, State(config): State<Arc<Config>>) -> impl IntoResponse {
@@ -17,7 +18,7 @@ pub async fn index(Extension(current_user): Extension<AuthState>, Query(paginati
     match menu_items.limit(pagination.per_page as i64).offset(pagination.offset as i64).load::<MenuItem>(&mut config.database.pool.get().unwrap()) {
         Ok(results) => {
             if get_content_type(headers) == "application/json" {
-                render_json!(config, results)
+                render_json!(StatusCode::OK, results)
             } else {
                 let mut context = prepare_tera_context(current_user).await;
                 context.insert("title", "MenuItem");
@@ -68,20 +69,33 @@ pub async fn new(Extension(current_user): Extension<AuthState>, headers: HeaderM
 
     let mut context = prepare_tera_context(current_user).await;
     let config_ref = config.as_ref();
+    context.insert("errors_message", "");
     context.insert("data",&MenuItem::build_create_form(config_ref, headers, "/menu-items"));
 
     let rendered = tera.render("menu_item/form.html", &context).unwrap();
     Response{status_code: StatusCode::OK, content_type: "text/html", datas: rendered}
 }
 
-pub async fn create(headers: HeaderMap, State(config): State<Arc<Config>>, Form(payload): Form<MenuItemForm>) -> Redirect {
-    if is_csrf_token_valid(headers, config.clone(), payload.csrf_token) {
-        let _inserted_record: MenuItem = diesel::insert_into(menu_items)
-            .values((menu_id.eq(payload.menu_id), article_id.eq(payload.article_id), label.eq(payload.label), position.eq(payload.position)))
-            .get_result(&mut config.database.pool.get().unwrap())
-            .expect("Error inserting data");
+pub async fn create(headers: HeaderMap, State(config): State<Arc<Config>>, Form(payload): Form<MenuItemForm>) -> impl IntoResponse  {
+    if is_csrf_token_valid(headers, config.clone(), payload.clone().csrf_token) {
+        match payload.validate() {
+            Ok(_) => {
+                let _inserted_record: MenuItem = diesel::insert_into(menu_items)
+                .values((menu_id.eq(payload.menu_id), article_id.eq(payload.article_id), label.eq(payload.label), position.eq(payload.position)))
+                .get_result(&mut config.database.pool.get().unwrap())
+                .expect("Error inserting data");
+                let serialized = serde_json::to_string(&"menu item created").unwrap();
+                render_json!(StatusCode::OK, serialized)
+            },
+            Err(e) => {
+                let serialized = serde_json::to_string(&e).unwrap();
+                render_json!(StatusCode::BAD_REQUEST, serialized)
+            }
+        };
+    } else {
+        let serialized = serde_json::to_string(&"Invalid csrf Token").unwrap();
+        render_json!(StatusCode::BAD_REQUEST, serialized)
     }
-    Redirect::to("/menu-items") 
 }
 
 pub async fn edit(Extension(current_user): Extension<AuthState>, headers: HeaderMap, Path(param_id): Path<i32>, State(config): State<Arc<Config>>) -> impl IntoResponse {

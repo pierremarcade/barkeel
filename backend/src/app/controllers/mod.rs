@@ -54,14 +54,14 @@ macro_rules! render_html {
 
 #[macro_export]
 macro_rules! render_json {
-    ($config:ident, $results:ident) => {
+    ($status_code:expr, $results:ident) => {
         {
             match serde_json::to_string(&$results) {
                 Ok(serialized) => {
-                    return Response{status_code: axum::http::StatusCode::OK, content_type: "application/json", datas: serialized};
+                    return Response{status_code: $status_code, content_type: "application/json", datas: serialized};
                 },
                 Err(err) => {
-                    return error_controller::handler_error($config, axum::http::StatusCode::BAD_REQUEST, err.to_string());
+                    return Response{status_code: axum::http::StatusCode::BAD_REQUEST, content_type: "application/json", datas: err.to_string()};
                 }
             }
         }  

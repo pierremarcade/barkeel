@@ -10,7 +10,6 @@ use std::time::Duration;
 use tower::ServiceBuilder;
 use inflector::Inflector;
 
-
 macro_rules! resource_routes {
     ($router:ident, $model:ident) => {
         {
