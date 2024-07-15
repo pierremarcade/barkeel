@@ -22,23 +22,7 @@ export function beforeSubmit() {
                 datetime_field.value = date.toISOString().slice(0, 19);
             });
 
-            try {
-                const formData = new FormData(form);
-                const response = await fetch(form.action, { 
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded'
-                    },
-                    body: new URLSearchParams(formData).toString(),
-                });
-    
-                if (!response.ok) {
-                    throw new Error(await response.text());
-                }
-                window.location.href = getRightPartOfActionUrl(form.action);
-            } catch (error) {
-                alert(error.message);
-            }
+            form.submit();
         });
     }
 }

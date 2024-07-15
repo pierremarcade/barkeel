@@ -9,7 +9,7 @@ use crate::app::controllers::{ get_content_type, is_csrf_token_valid, error_cont
 use crate::app::middlewares::auth::AuthState;
 use barkeel_lib::app::pagination::{ PaginationQuery, Pagination, PaginationTrait };
 use barkeel_lib::app::http::response::Response;
-use validator::{Validate,  ValidationErrors, ValidationError};
+use validator::Validate;
 use crate::{render_html, render_json, get_total};
 
 pub async fn index(Extension(current_user): Extension<AuthState>, Query(pagination_query): Query<PaginationQuery>, headers: HeaderMap, State(config): State<Arc<Config>>) -> impl IntoResponse {
@@ -76,25 +76,35 @@ pub async fn new(Extension(current_user): Extension<AuthState>, headers: HeaderM
     Response{status_code: StatusCode::OK, content_type: "text/html", datas: rendered}
 }
 
-pub async fn create(headers: HeaderMap, State(config): State<Arc<Config>>, Form(payload): Form<MenuItemForm>) -> impl IntoResponse  {
-    if is_csrf_token_valid(headers, config.clone(), payload.clone().csrf_token) {
+pub async fn create(Extension(current_user): Extension<AuthState>, headers: HeaderMap, State(config): State<Arc<Config>>, Form(payload): Form<MenuItemForm>) -> impl IntoResponse  {
+    if is_csrf_token_valid(headers.clone(), config.clone(), payload.clone().csrf_token) {
         match payload.validate() {
             Ok(_) => {
                 let _inserted_record: MenuItem = diesel::insert_into(menu_items)
                 .values((menu_id.eq(payload.menu_id), article_id.eq(payload.article_id), label.eq(payload.label), position.eq(payload.position)))
                 .get_result(&mut config.database.pool.get().unwrap())
                 .expect("Error inserting data");
+                let _ = Redirect::to("/menu-items");
                 let serialized = serde_json::to_string(&"menu item created").unwrap();
                 render_json!(StatusCode::OK, serialized)
             },
             Err(e) => {
+                let tera: &Tera = &config.template;
+                let mut tera = tera.clone();
+                tera.add_raw_template("menu_item/form.html", include_str!("../views/menu_item/form.html")).unwrap();
                 let serialized = serde_json::to_string(&e).unwrap();
-                render_json!(StatusCode::BAD_REQUEST, serialized)
+                let mut context = prepare_tera_context(current_user).await;
+                let config_ref = config.as_ref();
+                context.insert("errors_message", &serialized);
+                context.insert("data",&payload.build_edit_form(config_ref, headers, "/menu-items"));
+            
+                let rendered = tera.render("menu_item/form.html", &context).unwrap();
+                Response{status_code: StatusCode::OK, content_type: "text/html", datas: rendered}
             }
-        };
+        }
     } else {
-        let serialized = serde_json::to_string(&"Invalid csrf Token").unwrap();
-        render_json!(StatusCode::BAD_REQUEST, serialized)
+        let serialized = serde_json::to_string(&"Invaid CSRF token").unwrap();
+        render_json!(StatusCode::BAD_REQUEST, serialized) 
     }
 }
 
@@ -109,6 +119,7 @@ pub async fn edit(Extension(current_user): Extension<AuthState>, headers: Header
 
     let mut context = prepare_tera_context(current_user).await;
     let config_ref = config.as_ref();
+    context.insert("errors_message", &"");
     context.insert("data", &result.build_edit_form(config_ref, headers, format!("/menu-items/{}", param_id).as_str()));
 
     let rendered = tera.render("menu_item/form.html", &context).unwrap();

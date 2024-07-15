@@ -58,10 +58,10 @@ macro_rules! render_json {
         {
             match serde_json::to_string(&$results) {
                 Ok(serialized) => {
-                    return Response{status_code: $status_code, content_type: "application/json", datas: serialized};
+                    Response{status_code: $status_code, content_type: "application/json", datas: serialized}
                 },
                 Err(err) => {
-                    return Response{status_code: axum::http::StatusCode::BAD_REQUEST, content_type: "application/json", datas: err.to_string()};
+                    Response{status_code: axum::http::StatusCode::BAD_REQUEST, content_type: "application/json", datas: err.to_string()}
                 }
             }
         }  
