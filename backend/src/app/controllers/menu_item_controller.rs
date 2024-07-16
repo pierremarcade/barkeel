@@ -9,8 +9,8 @@ use crate::app::controllers::{ get_content_type, is_csrf_token_valid, error_cont
 use crate::app::middlewares::auth::AuthState;
 use barkeel_lib::app::pagination::{ PaginationQuery, Pagination, PaginationTrait };
 use barkeel_lib::app::http::response::Response;
-use validator::Validate;
-use crate::{render_html, render_json, get_total};
+use validator::{Validate, ValidationErrors};
+use crate::{ render_html, render_json, get_total, render_form };
 
 pub async fn index(Extension(current_user): Extension<AuthState>, Query(pagination_query): Query<PaginationQuery>, headers: HeaderMap, State(config): State<Arc<Config>>) -> impl IntoResponse {
     let total_results: i64 = get_total!(config, menu_items);
@@ -63,17 +63,9 @@ pub async fn show(Extension(current_user): Extension<AuthState>, Path(param_id):
 }
 
 pub async fn new(Extension(current_user): Extension<AuthState>, headers: HeaderMap, State(config): State<Arc<Config>>) -> impl IntoResponse {
-    let tera: &Tera = &config.template;
-    let mut tera = tera.clone();
-    tera.add_raw_template("menu_item/form.html", include_str!("../views/menu_item/form.html")).unwrap();
-
-    let mut context = prepare_tera_context(current_user).await;
     let config_ref = config.as_ref();
-    context.insert("errors_message", "");
-    context.insert("data",&MenuItem::build_create_form(config_ref, headers, "/menu-items"));
-
-    let rendered = tera.render("menu_item/form.html", &context).unwrap();
-    Response{status_code: StatusCode::OK, content_type: "text/html", datas: rendered}
+    let form = MenuItem::build_create_form(config_ref, headers, "/menu-items");
+    render_form!(form, config, current_user, None::<Option<ValidationErrors>>)
 }
 
 pub async fn create(Extension(current_user): Extension<AuthState>, headers: HeaderMap, State(config): State<Arc<Config>>, Form(payload): Form<MenuItemForm>) -> impl IntoResponse  {
@@ -89,17 +81,9 @@ pub async fn create(Extension(current_user): Extension<AuthState>, headers: Head
                 render_json!(StatusCode::OK, serialized)
             },
             Err(e) => {
-                let tera: &Tera = &config.template;
-                let mut tera = tera.clone();
-                tera.add_raw_template("menu_item/form.html", include_str!("../views/menu_item/form.html")).unwrap();
-                let serialized = serde_json::to_string(&e).unwrap();
-                let mut context = prepare_tera_context(current_user).await;
                 let config_ref = config.as_ref();
-                context.insert("errors_message", &serialized);
-                context.insert("data",&payload.build_edit_form(config_ref, headers, "/menu-items"));
-            
-                let rendered = tera.render("menu_item/form.html", &context).unwrap();
-                Response{status_code: StatusCode::OK, content_type: "text/html", datas: rendered}
+                let form = payload.build_edit_form(config_ref, headers, "/menu-items");
+                render_form!(form, config, current_user, Some(e.clone()))
             }
         }
     } else {
@@ -109,21 +93,14 @@ pub async fn create(Extension(current_user): Extension<AuthState>, headers: Head
 }
 
 pub async fn edit(Extension(current_user): Extension<AuthState>, headers: HeaderMap, Path(param_id): Path<i32>, State(config): State<Arc<Config>>) -> impl IntoResponse {
-    let tera: &Tera = &config.template;
-    let mut tera = tera.clone();
-    tera.add_raw_template("menu_item/form.html", include_str!("../views/menu_item/form.html")).unwrap();
     let result = menu_items
         .find(param_id)
         .first::<MenuItem>(&mut config.database.pool.get().unwrap())
         .expect("Error loading data");
 
-    let mut context = prepare_tera_context(current_user).await;
     let config_ref = config.as_ref();
-    context.insert("errors_message", &"");
-    context.insert("data", &result.build_edit_form(config_ref, headers, format!("/menu-items/{}", param_id).as_str()));
-
-    let rendered = tera.render("menu_item/form.html", &context).unwrap();
-    Response{status_code: StatusCode::OK, content_type: "text/html", datas: rendered}
+    let form = result.build_edit_form(config_ref, headers, format!("/menu-items/{}", param_id).as_str());
+    render_form!(form, config, current_user, None::<Option<ValidationErrors>>)
 }
 
 pub async fn update(headers: HeaderMap, State(config): State<Arc<Config>>, Path(param_id): Path<i32>, Form(payload): Form<MenuItemForm>) -> Redirect {

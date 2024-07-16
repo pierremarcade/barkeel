@@ -37,6 +37,23 @@ pub fn is_csrf_token_valid(headers: HeaderMap, config: Arc<Config>, csrf_token: 
 
 
 #[macro_export]
+macro_rules! render_form {
+    ($form:ident, $config:ident, $current_user:ident, $error:expr) => {
+        {
+            let tera: &Tera = &$config.template;
+            let mut context = prepare_tera_context($current_user).await;
+            if let Some(error) = $error {
+                let serialized = serde_json::to_string(&error).unwrap();
+                context.insert("errors_message", &serialized);
+            }
+            context.insert("form",&$form);
+            let rendered = tera.render("form.html", &context).unwrap();
+            Response{status_code: StatusCode::OK, content_type: "text/html", datas: rendered}
+        }  
+    };
+}
+
+#[macro_export]
 macro_rules! render_html {
     ($config:ident, $rendered:ident) => {
         {
