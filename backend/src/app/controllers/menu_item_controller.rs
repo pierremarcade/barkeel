@@ -103,18 +103,32 @@ pub async fn edit(Extension(current_user): Extension<AuthState>, headers: Header
     render_form!(form, config, current_user, None::<Option<ValidationErrors>>)
 }
 
-pub async fn update(headers: HeaderMap, State(config): State<Arc<Config>>, Path(param_id): Path<i32>, Form(payload): Form<MenuItemForm>) -> Redirect {
-    if is_csrf_token_valid(headers, config.clone(), payload.csrf_token) {
-        let _updated_record: MenuItem = diesel::update(menu_items)
-            .filter(id.eq(param_id))
-            .set((menu_id.eq(payload.menu_id), article_id.eq(payload.article_id), label.eq(payload.label), position.eq(payload.position)))
-            .get_result(&mut config.database.pool.get().unwrap())
-            .expect("Error updating data");
+pub async fn update(Extension(current_user): Extension<AuthState>, headers: HeaderMap, State(config): State<Arc<Config>>, Path(param_id): Path<i32>, Form(payload): Form<MenuItemForm>) -> impl IntoResponse {
+    if is_csrf_token_valid(headers.clone(), config.clone(), payload.clone().csrf_token) {
+        match payload.validate() {
+            Ok(_) => {
+                let _updated_record: MenuItem = diesel::update(menu_items)
+                    .filter(id.eq(param_id))
+                    .set((menu_id.eq(payload.menu_id), article_id.eq(payload.article_id), label.eq(payload.label), position.eq(payload.position)))
+                    .get_result(&mut config.database.pool.get().unwrap())
+                    .expect("Error updating data");
+                let _ = Redirect::to("/menu-items");
+                let serialized = serde_json::to_string(&"menu item updated").unwrap();
+                render_json!(StatusCode::OK, serialized)
+            },
+            Err(e) => {
+                let config_ref = config.as_ref();
+                let form = payload.build_edit_form(config_ref, headers, "/menu-items");
+                render_form!(form, config, current_user, Some(e.clone()))
+            }
+        }
+    } else {
+        let serialized = serde_json::to_string(&"Invaid CSRF token").unwrap();
+        render_json!(StatusCode::BAD_REQUEST, serialized) 
     }
-    Redirect::to("/menu-items") 
 }
 
-pub async fn delete(Path(param_id): Path<i32>, State(config): State<Arc<Config>>) -> Redirect {
+pub async fn delete(Path(param_id): Path<i32>, State(config): State<Arc<Config>>) -> Redirect  {
     diesel::delete(menu_items)
         .filter(id.eq(param_id))
         .execute(&mut config.database.pool.get().unwrap())
