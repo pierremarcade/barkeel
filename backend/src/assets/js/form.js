@@ -10,7 +10,7 @@ export function beforeSubmit() {
                 field.value = datetime_field.value;
             }
         });
-        form.addEventListener('submit', function(event) {
+        form.addEventListener('submit', async function(event) {
             event.preventDefault();
             form.querySelectorAll('h1, h2, h3, h4, h5, h6').forEach(function(titleElement) {
                 var slug = createSlug(titleElement.textContent);
@@ -21,8 +21,20 @@ export function beforeSubmit() {
                 let date = new Date(field.value);
                 datetime_field.value = date.toISOString().slice(0, 19);
             });
+
             form.submit();
         });
+    }
+}
+
+function getRightPartOfActionUrl(actionUrl) {
+    const splitUrl = actionUrl.split('/');
+
+    if (splitUrl.length > 1) {
+        return '/' + splitUrl.slice(1).join('/');
+    } else {
+        // Si il n'y a pas de slash, retournez la chaîne telle quelle
+        return actionUrl;
     }
 }
 

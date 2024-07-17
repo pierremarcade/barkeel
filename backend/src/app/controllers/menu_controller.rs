@@ -17,7 +17,7 @@ pub async fn index(Extension(current_user): Extension<AuthState>, Query(paginati
     match menus.limit(pagination.per_page as i64).offset(pagination.offset as i64).load::<Menu>(&mut config.database.pool.get().unwrap()) {
         Ok(results) => {
             if get_content_type(headers) == "application/json" {
-                render_json!(config, results)
+                render_json!(StatusCode::OK, results)
             } else {    
                 let mut context = prepare_tera_context(current_user).await;
                 context.insert("title", "Menu");

@@ -3,6 +3,7 @@ use diesel::prelude::*;
 use barkeel_derives::FormBuilder;
 use serde::{Deserialize, Serialize};
 use chrono::NaiveDateTime;
+use validator::Validate;
 
 #[derive(Serialize, Deserialize, Identifiable, Queryable, FormBuilder, Selectable, Clone)]
 #[diesel(table_name = crate::db::schema::articles)]

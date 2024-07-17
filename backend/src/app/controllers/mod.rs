@@ -37,6 +37,23 @@ pub fn is_csrf_token_valid(headers: HeaderMap, config: Arc<Config>, csrf_token: 
 
 
 #[macro_export]
+macro_rules! render_form {
+    ($form:ident, $config:ident, $current_user:ident, $error:expr) => {
+        {
+            let tera: &Tera = &$config.template;
+            let mut context = prepare_tera_context($current_user).await;
+            if let Some(error) = $error {
+                let serialized = serde_json::to_string(&error).unwrap();
+                context.insert("errors_message", &serialized);
+            }
+            context.insert("form",&$form);
+            let rendered = tera.render("form.html", &context).unwrap();
+            Response{status_code: StatusCode::OK, content_type: "text/html", datas: rendered}
+        }  
+    };
+}
+
+#[macro_export]
 macro_rules! render_html {
     ($config:ident, $rendered:ident) => {
         {
@@ -54,14 +71,14 @@ macro_rules! render_html {
 
 #[macro_export]
 macro_rules! render_json {
-    ($config:ident, $results:ident) => {
+    ($status_code:expr, $results:ident) => {
         {
             match serde_json::to_string(&$results) {
                 Ok(serialized) => {
-                    return Response{status_code: axum::http::StatusCode::OK, content_type: "application/json", datas: serialized};
+                    Response{status_code: $status_code, content_type: "application/json", datas: serialized}
                 },
                 Err(err) => {
-                    return error_controller::handler_error($config, axum::http::StatusCode::BAD_REQUEST, err.to_string());
+                    Response{status_code: axum::http::StatusCode::BAD_REQUEST, content_type: "application/json", datas: err.to_string()}
                 }
             }
         }  
