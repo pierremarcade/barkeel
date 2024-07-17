@@ -35,6 +35,91 @@ pub fn is_csrf_token_valid(headers: HeaderMap, config: Arc<Config>, csrf_token: 
     return false;
 }
 
+#[macro_export]
+macro_rules! partial_crud {
+    ($resource:ident, $model:ident) => {
+        pub async fn index(Extension(current_user): Extension<AuthState>, Query(pagination_query): Query<PaginationQuery>, headers: HeaderMap, State(config): State<Arc<Config>>) -> impl IntoResponse {
+            let total_results: i64 = get_total!(config, $resource);
+            let pagination = Pagination::new(pagination_query, total_results);
+            match $resource.limit(pagination.per_page as i64).offset(pagination.offset as i64).load::< $model>(&mut config.database.pool.get().unwrap()) {
+                Ok(results) => {
+                    if get_content_type(headers) == "application/json" {
+                        render_json!(StatusCode::OK, results)
+                    } else {
+                        let table_name = stringify!($resource);
+                        let model_class = table_name.to_class_case();
+                        let mut context = prepare_tera_context(current_user).await;
+                        context.insert("title", &model_class.as_str());
+                        context.insert("base_url", format!("/{}", table_name).as_str());
+                        context.insert("description", format!("A list of all the {}.", table_name).as_str());
+                        context.insert("datas", &results);
+                        context.insert("total_pages", &pagination.total_pages);
+                        context.insert("current_page", &pagination.current_page);
+                        context.insert("current_page_string", &pagination.current_page.to_string());
+                        context.insert("offset", &pagination.offset);
+                        context.insert("per_page", &pagination.per_page);
+                        context.insert("page_numbers", &pagination.generate_page_numbers());
+                        let tera: &mut tera::Tera = &mut config.template.clone();
+                        let _ = tera.add_raw_template("crud/index.html", include_str!("../views/crud/index.html"));
+                        let rendered = tera.render("crud/index.html", &context);
+                        render_html!(config, rendered)
+                    }
+                },
+                Err(err) => {
+                    error_controller::handler_error(config, StatusCode::BAD_REQUEST, err.to_string())
+                }
+            }
+        }
+
+        pub async fn show(Extension(current_user): Extension<AuthState>, Path(param_id): Path<i32>, State(config): State<Arc<Config>>) -> impl IntoResponse {
+            let tera: &Tera = &config.template;
+            let mut tera = tera.clone();
+            let table_name = stringify!($resource);
+            let model_class = table_name.to_class_case();
+            match $resource.find(param_id).first::<$model>(&mut config.database.pool.get().unwrap()) {
+                Ok(result) => {
+                    tera.add_raw_template("crud/show.html", include_str!("../views/crud/show.html")).unwrap();
+                    let mut context = prepare_tera_context(current_user).await;
+                    context.insert("data", &result);
+                    context.insert("title", &model_class.as_str());
+                    context.insert("description", format!("{}'s Detail", model_class).as_str());
+                    let rendered = tera.render("crud/show.html", &context).unwrap();
+                    Response{status_code: StatusCode::OK, content_type: "text/html", datas: rendered}
+                },
+                _ => {
+                    error_controller::render_404(config)
+                }
+            }
+        }
+
+        pub async fn new(Extension(current_user): Extension<AuthState>, headers: HeaderMap, State(config): State<Arc<Config>>) -> impl IntoResponse {
+            let config_ref = config.as_ref();
+            let table_name = stringify!($resource);
+            let form = $model::build_create_form(config_ref, headers, format!("/{}", table_name).as_str());
+            render_form!(form, config, current_user, None::<Option<ValidationErrors>>)
+        }
+
+        pub async fn edit(Extension(current_user): Extension<AuthState>, headers: HeaderMap, Path(param_id): Path<i32>, State(config): State<Arc<Config>>) -> impl IntoResponse {
+            let result = $resource
+                .find(param_id)
+                .first::<$model>(&mut config.database.pool.get().unwrap())
+                .expect("Error loading data");
+            let table_name = stringify!($resource);
+            let config_ref = config.as_ref();
+            let form = result.build_edit_form(config_ref, headers, format!("/{}/{}", table_name, param_id).as_str());
+            render_form!(form, config, current_user, None::<Option<ValidationErrors>>)
+        }
+        
+        pub async fn delete(Path(param_id): Path<i32>, State(config): State<Arc<Config>>) -> Redirect {
+            let table_name = stringify!($resource);
+            diesel::delete($resource)
+                .filter(id.eq(param_id))
+                .execute(&mut config.database.pool.get().unwrap())
+                .expect("Error deleting data");
+            Redirect::to(format!("/{}", table_name).as_str()) 
+        }
+    };
+}
 
 #[macro_export]
 macro_rules! render_form {
