@@ -3,13 +3,14 @@ use crate::app::models::menu::{ Menu, MenuForm };
 use crate::db::schema::menus::dsl::*;
 use crate::app::controllers::{ get_content_type, is_csrf_token_valid, error_controller, prepare_tera_context };
 use crate::app::middlewares::auth::AuthState;
+use crate::{ render_html, render_json, get_total, render_form };
 use barkeel_lib::app::pagination::{ PaginationQuery, Pagination, PaginationTrait };
 use barkeel_lib::app::http::response::Response;
 use diesel::prelude::*;
 use std::sync::Arc;
 use tera::Tera;
-use axum::{ Extension, extract::{Path, State, Query}, response::{ IntoResponse, Redirect }, http::{ HeaderMap, StatusCode }, Form };
-use crate::{render_html, render_json, get_total};
+use axum::{  Extension, extract::{Path, State, Query}, response::{ IntoResponse, Redirect }, http::{ HeaderMap, StatusCode }, Form};
+use validator::{Validate, ValidationErrors};
 
 pub async fn index(Extension(current_user): Extension<AuthState>, Query(pagination_query): Query<PaginationQuery>, headers: HeaderMap, State(config): State<Arc<Config>>) -> impl IntoResponse {
     let total_results: i64 = get_total!(config, menus);
@@ -62,54 +63,69 @@ pub async fn show(Extension(current_user): Extension<AuthState>, Path(param_id):
 }
 
 pub async fn new(Extension(current_user): Extension<AuthState>, headers: HeaderMap, State(config): State<Arc<Config>>) -> impl IntoResponse {
-    let tera: &Tera = &config.template;
-    let mut tera = tera.clone();
-    tera.add_raw_template("menu/form.html", include_str!("../views/menu/form.html")).unwrap();
-
-    let mut context = prepare_tera_context(current_user).await;
     let config_ref = config.as_ref();
-    context.insert("data",&Menu::build_create_form(config_ref, headers, "/menus"));
-
-    let rendered = tera.render("menu/form.html", &context).unwrap();
-    Response{status_code: StatusCode::OK, content_type: "text/html", datas: rendered}
+    let form = Menu::build_create_form(config_ref, headers, "/menus");
+    render_form!(form, config, current_user, None::<Option<ValidationErrors>>)
 }
 
-pub async fn create(headers: HeaderMap, State(config): State<Arc<Config>>, Form(payload): Form<MenuForm>) -> Redirect {
-    if is_csrf_token_valid(headers, config.clone(), payload.csrf_token) {
-        let _inserted_record: Menu = diesel::insert_into(menus)
-            .values(name.eq(payload.name))
-            .get_result(&mut config.database.pool.get().unwrap())
-            .expect("Error inserting data");
+pub async fn create(Extension(current_user): Extension<AuthState>, headers: HeaderMap, State(config): State<Arc<Config>>, Form(payload): Form<MenuForm>) -> impl IntoResponse {
+    if is_csrf_token_valid(headers.clone(), config.clone(), payload.clone().csrf_token) {
+        match payload.validate() {
+            Ok(_) => {
+                let _inserted_record: Menu = diesel::insert_into(menus)
+                .values(name.eq(payload.name))
+                .get_result(&mut config.database.pool.get().unwrap())
+                .expect("Error inserting data");
+                let _ = Redirect::to("/menus");
+                let serialized = serde_json::to_string(&"Menu created").unwrap();
+                render_json!(StatusCode::OK, serialized)
+            },
+            Err(e) => {
+                let config_ref = config.as_ref();
+                let form = payload.build_edit_form(config_ref, headers, "/menus");
+                render_form!(form, config, current_user, Some(e.clone()))
+            }
+        }
+    } else {
+        let serialized = serde_json::to_string(&"Invalid CSRF token").unwrap();
+        render_json!(StatusCode::BAD_REQUEST, serialized) 
     }
-    Redirect::to("/menus") 
 }
 
 pub async fn edit(Extension(current_user): Extension<AuthState>, headers: HeaderMap, Path(param_id): Path<i32>, State(config): State<Arc<Config>>) -> impl IntoResponse {
-    let tera: &Tera = &config.template;
-    let mut tera = tera.clone();
-    tera.add_raw_template("menu/form.html", include_str!("../views/menu/form.html")).unwrap();
     let result = menus
         .find(param_id)
         .first::<Menu>(&mut config.database.pool.get().unwrap())
         .expect("Error loading data");
 
-    let mut context = prepare_tera_context(current_user).await;
     let config_ref = config.as_ref();
-    context.insert("data", &result.build_edit_form(config_ref, headers, format!("/menus/{}", param_id).as_str()));
-
-    let rendered = tera.render("menu/form.html", &context).unwrap();
-    Response{status_code: StatusCode::OK, content_type: "text/html", datas: rendered}
+    let form = result.build_edit_form(config_ref, headers, format!("/menus/{}", param_id).as_str());
+    render_form!(form, config, current_user, None::<Option<ValidationErrors>>)
 }
 
-pub async fn update(headers: HeaderMap, State(config): State<Arc<Config>>, Path(param_id): Path<i32>, Form(payload): Form<MenuForm>) -> Redirect {
-    if is_csrf_token_valid(headers, config.clone(), payload.csrf_token) {
-        let _updated_record: Menu = diesel::update(menus)
-            .filter(id.eq(param_id))
-            .set(name.eq(payload.name))
-            .get_result(&mut config.database.pool.get().unwrap())
-            .expect("Error updating data");
+pub async fn update(Extension(current_user): Extension<AuthState>, headers: HeaderMap, State(config): State<Arc<Config>>, Path(param_id): Path<i32>, Form(payload): Form<MenuForm>) -> impl IntoResponse {
+    if is_csrf_token_valid(headers.clone(), config.clone(), payload.clone().csrf_token) {
+        match payload.validate() {
+            Ok(_) => {
+                let _updated_record: Menu = diesel::update(menus)
+                    .filter(id.eq(param_id))
+                    .set(name.eq(payload.name))
+                    .get_result(&mut config.database.pool.get().unwrap())
+                    .expect("Error updating data");
+                let _ = Redirect::to("/menus");
+                let serialized = serde_json::to_string(&"Menu updated").unwrap();
+                render_json!(StatusCode::OK, serialized)
+            },
+            Err(e) => {
+                let config_ref = config.as_ref();
+                let form = payload.build_edit_form(config_ref, headers, "/menus");
+                render_form!(form, config, current_user, Some(e.clone()))
+            }
+        }
+    } else {
+        let serialized = serde_json::to_string(&"Invaid CSRF token").unwrap();
+        render_json!(StatusCode::BAD_REQUEST, serialized) 
     }
-    Redirect::to("/menus") 
 }
 
 pub async fn delete(Path(param_id): Path<i32>, State(config): State<Arc<Config>>) -> Redirect {
