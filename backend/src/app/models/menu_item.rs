@@ -9,7 +9,7 @@ use crate::db::schema::menu_items;
 
 #[derive(Serialize, Deserialize)]
 #[derive(Debug, PartialEq)]
-#[derive(Identifiable, Queryable, Associations, Selectable)]
+#[derive(Identifiable, Queryable, Associations, Selectable, Insertable)]
 #[derive(FormBuilder, Validate)]
 #[diesel(belongs_to(Menu))]
 #[diesel(belongs_to(Article))]
@@ -22,5 +22,15 @@ pub struct MenuItem {
     #[validate(length(min = 4))]
     pub label: String,
     #[validate(range(min = 18, max = 20))]
+    pub position: i32,
+}
+
+
+#[derive(Insertable)]
+#[diesel(table_name = menu_items)]
+pub struct MenuItemInsert {
+    pub menu_id: Option<i32>,
+    pub article_id: Option<i32>,
+    pub label: String,
     pub position: i32,
 }

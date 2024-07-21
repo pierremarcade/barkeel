@@ -36,15 +36,35 @@ pub fn is_csrf_token_valid(headers: HeaderMap, config: Arc<Config>, csrf_token: 
 }
 
 #[macro_export]
-macro_rules! partial_crud {
-    ($resource:ident, $model:ident) => {
+macro_rules! crud {
+    ($resource:ident, $model:ident, $form:ident) => {
         index!($resource, $model);
         new!($resource, $model);
         edit!($resource, $model);
         show!($resource, $model);
-        delete!($resource, $model);  
+        delete!($resource, $model);
+        create!($resource, $model, $form);  
     };
 }
+
+#[macro_export]
+macro_rules! update {
+    ($resource:ident, $model:ident, $form:ident) => {
+        pub async fn create_test(Extension(current_user): Extension<AuthState>, headers: HeaderMap, State(config): State<Arc<Config>>, Form(payload): Form<$form>) {
+            //test_call(payload)
+        }   
+    }
+}
+
+#[macro_export]
+macro_rules! create {
+    ($resource:ident, $model:ident, $form:ident) => {
+        pub async fn update_test(Extension(current_user): Extension<AuthState>, headers: HeaderMap, State(config): State<Arc<Config>>, Path(param_id): Path<i32>, Form(payload): Form<$form>) {
+            //test_call(payload)
+        }   
+    }
+}
+
 
 #[macro_export]
 macro_rules! index {
@@ -84,6 +104,7 @@ macro_rules! index {
     }
 }
 
+#[macro_export]
 macro_rules! show {
     ($resource:ident, $model:ident) => {
         pub async fn show(Extension(current_user): Extension<AuthState>, Path(param_id): Path<i32>, State(config): State<Arc<Config>>) -> impl IntoResponse {
@@ -109,6 +130,7 @@ macro_rules! show {
     }
 }
 
+#[macro_export]
 macro_rules! new {
     ($resource:ident, $model:ident) => {
         pub async fn new(Extension(current_user): Extension<AuthState>, headers: HeaderMap, State(config): State<Arc<Config>>) -> impl IntoResponse {
@@ -120,6 +142,7 @@ macro_rules! new {
     }
 }
 
+#[macro_export]
 macro_rules! edit {
     ($resource:ident, $model:ident) => {
         pub async fn edit(Extension(current_user): Extension<AuthState>, headers: HeaderMap, Path(param_id): Path<i32>, State(config): State<Arc<Config>>) -> impl IntoResponse {
@@ -135,6 +158,7 @@ macro_rules! edit {
     }
 }
 
+#[macro_export]
 macro_rules! delete {
     ($resource:ident, $model:ident) => {
         pub async fn delete(Path(param_id): Path<i32>, State(config): State<Arc<Config>>) -> Redirect {

@@ -3,7 +3,7 @@ use crate::app::models::menu::{ Menu, MenuForm };
 use crate::db::schema::menus::dsl::*;
 use crate::app::controllers::{ get_content_type, is_csrf_token_valid, error_controller, prepare_tera_context };
 use crate::app::middlewares::auth::AuthState;
-use crate::{ render_json, render_form, partial_crud };
+use crate::{ render_json, render_form, crud };
 use barkeel_lib::app::pagination::{ PaginationQuery, Pagination, PaginationTrait };
 use barkeel_lib::app::http::response::Response;
 use diesel::prelude::*;
@@ -13,7 +13,7 @@ use axum::{  Extension, extract::{Path, State, Query}, response::{ IntoResponse,
 use validator::{Validate, ValidationErrors};
 use inflector::Inflector;
 
-partial_crud!(menus, Menu);
+crud!(menus, Menu, MenuForm);
 
 pub async fn create(Extension(current_user): Extension<AuthState>, headers: HeaderMap, State(config): State<Arc<Config>>, Form(payload): Form<MenuForm>) -> impl IntoResponse {
     if is_csrf_token_valid(headers.clone(), config.clone(), payload.clone().csrf_token) {

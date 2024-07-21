@@ -1,5 +1,5 @@
 use crate::config::application::Config;
-use crate::app::models::menu_item::{ MenuItem, MenuItemForm };
+use crate::app::models::menu_item::{ MenuItem, MenuItemForm, MenuItemInsert };
 use crate::db::schema::menu_items::dsl::*;
 use diesel::prelude::*;
 use std::sync::Arc;
@@ -10,17 +10,35 @@ use crate::app::middlewares::auth::AuthState;
 use barkeel_lib::app::pagination::{ PaginationQuery, Pagination, PaginationTrait };
 use barkeel_lib::app::http::response::Response;
 use validator::{Validate, ValidationErrors};
-use crate::{ render_json, render_form, partial_crud };
+use crate::{ render_json, render_form, crud };
 use inflector::Inflector;
 
-partial_crud!(menu_items, MenuItem);
+crud!(menu_items, MenuItem, MenuItemForm);
+
+fn insert_values(payload: MenuItemForm) -> MenuItemInsert {
+    MenuItemInsert {
+        menu_id: payload.menu_id,
+        article_id: payload.article_id,
+        label: payload.label,
+        position: payload.position,
+    }
+}
+
+fn updates_values(payload: MenuItemForm) -> MenuItemInsert {
+    MenuItemInsert {
+        menu_id: payload.menu_id,
+        article_id: payload.article_id,
+        label: payload.label,
+        position: payload.position,
+    }
+}
 
 pub async fn create(Extension(current_user): Extension<AuthState>, headers: HeaderMap, State(config): State<Arc<Config>>, Form(payload): Form<MenuItemForm>) -> impl IntoResponse  {
     if is_csrf_token_valid(headers.clone(), config.clone(), payload.clone().csrf_token) {
         match payload.validate() {
             Ok(_) => {
                 let _inserted_record: MenuItem = diesel::insert_into(menu_items)
-                .values((menu_id.eq(payload.menu_id), article_id.eq(payload.article_id), label.eq(payload.label), position.eq(payload.position)))
+                .values(insert_values(payload))
                 .get_result(&mut config.database.pool.get().unwrap())
                 .expect("Error inserting data");
                 let _ = Redirect::to("/menu-items");
