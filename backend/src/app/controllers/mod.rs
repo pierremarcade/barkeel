@@ -127,6 +127,7 @@ macro_rules! index {
                         render_json!(StatusCode::OK, results)
                     } else {
                         let table_name = stringify!($resource);
+                        let model_name = table_name.to_singular();
                         let model_class = table_name.to_class_case();
                         let mut context = prepare_tera_context(current_user).await;
                         context.insert("title", &model_class.as_str());
@@ -140,8 +141,19 @@ macro_rules! index {
                         context.insert("per_page", &pagination.per_page);
                         context.insert("page_numbers", &pagination.generate_page_numbers());
                         let tera: &mut tera::Tera = &mut config.template.clone();
-                        let _ = tera.add_raw_template("crud/index.html", include_str!("../views/crud/index.html"));
-                        let rendered = tera.render("crud/index.html", &context);
+                        let custom_index_name = format!("{}/index.html", model_name);
+                        let mut custom_index_path = env::current_dir().expect("REASON");
+                        custom_index_path.push(format!("src/app/views/{}/index.html", model_name).as_str());
+                        let filename = if custom_index_path.exists() {
+                            let custom_file_content = fs::read_to_string(custom_index_path).expect("Failed to read the file");
+                            let _ = tera.add_raw_template(custom_index_name.clone().as_str(), &custom_file_content.as_str());
+                            custom_index_name.as_str()
+                        } else {
+                            let _ = tera.add_raw_template("crud/index.html", include_str!("../views/crud/index.html"));
+                            "crud/index.html"
+                        };
+                        
+                        let rendered = tera.render(filename, &context);
                         render_html!(config, rendered)
                     }
                 },
@@ -160,15 +172,26 @@ macro_rules! show {
             let tera: &Tera = &config.template;
             let mut tera = tera.clone();
             let table_name = stringify!($resource);
+            let model_name = table_name.to_singular();
             let model_class = table_name.to_class_case();
             match $resource.find(param_id).first::<$model>(&mut config.database.pool.get().unwrap()) {
                 Ok(result) => {
-                    tera.add_raw_template("crud/show.html", include_str!("../views/crud/show.html")).unwrap();
+                    let custom_show_name = format!("{}/show.html", model_name);
+                    let mut custom_show_path = env::current_dir().expect("REASON");
+                    custom_show_path.push(format!("src/app/views/{}/show.html", model_name).as_str());
+                    let filename = if custom_show_path.exists() {
+                        let custom_file_content = fs::read_to_string(custom_show_path).expect("Failed to read the file");
+                        let _ = tera.add_raw_template(custom_show_name.clone().as_str(), &custom_file_content.as_str());
+                        custom_show_name.as_str()
+                    } else {
+                        let _ = tera.add_raw_template("crud/show.html", include_str!("../views/crud/show.html"));
+                        "crud/show.html"
+                    };
                     let mut context = prepare_tera_context(current_user).await;
                     context.insert("data", &result);
                     context.insert("title", &model_class.as_str());
                     context.insert("description", format!("{}'s Detail", model_class).as_str());
-                    let rendered = tera.render("crud/show.html", &context).unwrap();
+                    let rendered = tera.render(filename, &context).unwrap();
                     Response{status_code: StatusCode::OK, content_type: "text/html", datas: rendered}
                 },
                 _ => {
