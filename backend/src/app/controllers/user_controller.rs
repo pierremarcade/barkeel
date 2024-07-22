@@ -13,7 +13,7 @@ use axum::{  Extension, extract::{Path, State, Query}, response::{ IntoResponse,
 use validator::{Validate, ValidationErrors};
 use inflector::Inflector;
 
-fn insert_values(payload: UserForm) -> UserValues {
+fn insert_values(payload: UserForm, _current_user: User) -> UserValues {
     UserValues {
         name: payload.name,
         email: payload.email,
@@ -23,7 +23,7 @@ fn insert_values(payload: UserForm) -> UserValues {
     }
 }
 
-fn update_values(payload: UserForm) -> UserValues {
+fn update_values(payload: UserForm, _current_user: User) -> UserValues {
     UserValues {
         name: payload.name,
         email: payload.email,

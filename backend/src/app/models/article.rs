@@ -21,6 +21,28 @@ pub struct Article {
     pub homepage: bool,
 }
 
+#[derive(Insertable, AsChangeset)]
+#[diesel(table_name = crate::db::schema::articles)]
+pub struct ArticleInsertValues {
+    pub title: String,
+    pub slug: String,
+    pub content: String,
+    pub published_at: NaiveDateTime,
+    pub author_id: Option<i32>,
+    pub homepage: bool,
+}
+
+
+#[derive(Insertable, AsChangeset)]
+#[diesel(table_name = crate::db::schema::articles)]
+pub struct ArticleUpdateValues {
+    pub title: String,
+    pub slug: String,
+    pub content: String,
+    pub homepage: bool,
+}
+
+
 #[derive(Serialize, Deserialize)]
 #[derive(Debug, Queryable)]
 pub struct ArticleWithMenu{

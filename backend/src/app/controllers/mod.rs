@@ -49,48 +49,19 @@ macro_rules! crud {
 }
 
 #[macro_export]
-macro_rules! update {
-    ($resource:ident, $model:ident, $form:ident) => {
-        pub async fn update(Extension(current_user): Extension<AuthState>, headers: HeaderMap, State(config): State<Arc<Config>>, Path(param_id): Path<i32>, Form(payload): Form<$form>) -> impl IntoResponse {
-            if is_csrf_token_valid(headers.clone(), config.clone(), payload.clone().csrf_token) {
-                let table_name = stringify!($resource);
-                match payload.validate() {
-                    Ok(_) => {
-                        let _updated_record: $model = diesel::update($resource)
-                            .filter(id.eq(param_id))
-                            .set(insert_values(payload))
-                            .get_result(&mut config.database.pool.get().unwrap())
-                            .expect("Error updating data");
-                            let _ = Redirect::to(format!("/{}", table_name).as_str());
-                        let serialized = serde_json::to_string(&"Menu updated").unwrap();
-                        render_json!(StatusCode::OK, serialized)
-                    },
-                    Err(e) => {
-                        let config_ref = config.as_ref();
-                        let form = payload.build_form(config_ref, headers, format!("/{}", table_name).as_str());
-                        render_form!(form, config, current_user, Some(e.clone()))
-                    }
-                }
-            } else {
-                let serialized = serde_json::to_string(&"Invaid CSRF token").unwrap();
-                render_json!(StatusCode::BAD_REQUEST, serialized) 
-            }
-        }
-    }
-}
-
-#[macro_export]
 macro_rules! create {
     ($resource:ident, $model:ident, $form:ident) => {
-        pub async fn create(Extension(current_user): Extension<AuthState>, headers: HeaderMap, State(config): State<Arc<Config>>, Form(payload): Form<$form>) -> impl IntoResponse {
+        pub async fn create(Extension(mut current_user): Extension<AuthState>, headers: HeaderMap, State(config): State<Arc<Config>>, Form(payload): Form<$form>) -> impl IntoResponse {
             if is_csrf_token_valid(headers.clone(), config.clone(), payload.clone().csrf_token) {
                 let table_name = stringify!($resource);
                 match payload.validate() {
                     Ok(_) => {
-                        let _inserted_record: $model = diesel::insert_into($resource)
-                        .values(update_values(payload))
-                        .get_result(&mut config.database.pool.get().unwrap())
-                        .expect("Error inserting data");
+                        if let Some(user) = current_user.get_user().await {
+                            let _inserted_record: $model = diesel::insert_into($resource)
+                            .values(insert_values(payload, user.clone()))
+                            .get_result(&mut config.database.pool.get().unwrap())
+                            .expect("Error inserting data");
+                        }
                         let _ = Redirect::to(format!("/{}", table_name).as_str());
                         let serialized = serde_json::to_string(&"Menu created").unwrap();
                         render_json!(StatusCode::OK, serialized)
@@ -103,6 +74,40 @@ macro_rules! create {
                 }
             } else {
                 let serialized = serde_json::to_string(&"Invalid CSRF token").unwrap();
+                render_json!(StatusCode::BAD_REQUEST, serialized) 
+            }
+        }
+    }
+}
+
+
+#[macro_export]
+macro_rules! update {
+    ($resource:ident, $model:ident, $form:ident) => {
+        pub async fn update(Extension(mut current_user): Extension<AuthState>, headers: HeaderMap, State(config): State<Arc<Config>>, Path(param_id): Path<i32>, Form(payload): Form<$form>) -> impl IntoResponse {
+            if is_csrf_token_valid(headers.clone(), config.clone(), payload.clone().csrf_token) {
+                let table_name = stringify!($resource);
+                match payload.validate() {
+                    Ok(_) => {
+                        if let Some(user) = current_user.get_user().await {
+                            let _updated_record: $model = diesel::update($resource)
+                                .filter(id.eq(param_id))
+                                .set(update_values(payload, user.clone()))
+                                .get_result(&mut config.database.pool.get().unwrap())
+                                .expect("Error updating data");
+                        }
+                            let _ = Redirect::to(format!("/{}", table_name).as_str());
+                        let serialized = serde_json::to_string(&"Menu updated").unwrap();
+                        render_json!(StatusCode::OK, serialized)
+                    },
+                    Err(e) => {
+                        let config_ref = config.as_ref();
+                        let form = payload.build_form(config_ref, headers, format!("/{}", table_name).as_str());
+                        render_form!(form, config, current_user, Some(e.clone()))
+                    }
+                }
+            } else {
+                let serialized = serde_json::to_string(&"Invaid CSRF token").unwrap();
                 render_json!(StatusCode::BAD_REQUEST, serialized) 
             }
         }

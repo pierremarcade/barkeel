@@ -1,5 +1,6 @@
 use crate::config::application::Config;
 use crate::app::models::menu_item::{ MenuItem, MenuItemForm, MenuItemValues };
+use crate::app::models::user::User;
 use crate::db::schema::menu_items::dsl::*;
 use diesel::prelude::*;
 use std::sync::Arc;
@@ -14,7 +15,7 @@ use crate::crud;
 use inflector::Inflector;
 
 
-fn insert_values(payload: MenuItemForm) -> MenuItemValues {
+fn insert_values(payload: MenuItemForm, _current_user: User) -> MenuItemValues {
     MenuItemValues {
         menu_id: payload.menu_id,
         article_id: payload.article_id,
@@ -23,7 +24,7 @@ fn insert_values(payload: MenuItemForm) -> MenuItemValues {
     }
 }
 
-fn update_values(payload: MenuItemForm) -> MenuItemValues {
+fn update_values(payload: MenuItemForm, _current_user: User) -> MenuItemValues {
     MenuItemValues {
         menu_id: payload.menu_id,
         article_id: payload.article_id,

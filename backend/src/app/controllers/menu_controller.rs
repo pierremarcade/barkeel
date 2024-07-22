@@ -1,5 +1,6 @@
 use crate::config::application::Config;
 use crate::app::models::menu::{ Menu, MenuForm, MenuValues };
+use crate::app::models::user::User;
 use crate::db::schema::menus::dsl::*;
 use crate::app::controllers::{ get_content_type, is_csrf_token_valid, error_controller, prepare_tera_context };
 use crate::app::middlewares::auth::AuthState;
@@ -13,13 +14,13 @@ use axum::{  Extension, extract::{Path, State, Query}, response::{ IntoResponse,
 use validator::{Validate, ValidationErrors};
 use inflector::Inflector;
 
-fn insert_values(payload: MenuForm) -> MenuValues {
+fn insert_values(payload: MenuForm, _current_user: User) -> MenuValues {
     MenuValues {
         name: payload.name,
     }
 }
 
-fn update_values(payload: MenuForm) -> MenuValues {
+fn update_values(payload: MenuForm, _current_user: User) -> MenuValues {
     MenuValues {
         name: payload.name,
     }
