@@ -13,5 +13,14 @@ pub struct User {
     pub password: String,
     pub role_id: Option<i32>,
     pub session_token: Option<String>,
+}
 
+#[derive(Insertable, AsChangeset)]
+#[diesel(table_name = crate::db::schema::users)]
+pub struct UserValues {
+    pub name: String,
+    pub email: String,
+    pub password: String,
+    pub role_id: Option<i32>,
+    pub session_token: Option<String>,
 }

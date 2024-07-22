@@ -87,7 +87,7 @@ pub async fn create(Extension(mut current_user): Extension<AuthState>, headers: 
             },
             Err(e) => {
                 let config_ref = config.as_ref();
-                let form = payload.build_edit_form(config_ref, headers, "/articles");
+                let form = payload.build_form(config_ref, headers, "/articles");
                 render_form!(form, config, current_user, Some(e.clone()))
             }
         }
@@ -123,7 +123,7 @@ pub async fn update(Extension(current_user): Extension<AuthState>, headers: Head
             },
             Err(e) => {
                 let config_ref = config.as_ref();
-                let form = payload.build_edit_form(config_ref, headers, "/articles");
+                let form = payload.build_form(config_ref, headers, "/articles");
                 render_form!(form, config, current_user, Some(e.clone()))
             }
         }

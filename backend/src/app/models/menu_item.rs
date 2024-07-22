@@ -26,9 +26,9 @@ pub struct MenuItem {
 }
 
 
-#[derive(Insertable)]
+#[derive(Insertable, AsChangeset)]
 #[diesel(table_name = menu_items)]
-pub struct MenuItemInsert {
+pub struct MenuItemValues {
     pub menu_id: Option<i32>,
     pub article_id: Option<i32>,
     pub label: String,

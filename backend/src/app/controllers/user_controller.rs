@@ -1,5 +1,5 @@
 use crate::config::application::Config;
-use crate::app::models::user::{ User, UserForm };
+use crate::app::models::user::{ User, UserForm, UserValues };
 use crate::db::schema::users::dsl::*;
 use crate::app::controllers::{ get_content_type, is_csrf_token_valid, error_controller, prepare_tera_context };
 use crate::app::middlewares::auth::AuthState;
@@ -13,53 +13,24 @@ use axum::{  Extension, extract::{Path, State, Query}, response::{ IntoResponse,
 use validator::{Validate, ValidationErrors};
 use inflector::Inflector;
 
+fn insert_values(payload: UserForm) -> UserValues {
+    UserValues {
+        name: payload.name,
+        email: payload.email,
+        password: payload.password,
+        role_id: payload.role_id,
+        session_token: payload.session_token,
+    }
+}
+
+fn update_values(payload: UserForm) -> UserValues {
+    UserValues {
+        name: payload.name,
+        email: payload.email,
+        password: payload.password,
+        role_id: payload.role_id,
+        session_token: payload.session_token,
+    }
+}
+
 crud!(users, User, UserForm);
-
-pub async fn create(Extension(current_user): Extension<AuthState>, headers: HeaderMap, State(config): State<Arc<Config>>, Form(payload): Form<UserForm>) -> impl IntoResponse {
-    if is_csrf_token_valid(headers.clone(), config.clone(), payload.clone().csrf_token) {
-        match payload.validate() {
-            Ok(_) => {
-                let _inserted_record: User = diesel::insert_into(users)
-                .values((name.eq(payload.name), email.eq(payload.email), password.eq(payload.password), role_id.eq(payload.role_id), session_token.eq(payload.session_token)))
-                .get_result(&mut config.database.pool.get().unwrap())
-                .expect("Error inserting data");
-                let _ = Redirect::to("/users");
-                let serialized = serde_json::to_string(&"User created").unwrap();
-                render_json!(StatusCode::OK, serialized)
-            },
-            Err(e) => {
-                let config_ref = config.as_ref();
-                let form = payload.build_edit_form(config_ref, headers, "/users");
-                render_form!(form, config, current_user, Some(e.clone()))
-            }
-        }
-    } else {
-        let serialized = serde_json::to_string(&"Invalid CSRF token").unwrap();
-        render_json!(StatusCode::BAD_REQUEST, serialized) 
-    }
-}
-
-pub async fn update(Extension(current_user): Extension<AuthState>, headers: HeaderMap, State(config): State<Arc<Config>>, Path(param_id): Path<i32>, Form(payload): Form<UserForm>) -> impl IntoResponse {
-    if is_csrf_token_valid(headers.clone(), config.clone(), payload.clone().csrf_token) {
-        match payload.validate() {
-            Ok(_) => {
-                let _updated_record: User = diesel::update(users)
-                    .filter(id.eq(param_id))
-                    .set((name.eq(payload.name), email.eq(payload.email), password.eq(payload.password), role_id.eq(payload.role_id), session_token.eq(payload.session_token)))
-                    .get_result(&mut config.database.pool.get().unwrap())
-                    .expect("Error updating data");
-                let _ = Redirect::to("/users");
-                let serialized = serde_json::to_string(&"User updated").unwrap();
-                render_json!(StatusCode::OK, serialized)
-            },
-            Err(e) => {
-                let config_ref = config.as_ref();
-                let form = payload.build_edit_form(config_ref, headers, "/users");
-                render_form!(form, config, current_user, Some(e.clone()))
-            }
-        }
-    } else {
-        let serialized = serde_json::to_string(&"Invaid CSRF token").unwrap();
-        render_json!(StatusCode::BAD_REQUEST, serialized) 
-    }
-}

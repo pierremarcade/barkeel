@@ -30,3 +30,9 @@ pub struct MenuItemWithArticle{
     pub homepage: bool,
     pub slug: String,
 }
+
+#[derive(Insertable, AsChangeset)]
+#[diesel(table_name = menus)]
+pub struct MenuValues {
+    pub name: String,
+}
