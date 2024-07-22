@@ -13,7 +13,14 @@ use tera::Tera;
 use chrono::Utc;
 use validator::{Validate, ValidationErrors};
 use axum::{ Extension, extract::{Multipart, Path, State, Query}, response::{ IntoResponse, Redirect }, http::{ HeaderMap, StatusCode }, Form};
-use crate::{render_html, render_json, get_total};
+use crate::{render_html, render_json, get_total, show, new, edit, delete};
+use inflector::Inflector;
+
+show!(articles, Article);
+new!(articles, Article);
+edit!(articles, Article);
+delete!(articles, Article);
+
 
 pub async fn index(Extension(current_user): Extension<AuthState>, Query(pagination_query): Query<PaginationQuery>, headers: HeaderMap, State(config): State<Arc<Config>>) -> impl IntoResponse {
     let total_results: i64 = get_total!(config, articles);
@@ -46,31 +53,6 @@ pub async fn index(Extension(current_user): Extension<AuthState>, Query(paginati
     }
 }
 
-pub async fn show(Extension(current_user): Extension<AuthState>, Path(param_id): Path<i32>, State(config): State<Arc<Config>>) -> impl IntoResponse {
-    let tera: &Tera = &config.template;
-    let mut tera = tera.clone();
-    match articles.find(param_id).first::<Article>(&mut config.database.pool.get().unwrap()) {
-        Ok(result) => {
-            tera.add_raw_template("article/show.html", include_str!("../views/article/show.html")).unwrap();
-            let mut context = prepare_tera_context(current_user).await;
-            context.insert("data", &result);
-            context.insert("title", "Article");
-            context.insert("description", "Article's Detail");
-            let rendered = tera.render("article/show.html", &context).unwrap();
-            Response{status_code: StatusCode::OK, content_type: "text/html", datas: rendered}
-        },
-        _ => {
-            error_controller::render_404(config)
-        }
-    }
-}
-
-pub async fn new(Extension(current_user): Extension<AuthState>, headers: HeaderMap, State(config): State<Arc<Config>>) -> impl IntoResponse {
-    let config_ref = config.as_ref();
-    let form = Article::build_create_form(config_ref, headers, "/articles");
-    render_form!(form, config, current_user, None::<Option<ValidationErrors>>)
-}
-
 pub async fn create(Extension(mut current_user): Extension<AuthState>, headers: HeaderMap, State(config): State<Arc<Config>>, Form(payload): Form<ArticleForm>) -> impl IntoResponse {
     if is_csrf_token_valid(headers.clone(), config.clone(), payload.clone().csrf_token) {
         match payload.validate() {
@@ -97,17 +79,6 @@ pub async fn create(Extension(mut current_user): Extension<AuthState>, headers: 
     }
 }
 
-pub async fn edit(Extension(current_user): Extension<AuthState>, headers: HeaderMap, Path(param_id): Path<i32>, State(config): State<Arc<Config>>) -> impl IntoResponse {
-    let result = articles
-        .find(param_id)
-        .first::<Article>(&mut config.database.pool.get().unwrap())
-        .expect("Error loading data");
-
-    let config_ref = config.as_ref();
-    let form = result.build_edit_form(config_ref, headers, format!("/articles/{}", param_id).as_str());
-    render_form!(form, config, current_user, None::<Option<ValidationErrors>>)
-}
-
 pub async fn update(Extension(current_user): Extension<AuthState>, headers: HeaderMap, State(config): State<Arc<Config>>, Path(param_id): Path<i32>, Form(payload): Form<ArticleForm>) -> impl IntoResponse {
     if is_csrf_token_valid(headers.clone(), config.clone(), payload.clone().csrf_token) {
         match payload.validate() {
@@ -131,14 +102,6 @@ pub async fn update(Extension(current_user): Extension<AuthState>, headers: Head
         let serialized = serde_json::to_string(&"Invaid CSRF token").unwrap();
         render_json!(StatusCode::BAD_REQUEST, serialized) 
     }
-}
-
-pub async fn delete(Path(param_id): Path<i32>, State(config): State<Arc<Config>>) -> Redirect {
-    diesel::delete(articles)
-        .filter(id.eq(param_id))
-        .execute(&mut config.database.pool.get().unwrap())
-        .expect("Error deleting data");
-    Redirect::to("/articles") 
 }
 
 pub async fn search(Path(query): Path<String>, State(config): State<Arc<Config>>) -> impl IntoResponse {
