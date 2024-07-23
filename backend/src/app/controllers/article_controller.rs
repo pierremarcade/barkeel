@@ -2,15 +2,13 @@ use crate::config::application::Config;
 use crate::app::models::article::{ Article, ArticleForm, ArticleInsertValues, ArticleUpdateValues };
 use crate::db::schema::articles::{self, dsl::*};
 use crate::app::models::user::User;
-use crate::app::controllers::{ get_content_type, is_csrf_token_valid, error_controller, prepare_tera_context };
+use crate::app::controllers::{ CrudTrait, get_content_type, is_csrf_token_valid, error_controller, prepare_tera_context };
 use crate::app::middlewares::auth::AuthState;
 use barkeel_lib::storage::{local_storage::LocalStorage, FileStorage};
 use barkeel_lib::utils::slugify;
 use barkeel_lib::app::http::response::Response;
 use barkeel_lib::app::pagination::{ PaginationQuery, Pagination, PaginationTrait };
 use diesel::prelude::*;
-use std::fs;
-use std::env;
 use std::sync::Arc;
 use tera::Tera;
 use chrono::Utc;
@@ -19,7 +17,15 @@ use axum::{ Extension, extract::{Multipart, Path, State, Query}, response::{ Int
 use crate::crud;
 use inflector::Inflector;
 
-crud!(articles, Article, ArticleForm);
+pub struct ArticleCrud;
+impl CrudTrait for ArticleCrud {
+    fn index_view(tera: &mut Tera) -> String {
+        let _ = tera.add_raw_template("article_index", include_str!("../views/article/index.html"));
+        "article_index".to_string()
+    }
+}
+
+crud!(articles, Article, ArticleForm, ArticleCrud);
 
 fn insert_values(payload: ArticleForm, current_user: User) -> ArticleInsertValues {
     ArticleInsertValues {

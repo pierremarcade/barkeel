@@ -6,15 +6,16 @@ use diesel::prelude::*;
 use std::sync::Arc;
 use tera::Tera;
 use axum::{  Extension, extract::{Path, State, Query}, response::{ IntoResponse, Redirect }, http::{ HeaderMap, StatusCode }, Form};
-use crate::app::controllers::{ get_content_type, is_csrf_token_valid, error_controller, prepare_tera_context };
+use crate::app::controllers::{ CrudTrait, get_content_type, is_csrf_token_valid, error_controller, prepare_tera_context };
 use crate::app::middlewares::auth::AuthState;
 use barkeel_lib::app::pagination::{ PaginationQuery, Pagination, PaginationTrait };
 use barkeel_lib::app::http::response::Response;
 use validator::{Validate, ValidationErrors};
 use crate::crud;
 use inflector::Inflector;
-use std::fs;
-use std::env;
+
+pub struct MenuItemCrud;
+impl CrudTrait for MenuItemCrud{}
 
 fn insert_values(payload: MenuItemForm, _current_user: User) -> MenuItemValues {
     MenuItemValues {
@@ -34,4 +35,4 @@ fn update_values(payload: MenuItemForm, _current_user: User) -> MenuItemValues {
     }
 }
 
-crud!(menu_items, MenuItem, MenuItemForm);
+crud!(menu_items, MenuItem, MenuItemForm, MenuItemCrud);
