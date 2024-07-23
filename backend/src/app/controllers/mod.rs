@@ -13,7 +13,7 @@ pub trait CrudTrait {
     }
 
     fn show_view(tera: &mut tera::Tera) -> String {
-        let _ = tera.add_raw_template("crud_show", include_str!("../views/crud/index.html"));
+        let _ = tera.add_raw_template("crud_show", include_str!("../views/crud/show.html"));
         "crud_show".to_string()
     }  
 }
