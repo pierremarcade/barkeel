@@ -66,6 +66,7 @@ macro_rules! create {
         pub async fn create(Extension(mut current_user): Extension<AuthState>, headers: HeaderMap, State(config): State<Arc<Config>>, Form(payload): Form<$form>) -> impl IntoResponse {
             if is_csrf_token_valid(headers.clone(), config.clone(), payload.clone().csrf_token) {
                 let table_name = stringify!($resource);
+                let link_name = table_name.to_kebab_case();
                 match payload.validate() {
                     Ok(_) => {
                         if let Some(user) = current_user.get_user().await {
@@ -74,13 +75,13 @@ macro_rules! create {
                             .get_result(&mut config.database.pool.get().unwrap())
                             .expect("Error inserting data");
                         }
-                        let _ = Redirect::to(format!("/{}", table_name).as_str());
+                        let _ = Redirect::to(format!("/{}", link_name).as_str());
                         let serialized = serde_json::to_string(&"Menu created").unwrap();
                         render_json!(StatusCode::OK, serialized)
                     },
                     Err(e) => {
                         let config_ref = config.as_ref();
-                        let form = payload.build_form(config_ref, headers, format!("/{}", table_name).as_str());
+                        let form = payload.build_form(config_ref, headers, format!("/{}", link_name).as_str());
                         render_form!(form, config, current_user, Some(e.clone()))
                     }
                 }
@@ -98,6 +99,7 @@ macro_rules! update {
         pub async fn update(Extension(mut current_user): Extension<AuthState>, headers: HeaderMap, State(config): State<Arc<Config>>, Path(param_id): Path<i32>, Form(payload): Form<$form>) -> impl IntoResponse {
             if is_csrf_token_valid(headers.clone(), config.clone(), payload.clone().csrf_token) {
                 let table_name = stringify!($resource);
+                let link_name = table_name.to_kebab_case();
                 match payload.validate() {
                     Ok(_) => {
                         if let Some(user) = current_user.get_user().await {
@@ -107,13 +109,13 @@ macro_rules! update {
                                 .get_result(&mut config.database.pool.get().unwrap())
                                 .expect("Error updating data");
                         }
-                            let _ = Redirect::to(format!("/{}", table_name).as_str());
+                            let _ = Redirect::to(format!("/{}", link_name).as_str());
                         let serialized = serde_json::to_string(&"Menu updated").unwrap();
                         render_json!(StatusCode::OK, serialized)
                     },
                     Err(e) => {
                         let config_ref = config.as_ref();
-                        let form = payload.build_form(config_ref, headers, format!("/{}", table_name).as_str());
+                        let form = payload.build_form(config_ref, headers, format!("/{}", link_name).as_str());
                         render_form!(form, config, current_user, Some(e.clone()))
                     }
                 }
@@ -138,10 +140,11 @@ macro_rules! index {
                         render_json!(StatusCode::OK, results)
                     } else {
                         let table_name = stringify!($resource);
+                        let link_name = table_name.to_kebab_case();
                         let model_class = table_name.to_class_case();
                         let mut context = prepare_tera_context(current_user).await;
                         context.insert("title", &model_class.as_str());
-                        context.insert("base_url", format!("/{}", table_name).as_str());
+                        context.insert("base_url", format!("/{}", link_name).as_str());
                         context.insert("description", format!("A list of all the {}.", table_name).as_str());
                         context.insert("datas", &results);
                         context.insert("total_pages", &pagination.total_pages);
