@@ -6,6 +6,16 @@ use tera::Context;
 use crate::config::application::Config;
 use crate::app::middlewares::auth::AuthState;
 
+pub trait CrudTrait {
+    fn index_view() -> String {
+        "../views/crud/index.html".to_string()
+    }
+
+    fn index_show() -> String {
+        "../views/crud/index.html".to_string()
+    }  
+}
+
 pub fn get_content_type(headers: HeaderMap) -> String {
     let header_value = headers.get("Content-Type");
     let mut content_type = String::new();
@@ -37,11 +47,11 @@ pub fn is_csrf_token_valid(headers: HeaderMap, config: Arc<Config>, csrf_token: 
 
 #[macro_export]
 macro_rules! crud {
-    ($resource:ident, $model:ident, $form:ident) => {
-        index!($resource, $model);
+    ($resource:ident, $model:ident, $form:ident, $controller: ident) => {
+        index!($resource, $model, $controller);
         new!($resource, $model);
         edit!($resource, $model);
-        show!($resource, $model);
+        show!($resource, $model, $controller);
         delete!($resource, $model);
         create!($resource, $model, $form); 
         update!($resource, $model, $form);
@@ -117,7 +127,7 @@ macro_rules! update {
 
 #[macro_export]
 macro_rules! index {
-    ($resource:ident, $model:ident) => {
+    ($resource:ident, $model:ident, $controller:ident) => {
         pub async fn index(Extension(current_user): Extension<AuthState>, Query(pagination_query): Query<PaginationQuery>, headers: HeaderMap, State(config): State<Arc<Config>>) -> impl IntoResponse {
             let total_results: i64 = get_total!(config, $resource);
             let pagination = Pagination::new(pagination_query, total_results);
@@ -141,19 +151,12 @@ macro_rules! index {
                         context.insert("per_page", &pagination.per_page);
                         context.insert("page_numbers", &pagination.generate_page_numbers());
                         let tera: &mut tera::Tera = &mut config.template.clone();
-                        let custom_index_name = format!("{}/index.html", model_name);
-                        let mut custom_index_path = env::current_dir().expect("REASON");
-                        custom_index_path.push(format!("src/app/views/{}/index.html", model_name).as_str());
-                        let filename = if custom_index_path.exists() {
-                            let custom_file_content = fs::read_to_string(custom_index_path).expect("Failed to read the file");
-                            let _ = tera.add_raw_template(custom_index_name.clone().as_str(), &custom_file_content.as_str());
-                            custom_index_name.as_str()
-                        } else {
-                            let _ = tera.add_raw_template("crud/index.html", include_str!("../views/crud/index.html"));
-                            "crud/index.html"
-                        };
+                        let index_name = $controller::index_view();
+                        let file_content = fs::read_to_string(index_name.clone()).expect("Failed to read template file");
+
+                        let _ = tera.add_raw_template(&index_name, &file_content.as_str());
                         
-                        let rendered = tera.render(filename, &context);
+                        let rendered = tera.render(&index_name, &context);
                         render_html!(config, rendered)
                     }
                 },
@@ -167,7 +170,7 @@ macro_rules! index {
 
 #[macro_export]
 macro_rules! show {
-    ($resource:ident, $model:ident) => {
+    ($resource:ident, $model:ident, $controller:ident) => {
         pub async fn show(Extension(current_user): Extension<AuthState>, Path(param_id): Path<i32>, State(config): State<Arc<Config>>) -> impl IntoResponse {
             let tera: &Tera = &config.template;
             let mut tera = tera.clone();

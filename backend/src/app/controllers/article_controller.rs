@@ -2,7 +2,7 @@ use crate::config::application::Config;
 use crate::app::models::article::{ Article, ArticleForm, ArticleInsertValues, ArticleUpdateValues };
 use crate::db::schema::articles::{self, dsl::*};
 use crate::app::models::user::User;
-use crate::app::controllers::{ get_content_type, is_csrf_token_valid, error_controller, prepare_tera_context };
+use crate::app::controllers::{ CrudTrait, get_content_type, is_csrf_token_valid, error_controller, prepare_tera_context };
 use crate::app::middlewares::auth::AuthState;
 use barkeel_lib::storage::{local_storage::LocalStorage, FileStorage};
 use barkeel_lib::utils::slugify;
@@ -19,7 +19,16 @@ use axum::{ Extension, extract::{Multipart, Path, State, Query}, response::{ Int
 use crate::crud;
 use inflector::Inflector;
 
-crud!(articles, Article, ArticleForm);
+pub struct ArticleController;
+
+impl CrudTrait for ArticleController {
+    fn index_view() -> String {
+        "../views/article/index.html".to_string()
+    }
+}
+
+crud!(articles, Article, ArticleForm, ArticleController);
+
 
 fn insert_values(payload: ArticleForm, current_user: User) -> ArticleInsertValues {
     ArticleInsertValues {
