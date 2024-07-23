@@ -9,8 +9,6 @@ use barkeel_lib::utils::slugify;
 use barkeel_lib::app::http::response::Response;
 use barkeel_lib::app::pagination::{ PaginationQuery, Pagination, PaginationTrait };
 use diesel::prelude::*;
-use std::fs;
-use std::env;
 use std::sync::Arc;
 use tera::Tera;
 use chrono::Utc;
@@ -19,16 +17,15 @@ use axum::{ Extension, extract::{Multipart, Path, State, Query}, response::{ Int
 use crate::crud;
 use inflector::Inflector;
 
-pub struct ArticleController;
-
-impl CrudTrait for ArticleController {
-    fn index_view() -> String {
-        "../views/article/index.html".to_string()
+pub struct ArticleCrud;
+impl CrudTrait for ArticleCrud {
+    fn index_view(tera: &mut Tera) -> String {
+        let _ = tera.add_raw_template("article_index", include_str!("../views/article/index.html"));
+        "article_index".to_string()
     }
 }
 
-crud!(articles, Article, ArticleForm, ArticleController);
-
+crud!(articles, Article, ArticleForm, ArticleCrud);
 
 fn insert_values(payload: ArticleForm, current_user: User) -> ArticleInsertValues {
     ArticleInsertValues {

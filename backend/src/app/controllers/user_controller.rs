@@ -12,11 +12,9 @@ use tera::Tera;
 use axum::{  Extension, extract::{Path, State, Query}, response::{ IntoResponse, Redirect }, http::{ HeaderMap, StatusCode }, Form};
 use validator::{Validate, ValidationErrors};
 use inflector::Inflector;
-use std::fs;
-use std::env;
 
-pub struct UserController;
-impl CrudTrait for UserController{}
+pub struct UserCrud;
+impl CrudTrait for UserCrud{}
 
 fn insert_values(payload: UserForm, _current_user: User) -> UserValues {
     UserValues {
@@ -38,4 +36,4 @@ fn update_values(payload: UserForm, _current_user: User) -> UserValues {
     }
 }
 
-crud!(users, User, UserForm, UserController);
+crud!(users, User, UserForm, UserCrud);

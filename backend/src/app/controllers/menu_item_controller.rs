@@ -13,11 +13,9 @@ use barkeel_lib::app::http::response::Response;
 use validator::{Validate, ValidationErrors};
 use crate::crud;
 use inflector::Inflector;
-use std::fs;
-use std::env;
 
-pub struct MenuItemController;
-impl CrudTrait for MenuItemController{}
+pub struct MenuItemCrud;
+impl CrudTrait for MenuItemCrud{}
 
 fn insert_values(payload: MenuItemForm, _current_user: User) -> MenuItemValues {
     MenuItemValues {
@@ -37,4 +35,4 @@ fn update_values(payload: MenuItemForm, _current_user: User) -> MenuItemValues {
     }
 }
 
-crud!(menu_items, MenuItem, MenuItemForm, MenuItemController);
+crud!(menu_items, MenuItem, MenuItemForm, MenuItemCrud);

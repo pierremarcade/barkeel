@@ -13,12 +13,10 @@ use tera::Tera;
 use axum::{  Extension, extract::{Path, State, Query}, response::{ IntoResponse, Redirect }, http::{ HeaderMap, StatusCode }, Form};
 use validator::{Validate, ValidationErrors};
 use inflector::Inflector;
-use std::fs;
-use std::env;
 
-pub struct MenuController;
+pub struct MenuCrud;
 
-impl CrudTrait for MenuController{}
+impl CrudTrait for MenuCrud{}
 
 fn insert_values(payload: MenuForm, _current_user: User) -> MenuValues {
     MenuValues {
@@ -32,4 +30,4 @@ fn update_values(payload: MenuForm, _current_user: User) -> MenuValues {
     }
 }
 
-crud!(menus, Menu, MenuForm, MenuController);
+crud!(menus, Menu, MenuForm, MenuCrud);
