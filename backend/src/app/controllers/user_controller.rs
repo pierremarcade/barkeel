@@ -13,8 +13,11 @@ use axum::{  Extension, extract::{Path, State, Query}, response::{ IntoResponse,
 use validator::{Validate, ValidationErrors};
 use inflector::Inflector;
 
+type CrudModel = User;
+type CrudForm = UserForm;
+
 pub struct UserCrud;
-impl CrudTrait for UserCrud{}
+impl CrudTrait for UserCrud {}
 
 fn insert_values(payload: UserForm, _current_user: User) -> UserValues {
     UserValues {
@@ -36,4 +39,4 @@ fn update_values(payload: UserForm, _current_user: User) -> UserValues {
     }
 }
 
-crud!(users, User, UserForm, UserCrud);
+crud!(users, UserCrud);

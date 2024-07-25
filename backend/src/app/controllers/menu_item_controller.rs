@@ -14,8 +14,11 @@ use validator::{Validate, ValidationErrors};
 use crate::crud;
 use inflector::Inflector;
 
+type CrudModel = MenuItem;
+type CrudForm = MenuItemForm;
+
 pub struct MenuItemCrud;
-impl CrudTrait for MenuItemCrud{}
+impl CrudTrait for MenuItemCrud {}
 
 fn insert_values(payload: MenuItemForm, _current_user: User) -> MenuItemValues {
     MenuItemValues {
@@ -35,4 +38,4 @@ fn update_values(payload: MenuItemForm, _current_user: User) -> MenuItemValues {
     }
 }
 
-crud!(menu_items, MenuItem, MenuItemForm, MenuItemCrud);
+crud!(menu_items, MenuItemCrud);

@@ -14,9 +14,12 @@ use axum::{  Extension, extract::{Path, State, Query}, response::{ IntoResponse,
 use validator::{Validate, ValidationErrors};
 use inflector::Inflector;
 
+type CrudModel = Menu;
+type CrudForm = MenuForm;
+
 pub struct MenuCrud;
 
-impl CrudTrait for MenuCrud{}
+impl CrudTrait for MenuCrud {}
 
 fn insert_values(payload: MenuForm, _current_user: User) -> MenuValues {
     MenuValues {
@@ -30,4 +33,4 @@ fn update_values(payload: MenuForm, _current_user: User) -> MenuValues {
     }
 }
 
-crud!(menus, Menu, MenuForm, MenuCrud);
+crud!(menus, MenuCrud);
