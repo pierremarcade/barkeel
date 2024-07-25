@@ -15,7 +15,7 @@ pub trait CrudTrait {
     fn show_view(tera: &mut tera::Tera) -> String {
         let _ = tera.add_raw_template("crud_show", include_str!("../views/crud/show.html"));
         "crud_show".to_string()
-    }  
+    }
 }
 
 pub fn get_content_type(headers: HeaderMap) -> String {
@@ -49,28 +49,28 @@ pub fn is_csrf_token_valid(headers: HeaderMap, config: Arc<Config>, csrf_token: 
 
 #[macro_export]
 macro_rules! crud {
-    ($resource:ident, $model:ident, $form:ident, $controller: ident) => {
-        index!($resource, $model, $controller);
-        new!($resource, $model);
-        edit!($resource, $model);
-        show!($resource, $model, $controller);
-        delete!($resource, $model);
-        create!($resource, $model, $form); 
-        update!($resource, $model, $form);
+    ($resource:ident, $controller:ident) => {
+        index!($resource, $controller);
+        new!($resource);
+        edit!($resource);
+        show!($resource, $controller);
+        delete!($resource);
+        create!($resource); 
+        update!($resource);
     };
 }
 
 #[macro_export]
 macro_rules! create {
-    ($resource:ident, $model:ident, $form:ident) => {
-        pub async fn create(Extension(mut current_user): Extension<AuthState>, headers: HeaderMap, State(config): State<Arc<Config>>, Form(payload): Form<$form>) -> impl IntoResponse {
+    ($resource:ident) => {
+        pub async fn create(Extension(mut current_user): Extension<AuthState>, headers: HeaderMap, State(config): State<Arc<Config>>, Form(payload): Form<CrudForm>) -> impl IntoResponse {
             if is_csrf_token_valid(headers.clone(), config.clone(), payload.clone().csrf_token) {
                 let table_name = stringify!($resource);
                 let link_name = table_name.to_kebab_case();
                 match payload.validate() {
                     Ok(_) => {
                         if let Some(user) = current_user.get_user().await {
-                            let _inserted_record: $model = diesel::insert_into($resource)
+                            let _inserted_record: CrudModel = diesel::insert_into($resource)
                             .values(insert_values(payload, user.clone()))
                             .get_result(&mut config.database.pool.get().unwrap())
                             .expect("Error inserting data");
@@ -95,15 +95,15 @@ macro_rules! create {
 
 #[macro_export]
 macro_rules! update {
-    ($resource:ident, $model:ident, $form:ident) => {
-        pub async fn update(Extension(mut current_user): Extension<AuthState>, headers: HeaderMap, State(config): State<Arc<Config>>, Path(param_id): Path<i32>, Form(payload): Form<$form>) -> impl IntoResponse {
+    ($resource:ident) => {
+        pub async fn update(Extension(mut current_user): Extension<AuthState>, headers: HeaderMap, State(config): State<Arc<Config>>, Path(param_id): Path<i32>, Form(payload): Form<CrudForm>) -> impl IntoResponse {
             if is_csrf_token_valid(headers.clone(), config.clone(), payload.clone().csrf_token) {
                 let table_name = stringify!($resource);
                 let link_name = table_name.to_kebab_case();
                 match payload.validate() {
                     Ok(_) => {
                         if let Some(user) = current_user.get_user().await {
-                            let _updated_record: $model = diesel::update($resource)
+                            let _updated_record: CrudModel = diesel::update($resource)
                                 .filter(id.eq(param_id))
                                 .set(update_values(payload, user.clone()))
                                 .get_result(&mut config.database.pool.get().unwrap())
@@ -130,11 +130,11 @@ macro_rules! update {
 
 #[macro_export]
 macro_rules! index {
-    ($resource:ident, $model:ident, $controller:ident) => {
+    ($resource:ident, $controller:ident) => {
         pub async fn index(Extension(current_user): Extension<AuthState>, Query(pagination_query): Query<PaginationQuery>, headers: HeaderMap, State(config): State<Arc<Config>>) -> impl IntoResponse {
             let total_results: i64 = get_total!(config, $resource);
             let pagination = Pagination::new(pagination_query, total_results);
-            match $resource.limit(pagination.per_page as i64).offset(pagination.offset as i64).load::< $model>(&mut config.database.pool.get().unwrap()) {
+            match $resource.limit(pagination.per_page as i64).offset(pagination.offset as i64).load::< CrudModel >(&mut config.database.pool.get().unwrap()) {
                 Ok(results) => {
                     if get_content_type(headers) == "application/json" {
                         render_json!(StatusCode::OK, results)
@@ -169,12 +169,12 @@ macro_rules! index {
 
 #[macro_export]
 macro_rules! show {
-    ($resource:ident, $model:ident, $controller:ident) => {
+    ($resource:ident, $controller:ident) => {
         pub async fn show(Extension(current_user): Extension<AuthState>, Path(param_id): Path<i32>, State(config): State<Arc<Config>>) -> impl IntoResponse {
             let tera: &mut Tera = &mut config.template.clone();
             let table_name = stringify!($resource);
             let model_class = table_name.to_class_case();
-            match $resource.find(param_id).first::<$model>(&mut config.database.pool.get().unwrap()) {
+            match $resource.find(param_id).first::<CrudModel>(&mut config.database.pool.get().unwrap()) {
                 Ok(result) => {
                     let mut context = prepare_tera_context(current_user).await;
                     context.insert("data", &result);
@@ -194,11 +194,11 @@ macro_rules! show {
 
 #[macro_export]
 macro_rules! new {
-    ($resource:ident, $model:ident) => {
+    ($resource:ident) => {
         pub async fn new(Extension(current_user): Extension<AuthState>, headers: HeaderMap, State(config): State<Arc<Config>>) -> impl IntoResponse {
             let config_ref = config.as_ref();
             let table_name = stringify!($resource);
-            let form = $model::build_create_form(config_ref, headers, format!("/{}", table_name).as_str());
+            let form = CrudModel::build_create_form(config_ref, headers, format!("/{}", table_name).as_str());
             render_form!(form, config, current_user, None::<Option<ValidationErrors>>)
         }
     }
@@ -206,11 +206,11 @@ macro_rules! new {
 
 #[macro_export]
 macro_rules! edit {
-    ($resource:ident, $model:ident) => {
+    ($resource:ident) => {
         pub async fn edit(Extension(current_user): Extension<AuthState>, headers: HeaderMap, Path(param_id): Path<i32>, State(config): State<Arc<Config>>) -> impl IntoResponse {
             let result = $resource
                 .find(param_id)
-                .first::<$model>(&mut config.database.pool.get().unwrap())
+                .first::<CrudModel>(&mut config.database.pool.get().unwrap())
                 .expect("Error loading data");
             let table_name = stringify!($resource);
             let config_ref = config.as_ref();
@@ -222,7 +222,7 @@ macro_rules! edit {
 
 #[macro_export]
 macro_rules! delete {
-    ($resource:ident, $model:ident) => {
+    ($resource:ident) => {
         pub async fn delete(Path(param_id): Path<i32>, State(config): State<Arc<Config>>) -> Redirect {
             let table_name = stringify!($resource);
             diesel::delete($resource)

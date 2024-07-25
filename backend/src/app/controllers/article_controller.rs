@@ -17,6 +17,9 @@ use axum::{ Extension, extract::{Multipart, Path, State, Query}, response::{ Int
 use crate::crud;
 use inflector::Inflector;
 
+type CrudModel = Article;
+type CrudForm = ArticleForm;
+
 pub struct ArticleCrud;
 impl CrudTrait for ArticleCrud {
     fn index_view(tera: &mut Tera) -> String {
@@ -25,7 +28,7 @@ impl CrudTrait for ArticleCrud {
     }
 }
 
-crud!(articles, Article, ArticleForm, ArticleCrud);
+crud!(articles, ArticleCrud);
 
 fn insert_values(payload: ArticleForm, current_user: User) -> ArticleInsertValues {
     ArticleInsertValues {
