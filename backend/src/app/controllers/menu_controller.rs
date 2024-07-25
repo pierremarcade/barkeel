@@ -16,7 +16,6 @@ use inflector::Inflector;
 
 type CrudModel = Menu;
 type CrudForm = MenuForm;
-const TABLE: menus = menus;
 
 pub struct MenuCrud;
 
