@@ -15,6 +15,7 @@ use inflector::Inflector;
 
 type CrudModel = User;
 type CrudForm = UserForm;
+const TABLE: users = users;
 
 pub struct UserCrud;
 impl CrudTrait for UserCrud {}

@@ -19,6 +19,7 @@ use inflector::Inflector;
 
 type CrudModel = Article;
 type CrudForm = ArticleForm;
+const TABLE: articles::table = articles;
 
 pub struct ArticleCrud;
 impl CrudTrait for ArticleCrud {
