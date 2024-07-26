@@ -72,9 +72,7 @@ macro_rules! create {
                             .get_result(&mut config.database.pool.get().unwrap())
                             .expect("Error inserting data");
                         }
-                        let _ = Redirect::to(format!("/{}", link_name).as_str());
-                        let serialized = serde_json::to_string(&"Menu created").unwrap();
-                        render_json!(StatusCode::OK, serialized)
+                        Redirect::to(format!("/{}", link_name).as_str()).into_response()
                     },
                     Err(e) => {
                         let config_ref = config.as_ref();
@@ -106,9 +104,7 @@ macro_rules! update {
                                 .get_result(&mut config.database.pool.get().unwrap())
                                 .expect("Error updating data");
                         }
-                            let _ = Redirect::to(format!("/{}", link_name).as_str());
-                        let serialized = serde_json::to_string(&"Menu updated").unwrap();
-                        render_json!(StatusCode::OK, serialized)
+                        Redirect::to(format!("/{}", link_name).as_str()).into_response()
                     },
                     Err(e) => {
                         let config_ref = config.as_ref();
@@ -157,7 +153,7 @@ macro_rules! index {
                     }
                 },
                 Err(err) => {
-                    error_controller::handler_error(config, StatusCode::BAD_REQUEST, err.to_string())
+                    error_controller::handler_error(config, StatusCode::BAD_REQUEST, err.to_string()).into_response()
                 }
             }
         }
@@ -243,7 +239,7 @@ macro_rules! render_form {
             }
             context.insert("form",&$form);
             let rendered = tera.render("form.html", &context).unwrap();
-            Response{status_code: StatusCode::OK, content_type: "text/html", datas: rendered}
+            Response{status_code: StatusCode::OK, content_type: "text/html", datas: rendered}.into_response()
         }  
     };
 }
@@ -254,10 +250,10 @@ macro_rules! render_html {
         {
             match $rendered {
                 Ok(result) => {
-                    Response{status_code: axum::http::StatusCode::OK, content_type: "text/html", datas: result}
+                    Response{status_code: axum::http::StatusCode::OK, content_type: "text/html", datas: result}.into_response()
                 },
                 Err(err) => {
-                    error_controller::handler_error($config, axum::http::StatusCode::BAD_REQUEST, err.to_string())
+                    error_controller::handler_error($config, axum::http::StatusCode::BAD_REQUEST, err.to_string()).into_response()
                 }
             }
         }  
@@ -270,10 +266,10 @@ macro_rules! render_json {
         {
             match serde_json::to_string(&$results) {
                 Ok(serialized) => {
-                    Response{status_code: $status_code, content_type: "application/json", datas: serialized}
+                    Response{status_code: $status_code, content_type: "application/json", datas: serialized}.into_response()
                 },
                 Err(err) => {
-                    Response{status_code: axum::http::StatusCode::BAD_REQUEST, content_type: "application/json", datas: err.to_string()}
+                    Response{status_code: axum::http::StatusCode::BAD_REQUEST, content_type: "application/json", datas: err.to_string()}.into_response()
                 }
             }
         }  

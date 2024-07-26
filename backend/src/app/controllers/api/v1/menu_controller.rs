@@ -21,15 +21,15 @@ pub async fn index(State(config): State<Arc<Config>>) -> impl IntoResponse  {
             let mut grouped_menu_items = BTreeMap::new();
             for item in &menu_items_with_articles {
                 if let Some(menu_id) = item.menu_id {
-                    grouped_menu_items.entry(menu_id).or_insert_with(|| Vec::new);
-                    (grouped_menu_items.get_mut(&menu_id).unwrap())().push(item);
+                    grouped_menu_items.entry(menu_id).or_insert_with(Vec::new);
+                    grouped_menu_items.get_mut(&menu_id).unwrap().push(item);
                 }
             }
             let items_per_menu: Vec<MenuWithItem> = grouped_menu_items.into_iter().map(|(menu_id, items)| {
                 let menu = all_menus.iter().find(|menu| menu.id == menu_id).unwrap();
                 MenuWithItem { 
                     menu: menu.clone(), 
-                    items: items().to_vec() 
+                    items: items.to_vec() 
                 }
             }).collect();
 
