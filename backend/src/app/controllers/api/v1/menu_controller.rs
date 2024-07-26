@@ -21,22 +21,20 @@ pub async fn index(State(config): State<Arc<Config>>) -> impl IntoResponse  {
             let mut grouped_menu_items = BTreeMap::new();
             for item in &menu_items_with_articles {
                 if let Some(menu_id) = item.menu_id {
-                    if !grouped_menu_items.contains_key(&menu_id) {
-                        grouped_menu_items.insert(menu_id, Vec::new());
-                    }
-                    grouped_menu_items.get_mut(&menu_id).unwrap().push(item);
+                    grouped_menu_items.entry(menu_id).or_insert_with(|| Vec::new);
+                    (grouped_menu_items.get_mut(&menu_id).unwrap())().push(item);
                 }
             }
             let items_per_menu: Vec<MenuWithItem> = grouped_menu_items.into_iter().map(|(menu_id, items)| {
                 let menu = all_menus.iter().find(|menu| menu.id == menu_id).unwrap();
                 MenuWithItem { 
                     menu: menu.clone(), 
-                    items: items.to_vec() 
+                    items: items().to_vec() 
                 }
             }).collect();
 
             let serialized = serde_json::to_string(&items_per_menu).unwrap();
-            return Response{status_code: StatusCode::OK, content_type: "application/json", datas: serialized};
+            Response{status_code: StatusCode::OK, content_type: "application/json", datas: serialized}
         },
         _ => Response{status_code: StatusCode::OK, content_type: "application/json", datas: "".to_string()},
     }

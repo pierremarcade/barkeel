@@ -32,19 +32,16 @@ pub fn is_csrf_token_valid(headers: HeaderMap, config: Arc<Config>, csrf_token: 
         if let Ok(cookie_str) = cookie_header.to_str() {
             for cookie in Cookie::split_parse(cookie_str) {
                 let cookie = cookie.unwrap();
-                match cookie.name() {
-                    "session_token" => {
-                        let csrf_manager: &CSRFManager = &config.csrf_manager;
-                        if csrf_manager.is_csrf_token_valid(cookie.value().to_string(), csrf_token.clone()) {
-                            return true;
-                        }
-                    },
-                    _ =>  {  }
+                if cookie.name() == "session_token" {
+                    let csrf_manager: &CSRFManager = &config.csrf_manager;
+                    if csrf_manager.is_csrf_token_valid(cookie.value().to_string(), csrf_token.clone()) {
+                        return true;
+                    }
                 }
             }
         }
     }
-    return false;
+    false
 }
 
 #[macro_export]

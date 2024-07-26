@@ -9,7 +9,7 @@ use barkeel_lib::workers::ThreadPool;
 use redis::Client;
 
 #[tokio::main]
-async fn  main() -> ()  {
+async fn  main() {
     dotenv().ok();
     env_logger::init();
     jobs::register_jobs();
