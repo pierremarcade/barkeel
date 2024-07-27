@@ -46,7 +46,7 @@ impl JobTrait for Mail {
                     Err(e)
                 },
             }
-        }else {
+        } else {
             println!("No arguments provided for sending email.");
             Err("No arguments provided".into())
         }
