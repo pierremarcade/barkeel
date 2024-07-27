@@ -16,6 +16,7 @@ pub async fn index(Extension(current_user): Extension<AuthState>, State(config):
     tera.add_raw_template("index.html", include_str!("../views/index.html")).unwrap();
     let context = prepare_tera_context(current_user).await;
     let rendered = tera.render("index.html", &context).unwrap();
+    Html(rendered)
 }
 
 pub async fn handle_assets(Path(path): Path<String>) -> impl IntoResponse {
