@@ -1,7 +1,7 @@
 use crate::config::application::Config;
 use crate::app::models::user::{ User, UserForm, UserValues };
 use crate::db::schema::users::dsl::*;
-use crate::app::controllers::{ CrudTrait, get_content_type, is_csrf_token_valid, error_controller, prepare_tera_context };
+use crate::app::controllers::{ CrudViewTrait, get_content_type, is_csrf_token_valid, error_controller, prepare_tera_context };
 use crate::app::middlewares::auth::AuthState;
 use crate::crud;
 use barkeel_lib::app::pagination::{ PaginationQuery, Pagination, PaginationTrait };
@@ -16,8 +16,8 @@ use inflector::Inflector;
 type CrudModel = User;
 type CrudForm = UserForm;
 
-pub struct UserCrud;
-impl CrudTrait for UserCrud {}
+pub struct UserView;
+impl CrudViewTrait for UserView {}
 
 fn insert_values(payload: UserForm, _current_user: User) -> UserValues {
     UserValues {
@@ -39,4 +39,4 @@ fn update_values(payload: UserForm, _current_user: User) -> UserValues {
     }
 }
 
-crud!(users, UserCrud);
+crud!(users, UserView);

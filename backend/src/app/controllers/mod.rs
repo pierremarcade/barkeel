@@ -6,7 +6,7 @@ use tera::Context;
 use crate::config::application::Config;
 use crate::app::middlewares::auth::AuthState;
 
-pub trait CrudTrait {
+pub trait CrudViewTrait {
     fn index_view(tera: &mut tera::Tera) -> String {
         let _ = tera.add_raw_template("crud_index", include_str!("../views/crud/index.html"));
         "crud_index".to_string()
@@ -46,11 +46,11 @@ pub fn is_csrf_token_valid(headers: HeaderMap, config: Arc<Config>, csrf_token: 
 
 #[macro_export]
 macro_rules! crud {
-    ($resource:ident, $controller:ident) => {
-        index!($resource, $controller);
+    ($resource:ident, $view:ident) => {
+        index!($resource, $view);
         new!($resource);
         edit!($resource);
-        show!($resource, $controller);
+        show!($resource, $view);
         delete!($resource);
         create!($resource); 
         update!($resource);
@@ -123,7 +123,7 @@ macro_rules! update {
 
 #[macro_export]
 macro_rules! index {
-    ($resource:ident, $controller:ident) => {
+    ($resource:ident, $view:ident) => {
         pub async fn index(Extension(current_user): Extension<AuthState>, Query(pagination_query): Query<PaginationQuery>, headers: HeaderMap, State(config): State<Arc<Config>>) -> impl IntoResponse {
             let total_results: i64 = get_total!(config, $resource);
             let pagination = Pagination::new(pagination_query, total_results);
@@ -147,7 +147,7 @@ macro_rules! index {
                         context.insert("per_page", &pagination.per_page);
                         context.insert("page_numbers", &pagination.generate_page_numbers());
                         let tera: &mut tera::Tera = &mut config.template.clone();
-                        let template_name = $controller::index_view(tera);                        
+                        let template_name = $view::index_view(tera);                        
                         let rendered = tera.render(&template_name.as_str(), &context);
                         render_html!(config, rendered)
                     }
@@ -162,7 +162,7 @@ macro_rules! index {
 
 #[macro_export]
 macro_rules! show {
-    ($resource:ident, $controller:ident) => {
+    ($resource:ident, $view:ident) => {
         pub async fn show(Extension(current_user): Extension<AuthState>, Path(param_id): Path<i32>, State(config): State<Arc<Config>>) -> impl IntoResponse {
             let tera: &mut Tera = &mut config.template.clone();
             let table_name = stringify!($resource);
@@ -173,7 +173,7 @@ macro_rules! show {
                     context.insert("data", &result);
                     context.insert("title", &model_class.as_str());
                     context.insert("description", format!("{}'s Detail", model_class).as_str());
-                    let template_name = $controller::show_view(tera);  
+                    let template_name = $view::show_view(tera);  
                     let rendered = tera.render(&template_name.as_str(), &context).unwrap();
                     Response{status_code: StatusCode::OK, content_type: "text/html", datas: rendered}
                 },

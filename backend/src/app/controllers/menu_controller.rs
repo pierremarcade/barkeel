@@ -2,7 +2,7 @@ use crate::config::application::Config;
 use crate::app::models::menu::{ Menu, MenuForm, MenuValues };
 use crate::app::models::user::User;
 use crate::db::schema::menus::dsl::*;
-use crate::app::controllers::{ CrudTrait, get_content_type, is_csrf_token_valid, error_controller, prepare_tera_context };
+use crate::app::controllers::{ CrudViewTrait, get_content_type, is_csrf_token_valid, error_controller, prepare_tera_context };
 use crate::app::middlewares::auth::AuthState;
 use crate::crud;
 use barkeel_lib::app::pagination::{ PaginationQuery, Pagination, PaginationTrait };
@@ -17,9 +17,9 @@ use inflector::Inflector;
 type CrudModel = Menu;
 type CrudForm = MenuForm;
 
-pub struct MenuCrud;
+pub struct MenuView;
 
-impl CrudTrait for MenuCrud {}
+impl CrudViewTrait for MenuView {}
 
 fn insert_values(payload: MenuForm, _current_user: User) -> MenuValues {
     MenuValues {
@@ -33,4 +33,4 @@ fn update_values(payload: MenuForm, _current_user: User) -> MenuValues {
     }
 }
 
-crud!(menus, MenuCrud);
+crud!(menus, MenuView);

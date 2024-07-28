@@ -6,7 +6,7 @@ use diesel::prelude::*;
 use std::sync::Arc;
 use tera::Tera;
 use axum::{  Extension, extract::{Path, State, Query}, response::{ IntoResponse, Redirect }, http::{ HeaderMap, StatusCode }, Form};
-use crate::app::controllers::{ CrudTrait, get_content_type, is_csrf_token_valid, error_controller, prepare_tera_context };
+use crate::app::controllers::{ CrudViewTrait, get_content_type, is_csrf_token_valid, error_controller, prepare_tera_context };
 use crate::app::middlewares::auth::AuthState;
 use barkeel_lib::app::pagination::{ PaginationQuery, Pagination, PaginationTrait };
 use barkeel_lib::app::http::response::Response;
@@ -17,8 +17,8 @@ use inflector::Inflector;
 type CrudModel = MenuItem;
 type CrudForm = MenuItemForm;
 
-pub struct MenuItemCrud;
-impl CrudTrait for MenuItemCrud {}
+pub struct MenuItemViewCrud;
+impl CrudViewTrait for MenuItemViewCrud {}
 
 fn insert_values(payload: MenuItemForm, _current_user: User) -> MenuItemValues {
     MenuItemValues {
@@ -38,4 +38,4 @@ fn update_values(payload: MenuItemForm, _current_user: User) -> MenuItemValues {
     }
 }
 
-crud!(menu_items, MenuItemCrud);
+crud!(menu_items, MenuItemViewCrud);
