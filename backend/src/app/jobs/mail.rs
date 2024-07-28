@@ -36,7 +36,7 @@ impl JobTrait for Mail {
             }
             
             let mailer = MailerBuilder::new();
-            match mailer.send(email).await{
+            match mailer.send(email).await {
                 Ok(_) => {
                     println!("Email sent successfully!");
                     Ok(())
