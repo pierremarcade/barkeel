@@ -1,28 +1,30 @@
 import { fetchData, crossSvg, createSlug } from './utils.js';
 
 export function beforeSubmit() {
-    const form = document.querySelector('form');
-    if (form) {
-        const datetimeFields = form.querySelectorAll('input[type="datetime-local"]');
-        datetimeFields.forEach(function(field) {
-            var datetime_field = document.querySelector(`input[data-datetime="${field.id}"]`);
-            if (datetime_field) {
-                field.value = datetime_field.value;
-            }
-        });
-        form.addEventListener('submit', async function(event) {
-            event.preventDefault();
-            form.querySelectorAll('h1, h2, h3, h4, h5, h6').forEach(function(titleElement) {
-                var slug = createSlug(titleElement.textContent);
-                titleElement.setAttribute('id', slug);
-            });
+    const forms = document.querySelectorAll('form');
+    if (forms) {
+        forms.forEach(function(form) {
+            const datetimeFields = document.querySelectorAll('input[type="datetime-local"]');
             datetimeFields.forEach(function(field) {
                 var datetime_field = document.querySelector(`input[data-datetime="${field.id}"]`);
-                let date = new Date(field.value);
-                datetime_field.value = date.toISOString().slice(0, 19);
+                if (datetime_field) {
+                    field.value = datetime_field.value;
+                }
             });
-
-            form.submit();
+            form.addEventListener('submit', function(event) {
+                event.preventDefault();
+                form.querySelectorAll('h1, h2, h3, h4, h5, h6').forEach(function(titleElement) {
+                    var slug = createSlug(titleElement.textContent);
+                    titleElement.setAttribute('id', slug);
+                });
+                datetimeFields.forEach(function(field) {
+                    var datetime_field = document.querySelector(`input[data-datetime="${field.id}"]`);
+                    let date = new Date(field.value);
+                    datetime_field.value = date.toISOString().slice(0, 19);
+                    console.log(datetime_field.value)
+                });
+                form.submit();
+        });
         });
     }
 }

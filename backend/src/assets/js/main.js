@@ -2,9 +2,9 @@ import { beforeSubmit, handleSelectAndRadioElements, handleFileElements, handleA
 import { init } from './quill.js';
 
 document.addEventListener('DOMContentLoaded', function() {
-    beforeSubmit();
     handleSelectAndRadioElements();
     handleFileElements();
     handleAutocompleteElements();
     init();
+    beforeSubmit();
 });
