@@ -17,7 +17,7 @@ use crate::db::schema::menu_items;
 pub struct MenuItem {
     pub id: i32,
     pub menu_id: Option<i32>,
-    #[form_builder(type_="select")]
+    #[form_builder(type_="autocomplete")]
     pub article_id: Option<i32>,
     #[validate(length(min = 4))]
     pub label: String,
