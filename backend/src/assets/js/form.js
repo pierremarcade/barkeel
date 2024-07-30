@@ -11,8 +11,17 @@ export function beforeSubmit() {
                     field.value = datetime_field.value;
                 }
             });
+            const checkboxFields = document.querySelectorAll('input[type="checkbox"]');
             form.addEventListener('submit', function(event) {
                 event.preventDefault();
+                console.log(checkboxFields);
+                checkboxFields.forEach(function(field) {
+                    console.log(field.value);
+                    if (!field.checked) {
+                        field.value = false;
+                        field.checked = true;
+                    }
+                });
                 form.querySelectorAll('h1, h2, h3, h4, h5, h6').forEach(function(titleElement) {
                     var slug = createSlug(titleElement.textContent);
                     titleElement.setAttribute('id', slug);
@@ -26,17 +35,6 @@ export function beforeSubmit() {
                 form.submit();
         });
         });
-    }
-}
-
-function getRightPartOfActionUrl(actionUrl) {
-    const splitUrl = actionUrl.split('/');
-
-    if (splitUrl.length > 1) {
-        return '/' + splitUrl.slice(1).join('/');
-    } else {
-        // Si il n'y a pas de slash, retournez la chaîne telle quelle
-        return actionUrl;
     }
 }
 
@@ -79,6 +77,15 @@ export function handleSelectAndRadioElements() {
         fetchData(radioElement.getAttribute('data-url'), function(data) {
             populateRadioOptions(radioElement, data);
         });
+    });
+}
+
+export function handleCheckboxElements() {
+    var checkboxes = document.querySelectorAll('.checkbox');
+    checkboxes.forEach(function(checkbox) {
+        if (checkbox.getAttribute('data-checked') === 'true') {
+            checkbox.checked = true;
+        }
     });
 }
 
