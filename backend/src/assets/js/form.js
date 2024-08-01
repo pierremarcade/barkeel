@@ -14,7 +14,6 @@ export function beforeSubmit() {
             const checkboxFields = document.querySelectorAll('input[type="checkbox"]');
             form.addEventListener('submit', function(event) {
                 event.preventDefault();
-                console.log(checkboxFields);
                 checkboxFields.forEach(function(field) {
                     console.log(field.value);
                     if (!field.checked) {
@@ -133,11 +132,12 @@ export function handleAutocompleteElements() {
                 }
                 itemsSelected.push(selectedId);
                 const parentElementDataId = event.target.parentElement.getAttribute('data-id');
+                const ismultiple = event.target.parentElement.getAttribute('data-multiple');
                 const checkbox = document.createElement('input');
                 checkbox.id = `${selectedId}-autocomplete-selected`;
                 checkbox.setAttribute("type", "checkbox");
                 checkbox.setAttribute("style", "display:none");
-                checkbox.setAttribute("name", `${parentElementDataId}`);
+                checkbox.setAttribute("name", `${parentElementDataId}${ismultiple ? '[]' : null}`);
                 checkbox.setAttribute("value", selectedId);
                 checkbox.setAttribute("checked", 'checked');
                 const selectedItemContainer = document.querySelector(`#${parentElementDataId}Selected`);
