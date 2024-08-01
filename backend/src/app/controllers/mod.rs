@@ -120,7 +120,6 @@ macro_rules! update {
     }
 }
 
-
 #[macro_export]
 macro_rules! index {
     ($resource:ident, $view:ident) => {

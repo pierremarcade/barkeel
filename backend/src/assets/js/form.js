@@ -130,50 +130,55 @@ export function handleAutocompleteElements() {
             }
             itemsSelected.push(selectedId);
             const parentElementDataId = event.target.parentElement.getAttribute('data-id');
+            const value = event.target.parentElement.getAttribute('data-value');
             const ismultiple = event.target.parentElement.getAttribute('data-multiple');
-            const checkbox = document.createElement('input');
-            checkbox.id = `${selectedId}-autocomplete-selected`;
-            checkbox.setAttribute("type", "checkbox");
-            checkbox.setAttribute("style", "display:none");
-            checkbox.setAttribute("name", `${parentElementDataId}${ismultiple ? '[]' : null}`);
-            checkbox.setAttribute("value", selectedId);
-            checkbox.setAttribute("checked", 'checked');
-            const selectedItemContainer = document.querySelector(`#${parentElementDataId}Selected`);
-            if (selectedItemContainer) {
-                const removeBtn = document.createElement('span');
-                removeBtn.className = `
-                    remove-from-list
-                    inline-flex 
-                    items-center
-                    gap-x-1.5 
-                    rounded-md 
-                    bg-indigo-600 
-                    px-3 
-                    py-2 
-                    text-sm 
-                    font-semibold 
-                    text-white 
-                    shadow-sm 
-                    hover:bg-indigo-500 
-                    focus-visible:outline 
-                    focus-visible:outline-2 
-                    focus-visible:outline-offset-2 
-                    focus-visible:outline-indigo-600
-                    `;
-                removeBtn.textContent = event.target.textContent;
-                removeBtn.appendChild(crossSvg());
-                selectedItemContainer.appendChild(removeBtn);
-                selectedItemContainer.appendChild(checkbox);
-                removeBtn.addEventListener('click', function() {
-                    selectedItemContainer.removeChild(checkbox);
-                    selectedItemContainer.removeChild(removeBtn);
-                    itemsSelected = itemsSelected.filter(element => element!== selectedId);
-                    handleInputAutocompleState(itemsSelected, parentElementDataId, ismultiple)
-                });     
-            }
+            generateSelectedItem(itemsSelected, ismultiple, parentElementDataId, selectedId, event.target.textContent);
             handleInputAutocompleState(itemsSelected, parentElementDataId, ismultiple);
         });
     });
+}
+
+function generateSelectedItem(itemsSelected, ismultiple, parentElementDataId, selectedId, textContent) {
+    const checkbox = document.createElement('input');
+    checkbox.id = `${selectedId}-autocomplete-selected`;
+    checkbox.setAttribute("type", "checkbox");
+    checkbox.setAttribute("style", "display:none");
+    checkbox.setAttribute("name", `${parentElementDataId}${ismultiple ? '[]' : null}`);
+    checkbox.setAttribute("value", selectedId);
+    checkbox.setAttribute("checked", 'checked');
+    const selectedItemContainer = document.querySelector(`#${parentElementDataId}Selected`);
+    if (selectedItemContainer) {
+        const removeBtn = document.createElement('span');
+        removeBtn.className = `
+            remove-from-list
+            inline-flex 
+            items-center
+            gap-x-1.5 
+            rounded-md 
+            bg-indigo-600 
+            px-3 
+            py-2 
+            text-sm 
+            font-semibold 
+            text-white 
+            shadow-sm 
+            hover:bg-indigo-500 
+            focus-visible:outline 
+            focus-visible:outline-2 
+            focus-visible:outline-offset-2 
+            focus-visible:outline-indigo-600
+            `;
+        removeBtn.textContent = textContent;
+        removeBtn.appendChild(crossSvg());
+        selectedItemContainer.appendChild(removeBtn);
+        selectedItemContainer.appendChild(checkbox);
+        removeBtn.addEventListener('click', function() {
+            selectedItemContainer.removeChild(checkbox);
+            selectedItemContainer.removeChild(removeBtn);
+            itemsSelected = itemsSelected.filter(element => element!== selectedId);
+            handleInputAutocompleState(itemsSelected, parentElementDataId, ismultiple)
+        });
+    }
 }
 
 function handleInputAutocompleState(itemsSelected, parentElementDataId, ismultiple) {
