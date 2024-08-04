@@ -16,6 +16,11 @@ pub trait CrudViewTrait {
         let _ = tera.add_raw_template("crud_show", include_str!("../views/crud/show.html"));
         "crud_show".to_string()
     }
+
+    fn form_view(tera: &mut tera::Tera) -> String {
+        let _ = tera.add_raw_template("crud_form", include_str!("../views/crud/form.html"));
+        "crud_form".to_string()
+    }
 }
 
 pub fn get_content_type(headers: HeaderMap) -> String {
@@ -48,18 +53,18 @@ pub fn is_csrf_token_valid(headers: HeaderMap, config: Arc<Config>, csrf_token: 
 macro_rules! crud {
     ($resource:ident, $view:ident) => {
         index!($resource, $view);
-        new!($resource);
-        edit!($resource);
+        new!($resource, $view);
+        edit!($resource, $view);
         show!($resource, $view);
         delete!($resource);
-        create!($resource); 
-        update!($resource);
+        create!($resource, $view); 
+        update!($resource, $view);
     };
 }
 
 #[macro_export]
 macro_rules! create {
-    ($resource:ident) => {
+    ($resource:ident, $view:ident) => {
         pub async fn create(Extension(mut current_user): Extension<AuthState>, headers: HeaderMap, State(config): State<Arc<Config>>, Form(payload): Form<CrudForm>) -> impl IntoResponse {
             if is_csrf_token_valid(headers.clone(), config.clone(), payload.clone().csrf_token) {
                 let table_name = stringify!($resource);
@@ -77,7 +82,7 @@ macro_rules! create {
                     Err(e) => {
                         let config_ref = config.as_ref();
                         let form = payload.build_form(config_ref, headers, format!("/{}", link_name).as_str());
-                        render_form!(form, config, current_user, Some(e.clone()))
+                        render_form!(form, $view, config, current_user, Some(e.clone()))
                     }
                 }
             } else {
@@ -90,7 +95,7 @@ macro_rules! create {
 
 #[macro_export]
 macro_rules! update {
-    ($resource:ident) => {
+    ($resource:ident, $view:ident) => {
         pub async fn update(Extension(mut current_user): Extension<AuthState>, headers: HeaderMap, State(config): State<Arc<Config>>, Path(param_id): Path<i32>, Form(payload): Form<CrudForm>) -> impl IntoResponse {
             if is_csrf_token_valid(headers.clone(), config.clone(), payload.clone().csrf_token) {
                 let table_name = stringify!($resource);
@@ -109,7 +114,7 @@ macro_rules! update {
                     Err(e) => {
                         let config_ref = config.as_ref();
                         let form = payload.build_form(config_ref, headers, format!("/{}", link_name).as_str());
-                        render_form!(form, config, current_user, Some(e.clone()))
+                        render_form!(form, $view, config, current_user, Some(e.clone()))
                     }
                 }
             } else {
@@ -146,7 +151,7 @@ macro_rules! index {
                         context.insert("per_page", &pagination.per_page);
                         context.insert("page_numbers", &pagination.generate_page_numbers());
                         let tera: &mut tera::Tera = &mut config.template.clone();
-                        let template_name = $view::index_view(tera);                        
+                        let template_name = $view::index_view(tera);                   
                         let rendered = tera.render(&template_name.as_str(), &context);
                         render_html!(config, rendered)
                     }
@@ -172,7 +177,7 @@ macro_rules! show {
                     context.insert("data", &result);
                     context.insert("title", &model_class.as_str());
                     context.insert("description", format!("{}'s Detail", model_class).as_str());
-                    let template_name = $view::show_view(tera);  
+                    let template_name = $view::show_view(tera);
                     let rendered = tera.render(&template_name.as_str(), &context).unwrap();
                     Response{status_code: StatusCode::OK, content_type: "text/html", datas: rendered}
                 },
@@ -186,20 +191,20 @@ macro_rules! show {
 
 #[macro_export]
 macro_rules! new {
-    ($resource:ident) => {
+    ($resource:ident, $view:ident) => {
         pub async fn new(Extension(current_user): Extension<AuthState>, headers: HeaderMap, State(config): State<Arc<Config>>) -> impl IntoResponse {
             let config_ref = config.as_ref();
             let table_name = stringify!($resource);
             let link_name = table_name.to_kebab_case();
             let form = CrudModel::build_create_form(config_ref, headers, format!("/{}", link_name).as_str());
-            render_form!(form, config, current_user, None::<Option<ValidationErrors>>)
+            render_form!(form, $view, config, current_user, None::<Option<ValidationErrors>>)
         }
     }
 }
 
 #[macro_export]
 macro_rules! edit {
-    ($resource:ident) => {
+    ($resource:ident, $view:ident) => {
         pub async fn edit(Extension(current_user): Extension<AuthState>, headers: HeaderMap, Path(param_id): Path<i32>, State(config): State<Arc<Config>>) -> impl IntoResponse {
             let result = $resource
                 .find(param_id)
@@ -209,7 +214,7 @@ macro_rules! edit {
             let link_name = table_name.to_kebab_case();
             let config_ref = config.as_ref();
             let form = result.build_edit_form(config_ref, headers, format!("/{}/{}", link_name, param_id).as_str());
-            render_form!(form, config, current_user, None::<Option<ValidationErrors>>)
+            render_form!(form, $view, config, current_user, None::<Option<ValidationErrors>>)
         }
     }
 }
@@ -231,16 +236,17 @@ macro_rules! delete {
 
 #[macro_export]
 macro_rules! render_form {
-    ($form:ident, $config:ident, $current_user:ident, $error:expr) => {
+    ($form:ident, $view:ident, $config:ident, $current_user:ident, $error:expr) => {
         {
-            let tera: &Tera = &$config.template;
+            let tera: &mut Tera = &mut $config.template.clone();
             let mut context = prepare_tera_context($current_user).await;
             if let Some(error) = $error {
                 let serialized = serde_json::to_string(&error).unwrap();
                 context.insert("errors_message", &serialized);
             }
             context.insert("form",&$form);
-            let rendered = tera.render("form.html", &context).unwrap();
+            let template_name = $view::show_view(tera);
+            let rendered = tera.render(&template_name, &context).unwrap();
             Response{status_code: StatusCode::OK, content_type: "text/html", datas: rendered}.into_response()
         }  
     };
