@@ -5,7 +5,7 @@ import { getArticle } from "@/components/Articles/articles.api";
 import React from 'react';
 
 export async function generateMetadata(): Promise<Metadata> {
-    const data = await getArticle("getting-started");
+    const data = await getArticle("why-barkeel");
    
     return {
       title: data.title,
@@ -14,5 +14,5 @@ export async function generateMetadata(): Promise<Metadata> {
   }
 
 export default function Page() {
-    return <Detail slug="getting-started" />;
+    return <Detail slug="why-barkeel" />;
 }
