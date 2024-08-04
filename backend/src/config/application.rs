@@ -11,6 +11,7 @@ use crate::config::database::sqlite::{Connector, Database};
 use tera::Tera;
 use std::error::Error;
 use axum::Router;
+use axum::extract::DefaultBodyLimit;
 use tower::layer::Layer;
 use tower_http::normalize_path::{ NormalizePathLayer, NormalizePath };
 use barkeel_lib::session::CSRFManager;
@@ -64,7 +65,7 @@ impl Loader {
         let cors = CorsLayer::new().allow_origin(Any);
 
         let app = NormalizePathLayer::trim_trailing_slash().layer(routes::routes(config.clone()).with_state(config.clone())
-        .layer(cors));
+        .layer(cors).layer(DefaultBodyLimit::disable()));
         
         let host = std::env::var("HOST")?;
         let listener = tokio::net::TcpListener::bind(host).await?;

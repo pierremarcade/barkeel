@@ -1,41 +1,43 @@
 import { fetchData, crossSvg, createSlug } from './utils.js';
 let itemsSelected = [];
 
+function updateDatetimeFields(form) {
+    const datetimeFields = form.querySelectorAll('input[type="datetime-local"]');
+    datetimeFields.forEach(field => {
+        const datetimeField = document.querySelector(`input[data-datetime="${field.id}"]`);
+        if (datetimeField) {
+            field.value = datetimeField.value;
+        }
+    });
+}
+
+function handleCheckboxFields(form) {
+    const checkboxFields = form.querySelectorAll('input[type="checkbox"]');
+    checkboxFields.forEach(field => {
+        if (!field.checked) {
+            field.value = false;
+            field.checked = true;
+        }
+    });
+}
+
 export function beforeSubmit() {
-    const forms = document.querySelectorAll('form');
-    if (forms) {
-        forms.forEach(function(form) {
-            const datetimeFields = document.querySelectorAll('input[type="datetime-local"]');
-            datetimeFields.forEach(function(field) {
-                var datetime_field = document.querySelector(`input[data-datetime="${field.id}"]`);
-                if (datetime_field) {
-                    field.value = datetime_field.value;
-                }
+    document.querySelectorAll('form').forEach(form => {
+        updateDatetimeFields(form);
+        handleCheckboxFields(form);
+
+        form.addEventListener('submit', event => {
+            event.preventDefault();
+            form.querySelectorAll('h1, h2, h3, h4, h5, h6').forEach(titleElement => {
+                const slug = createSlug(titleElement.textContent);
+                titleElement.setAttribute('id', slug);
             });
-            const checkboxFields = document.querySelectorAll('input[type="checkbox"]');
-            form.addEventListener('submit', function(event) {
-                event.preventDefault();
-                checkboxFields.forEach(function(field) {
-                    console.log(field.value);
-                    if (!field.checked) {
-                        field.value = false;
-                        field.checked = true;
-                    }
-                });
-                form.querySelectorAll('h1, h2, h3, h4, h5, h6').forEach(function(titleElement) {
-                    var slug = createSlug(titleElement.textContent);
-                    titleElement.setAttribute('id', slug);
-                });
-                datetimeFields.forEach(function(field) {
-                    var datetime_field = document.querySelector(`input[data-datetime="${field.id}"]`);
-                    let date = new Date(field.value);
-                    datetime_field.value = date.toISOString().slice(0, 19);
-                    console.log(datetime_field.value)
-                });
-                form.submit();
+
+            updateDatetimeFields(form);
+
+            form.submit();
         });
-        });
-    }
+    });
 }
 
 export function handleFileElements() {
