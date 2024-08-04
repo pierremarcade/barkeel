@@ -16,6 +16,7 @@ use validator::{Validate, ValidationErrors};
 use axum::{ Extension, extract::{Multipart, Path, State, Query}, response::{ IntoResponse, Redirect }, http::{ HeaderMap, StatusCode }, Form};
 use crate::crud;
 use inflector::Inflector;
+use std::collections::HashMap;
 
 type CrudModel = Article;
 type CrudForm = ArticleForm;
@@ -50,11 +51,20 @@ fn update_values(payload: ArticleForm, _current_user: User) -> ArticleUpdateValu
     }
 }
 
-pub async fn search(Path(query): Path<String>, State(config): State<Arc<Config>>) -> impl IntoResponse {
-    let results = articles::table
-        .filter(articles::title.ilike(format!("%{}%", query.clone())))
-        .or_filter(articles::content.ilike(format!("%{}%", query.clone())))
-        .limit(10)
+pub async fn search(Query(params): Query<HashMap<String, String>>, State(config): State<Arc<Config>>) -> impl IntoResponse {
+    let mut query = articles::table.into_boxed();
+    if let Some(title_param) = params.get("title") {
+        query = query.filter(articles::title.ilike(format!("%{}%", title_param)))
+                     .or_filter(articles::content.ilike(format!("%{}%", title_param)));
+    }
+
+    if let Some(ids_str) = params.get("ids") {
+        let ids: Vec<i32> = ids_str.split(',')
+                                    .map(|id_str| id_str.parse().unwrap_or_default())
+                                    .collect();
+        query = query.filter(articles::id.eq_any(ids));
+    }
+    let results = query.limit(10)
         .load::<Article>(&mut config.database.pool.get().unwrap())
         .expect("Error loading datas");
     let serialized = serde_json::to_string(&results).unwrap();
