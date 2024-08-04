@@ -190,7 +190,8 @@ macro_rules! new {
         pub async fn new(Extension(current_user): Extension<AuthState>, headers: HeaderMap, State(config): State<Arc<Config>>) -> impl IntoResponse {
             let config_ref = config.as_ref();
             let table_name = stringify!($resource);
-            let form = CrudModel::build_create_form(config_ref, headers, format!("/{}", table_name).as_str());
+            let link_name = table_name.to_kebab_case();
+            let form = CrudModel::build_create_form(config_ref, headers, format!("/{}", link_name).as_str());
             render_form!(form, config, current_user, None::<Option<ValidationErrors>>)
         }
     }
@@ -205,8 +206,9 @@ macro_rules! edit {
                 .first::<CrudModel>(&mut config.database.pool.get().unwrap())
                 .expect("Error loading data");
             let table_name = stringify!($resource);
+            let link_name = table_name.to_kebab_case();
             let config_ref = config.as_ref();
-            let form = result.build_edit_form(config_ref, headers, format!("/{}/{}", table_name, param_id).as_str());
+            let form = result.build_edit_form(config_ref, headers, format!("/{}/{}", link_name, param_id).as_str());
             render_form!(form, config, current_user, None::<Option<ValidationErrors>>)
         }
     }
@@ -217,11 +219,12 @@ macro_rules! delete {
     ($resource:ident) => {
         pub async fn delete(Path(param_id): Path<i32>, State(config): State<Arc<Config>>) -> Redirect {
             let table_name = stringify!($resource);
+            let link_name = table_name.to_kebab_case();
             diesel::delete($resource)
                 .filter(id.eq(param_id))
                 .execute(&mut config.database.pool.get().unwrap())
                 .expect("Error deleting data");
-            Redirect::to(format!("/{}", table_name).as_str()) 
+            Redirect::to(format!("/{}", link_name).as_str()) 
         }
     }
 }
