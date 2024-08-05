@@ -8,12 +8,13 @@ use crate::config::database::postgres::{Connector, Database};
 use crate::config::database::mysql::{Connector, Database};
 #[cfg(feature = "sqlite")]
 use crate::config::database::sqlite::{Connector, Database};
-use tera::Tera;
+use tera::{Tera, from_value, Error as ErrorTera, Value};
 use std::error::Error;
 use axum::{extract::DefaultBodyLimit, Router};
 use tower::layer::Layer;
 use tower_http::normalize_path::{ NormalizePathLayer, NormalizePath };
 use barkeel_lib::session::CSRFManager;
+use std::collections::HashMap;
 
 #[derive(Debug, Clone)]
 pub struct Config {
@@ -37,8 +38,14 @@ impl Loader {
 		}   
     }
 
+    // pub fn translate(args: &HashMap<String, Value>) -> Result<String, dyn Error> {
+    //     let my_key = args.get("key").expect("reason");
+    //     Ok(t!(my_key.as_str().expect("REASON")).to_string())
+    // }
+
     fn init_template() -> Result<Tera, Box<dyn std::error::Error>> {
         let mut tera = Tera::default();
+        //tera.register_function("translate", Self::translate);
         tera.add_raw_templates(vec![
             ("base.html", include_str!("../app/views/layouts/base.html")),
             ("sidebar.html", include_str!("../app/views/layouts/sidebar.html")),
