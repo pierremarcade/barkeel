@@ -18,8 +18,9 @@ pub struct MenuItem {
     pub id: i32,
     pub menu_id: Option<i32>,
     pub article_id: Option<i32>,
-    #[validate(length(min = 4))]
+    #[validate(contains(pattern = "gmail"), length(min = 40, message = "message_str"))]
     pub label: String,
+    #[validate(range(min = 18, max = 20))]
     pub position: i32,
 }
 

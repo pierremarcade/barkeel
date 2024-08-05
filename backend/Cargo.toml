@@ -33,6 +33,7 @@ bcrypt = "0.15"
 Inflector = "*"
 validator = { version = "0.18", features = ["derive"] }
 async-std = "=1.12.0"
+rust-i18n = "3.0.1"
 
 [dependencies.tera]
 version = "1.20"

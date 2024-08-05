@@ -245,7 +245,7 @@ macro_rules! render_form {
                 context.insert("errors_message", &serialized);
             }
             context.insert("form",&$form);
-            let template_name = $view::show_view(tera);
+            let template_name = $view::form_view(tera);
             let rendered = tera.render(&template_name, &context).unwrap();
             Response{status_code: StatusCode::OK, content_type: "text/html", datas: rendered}.into_response()
         }  

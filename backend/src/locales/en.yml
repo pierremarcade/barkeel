@@ -1,0 +1,4 @@
+_version: 1
+hello: 'Hello world'
+errors:
+  contains_pattern: "Must contains %{pattern}"
