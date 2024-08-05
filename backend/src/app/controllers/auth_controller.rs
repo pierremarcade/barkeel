@@ -71,7 +71,7 @@ pub async fn new_session(
             .filter(id.eq(other_user_id))
             .set(session_token.eq(session_tok.clone()))
             .get_result(&mut config.database.pool.get().unwrap())
-            .expect("Error updating data");
+            .expect(&t!("errors.crud.updating").to_string());
 
     session_tok
 }

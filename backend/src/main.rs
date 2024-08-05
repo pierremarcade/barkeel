@@ -1,11 +1,10 @@
 #[macro_use]
 extern crate rust_i18n;
-i18n!("locales");
+i18n!("src/locales");
 
 pub mod config;
 pub mod app;
 pub mod db;
-
 
 use crate::config::application::Loader;
 

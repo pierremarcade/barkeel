@@ -17,7 +17,6 @@ use axum::{ Extension, extract::{Multipart, Path, State, Query}, response::{ Int
 use crate::crud;
 use inflector::Inflector;
 use std::collections::HashMap;
-use rust_i18n::t;
 
 type CrudModel = Article;
 type CrudForm = ArticleForm;
@@ -53,7 +52,6 @@ fn update_values(payload: ArticleForm, _current_user: User) -> ArticleUpdateValu
 }
 
 pub async fn search(Query(params): Query<HashMap<String, String>>, State(config): State<Arc<Config>>) -> impl IntoResponse {
-    println!("{}", t!("errors.contains_pattern", pattern = "yesfdsds"));
     let mut query = articles::table.into_boxed();
     if let Some(title_param) = params.get("title") {
         query = query.filter(articles::title.ilike(format!("%{}%", title_param)))
@@ -68,7 +66,7 @@ pub async fn search(Query(params): Query<HashMap<String, String>>, State(config)
     }
     let results = query.limit(10)
         .load::<Article>(&mut config.database.pool.get().unwrap())
-        .expect("Error loading datas");
+        .expect(&t!("errors.crud.loading").to_string());
     let serialized = serde_json::to_string(&results).unwrap();
     Response{status_code: StatusCode::OK, content_type: "application/json", datas: serialized}
 }
