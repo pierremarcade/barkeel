@@ -8,13 +8,15 @@ use crate::config::database::postgres::{Connector, Database};
 use crate::config::database::mysql::{Connector, Database};
 #[cfg(feature = "sqlite")]
 use crate::config::database::sqlite::{Connector, Database};
-use tera::{Tera, from_value, Error as ErrorTera, Value};
+use tera::Tera;
 use std::error::Error;
 use axum::{extract::DefaultBodyLimit, Router};
 use tower::layer::Layer;
 use tower_http::normalize_path::{ NormalizePathLayer, NormalizePath };
 use barkeel_lib::session::CSRFManager;
 use std::collections::HashMap;
+use tera::Function;
+use tera::Value;
 
 #[derive(Debug, Clone)]
 pub struct Config {
@@ -22,6 +24,25 @@ pub struct Config {
     pub template: Tera,
     pub csrf_manager: CSRFManager,
 }
+
+pub struct Translate;
+
+    impl Function for Translate {
+        fn call(&self, args: &[Value]) -> Result<Value, Error> {
+            // Convertir les arguments en HashMap
+            let args_map: HashMap<String, Value> = args.iter().map(|arg| {
+                let key = arg.as_str().ok_or_else(|| Error::msg("Expected string"))?;
+                (key.to_owned(), arg.clone())
+            }).collect();
+
+            // Votre logique de translation ici
+            let my_key = args_map.get("key").expect("Key not found");
+            let translated_value = serde_json::Value::String(t!(my_key.as_str().expect("REASON")).to_string());
+            
+            Ok(translated_value)
+        }
+    }
+       
 
 pub struct Loader;
 
@@ -38,14 +59,9 @@ impl Loader {
 		}   
     }
 
-    // pub fn translate(args: &HashMap<String, Value>) -> Result<String, dyn Error> {
-    //     let my_key = args.get("key").expect("reason");
-    //     Ok(t!(my_key.as_str().expect("REASON")).to_string())
-    // }
-
     fn init_template() -> Result<Tera, Box<dyn std::error::Error>> {
         let mut tera = Tera::default();
-        //tera.register_function("translate", Self::translate);
+        tera.register_function("translate", Translate);
         tera.add_raw_templates(vec![
             ("base.html", include_str!("../app/views/layouts/base.html")),
             ("sidebar.html", include_str!("../app/views/layouts/sidebar.html")),

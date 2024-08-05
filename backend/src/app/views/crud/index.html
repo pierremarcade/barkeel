@@ -18,7 +18,7 @@
                     <tr class="divide-x divide-gray-200">
                         {% for data in datas %}
                             {% for key, value in data %}
-                                <th scope="col" class="py-3.5 pl-4 pr-4 text-left text-sm font-semibold text-gray-900">{{ key }}</th>
+                                <th scope="col" class="py-3.5 pl-4 pr-4 text-left text-sm font-semibold text-gray-900">{{ translate {"key": key} }}</th>
                             {% endfor %}
                             {% break %}
                         {% endfor %}
