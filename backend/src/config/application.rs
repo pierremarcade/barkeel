@@ -28,17 +28,13 @@ pub struct Config {
 pub struct Translate;
 
     impl Function for Translate {
-        fn call(&self, args: &[Value]) -> Result<Value, Error> {
-            // Convertir les arguments en HashMap
-            let args_map: HashMap<String, Value> = args.iter().map(|arg| {
-                let key = arg.as_str().ok_or_else(|| Error::msg("Expected string"))?;
-                (key.to_owned(), arg.clone())
+        fn call(&self, args: &HashMap<String, serde_json::Value>) -> Result<serde_json::Value, tera::Error> {
+            let args_map: HashMap<String, Value> = args.iter().map(|(arg_key, arg_value)| {
+                let key = arg_key.to_string(); 
+                (key, arg_value.clone())
             }).collect();
-
-            // Votre logique de translation ici
             let my_key = args_map.get("key").expect("Key not found");
             let translated_value = serde_json::Value::String(t!(my_key.as_str().expect("REASON")).to_string());
-            
             Ok(translated_value)
         }
     }
