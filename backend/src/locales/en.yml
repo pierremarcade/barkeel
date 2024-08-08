@@ -3,6 +3,8 @@ crud:
     description: "List of the %{name}"
   show:
     description: "Details of %{name}"
+  buttons:
+      edit: Edit
 errors:
   form:
     contains_pattern: "Must contains %{pattern}"

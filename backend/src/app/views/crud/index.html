@@ -18,7 +18,7 @@
                     <tr class="divide-x divide-gray-200">
                         {% for data in datas %}
                             {% for key, value in data %}
-                                <th scope="col" class="py-3.5 pl-4 pr-4 text-left text-sm font-semibold text-gray-900">{{ translate (key = key) }}</th>
+                                <th scope="col" class="py-3.5 pl-4 pr-4 text-left text-sm font-semibold text-gray-900">{{ translate (key = "crud.list." ~ key ) }}</th>
                             {% endfor %}
                             {% break %}
                         {% endfor %}
@@ -32,7 +32,7 @@
                                 <td class="whitespace-nowrap p-4 text-sm text-gray-500">{{ value }}</td>
                             {% endfor %}
                             <td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-0">
-                                <a href="{{base_url}}/{{ data.id }}/edit" class="text-indigo-600 hover:text-indigo-900">Edit</a>
+                                <a href="{{base_url}}/{{ data.id }}/edit" class="text-indigo-600 hover:text-indigo-900">{{ translate (key = "crud.buttons.edit") }}</a>
                             </td>
                         </tr>
                     {% endfor %}

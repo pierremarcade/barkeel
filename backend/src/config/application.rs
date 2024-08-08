@@ -27,18 +27,17 @@ pub struct Config {
 
 pub struct Translate;
 
-    impl Function for Translate {
-        fn call(&self, args: &HashMap<String, serde_json::Value>) -> Result<serde_json::Value, tera::Error> {
-            let args_map: HashMap<String, Value> = args.iter().map(|(arg_key, arg_value)| {
-                let key = arg_key.to_string(); 
-                (key, arg_value.clone())
-            }).collect();
-            let my_key = args_map.get("key").expect("Key not found");
-            let translated_value = serde_json::Value::String(t!(my_key.as_str().expect("REASON")).to_string());
-            Ok(translated_value)
-        }
+impl Function for Translate {
+    fn call(&self, args: &HashMap<String, serde_json::Value>) -> Result<serde_json::Value, tera::Error> {
+        let args_map: HashMap<String, Value> = args.iter().map(|(arg_key, arg_value)| {
+            let key = arg_key.to_string(); 
+            (key, arg_value.clone())
+        }).collect();
+        let my_key = args_map.get("key").expect("Key not found");
+        let translated_value = serde_json::Value::String(t!(my_key.as_str().expect("REASON")).to_string());
+        Ok(translated_value)
     }
-       
+}
 
 pub struct Loader;
 
