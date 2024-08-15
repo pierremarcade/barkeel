@@ -17,6 +17,8 @@ use axum::{ Extension, extract::{Multipart, Path, State, Query}, response::{ Int
 use crate::crud;
 use inflector::Inflector;
 use std::collections::HashMap;
+use crate::config::application::LOCALES;
+use fluent_templates::Loader;
 
 type CrudModel = Article;
 type CrudForm = ArticleForm;
@@ -66,7 +68,7 @@ pub async fn search(Query(params): Query<HashMap<String, String>>, State(config)
     }
     let results = query.limit(10)
         .load::<Article>(&mut config.database.pool.get().unwrap())
-        .expect(&t!("errors.crud.loading").to_string());
+        .unwrap_or_else(|_| { panic!("{}", LOCALES.lookup(&config.locale, "error_update").to_string()) });
     let serialized = serde_json::to_string(&results).unwrap();
     Response{status_code: StatusCode::OK, content_type: "application/json", datas: serialized}
 }

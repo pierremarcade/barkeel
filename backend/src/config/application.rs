@@ -14,29 +14,23 @@ use axum::{extract::DefaultBodyLimit, Router};
 use tower::layer::Layer;
 use tower_http::normalize_path::{ NormalizePathLayer, NormalizePath };
 use barkeel_lib::session::CSRFManager;
-use std::collections::HashMap;
-use tera::Function;
-use tera::Value;
+use unic_langid::{LanguageIdentifier, langid};
+use fluent_templates::{ FluentLoader, static_loader};
+
+static_loader! {
+    pub static LOCALES = {
+        locales: "src/locales",
+        fallback_language: "en",
+        customise: |bundle| bundle.set_use_isolating(false),
+    };
+}
 
 #[derive(Debug, Clone)]
 pub struct Config {
     pub database: Database,
     pub template: Tera,
     pub csrf_manager: CSRFManager,
-}
-
-pub struct Translate;
-
-impl Function for Translate {
-    fn call(&self, args: &HashMap<String, serde_json::Value>) -> Result<serde_json::Value, tera::Error> {
-        let args_map: HashMap<String, Value> = args.iter().map(|(arg_key, arg_value)| {
-            let key = arg_key.to_string(); 
-            (key, arg_value.clone())
-        }).collect();
-        let my_key = args_map.get("key").expect("Key not found");
-        let translated_value = serde_json::Value::String(t!(my_key.as_str().expect("REASON")).to_string());
-        Ok(translated_value)
-    }
+    pub locale: LanguageIdentifier,
 }
 
 pub struct Loader;
@@ -56,7 +50,7 @@ impl Loader {
 
     fn init_template() -> Result<Tera, Box<dyn std::error::Error>> {
         let mut tera = Tera::default();
-        tera.register_function("translate", Translate);
+        tera.register_function("fluent", FluentLoader::new(&*LOCALES));
         tera.add_raw_templates(vec![
             ("base.html", include_str!("../app/views/layouts/base.html")),
             ("sidebar.html", include_str!("../app/views/layouts/sidebar.html")),
@@ -77,7 +71,7 @@ impl Loader {
         };
         let database = Self::init_database()?;
         let csrf_manager = CSRFManager::new();
-        let config = Arc::new(Config { database: database.clone(), template: tera, csrf_manager });
+        let config = Arc::new(Config { database: database.clone(), template: tera, csrf_manager, locale: langid!("en") });
         let cors = CorsLayer::new().allow_origin(Any);
 
         let app = NormalizePathLayer::trim_trailing_slash().layer(routes::routes(config.clone()).with_state(config.clone())

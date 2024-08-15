@@ -75,7 +75,7 @@ macro_rules! create {
                             let _inserted_record: CrudModel = diesel::insert_into($resource)
                             .values(insert_values(payload, user.clone()))
                             .get_result(&mut config.database.pool.get().unwrap())
-                            .expect(&t!("error.crud.inserting").to_string());
+                            .expect(&LOCALES.lookup(&config.locale, "error_insert").to_string());
                         }
                         Redirect::to(format!("/{}", link_name).as_str()).into_response()
                     },
@@ -86,7 +86,7 @@ macro_rules! create {
                     }
                 }
             } else {
-                let serialized = serde_json::to_string(&t!("error.session.invalid_csrf_token").to_string()).unwrap();
+                let serialized = serde_json::to_string(&LOCALES.lookup(&config.locale, "invalid_csrf_token").to_string()).unwrap();
                 render_json!(StatusCode::BAD_REQUEST, serialized) 
             }
         }
@@ -107,7 +107,7 @@ macro_rules! update {
                                 .filter(id.eq(param_id))
                                 .set(update_values(payload, user.clone()))
                                 .get_result(&mut config.database.pool.get().unwrap())
-                                .expect(&t!("errors.crud.updating").to_string());
+                                .expect(&LOCALES.lookup(&config.locale, "error_update").to_string());
                         }
                         Redirect::to(format!("/{}", link_name).as_str()).into_response()
                     },
@@ -118,7 +118,7 @@ macro_rules! update {
                     }
                 }
             } else {
-                let serialized = serde_json::to_string(&t!("errors.session.invalid_csrf_token").to_string()).unwrap();
+                let serialized = serde_json::to_string(&LOCALES.lookup(&config.locale, "invalid_csrf_token").to_string()).unwrap();
                 render_json!(StatusCode::BAD_REQUEST, serialized) 
             }
         }
@@ -140,9 +140,14 @@ macro_rules! index {
                         let link_name = table_name.to_kebab_case();
                         let model_class = table_name.to_class_case();
                         let mut context = prepare_tera_context(current_user).await;
+                        let args = {
+                            let mut map = HashMap::new();
+                            map.insert(String::from("name"), table_name.into());
+                            map
+                        };
                         context.insert("title", &model_class.as_str());
                         context.insert("base_url", format!("/{}", link_name).as_str());
-                        context.insert("description", &t!("crud.list.description", name = table_name).to_string());
+                        context.insert("description", &LOCALES.lookup_with_args(&config.locale, "crud_list_description", &args).to_string());
                         context.insert("datas", &results);
                         context.insert("total_pages", &pagination.total_pages);
                         context.insert("current_page", &pagination.current_page);
@@ -150,6 +155,7 @@ macro_rules! index {
                         context.insert("offset", &pagination.offset);
                         context.insert("per_page", &pagination.per_page);
                         context.insert("page_numbers", &pagination.generate_page_numbers());
+                        context.insert("locale", &config.locale.to_string());
                         let tera: &mut tera::Tera = &mut config.template.clone();
                         let template_name = $view::index_view(tera);                   
                         let rendered = tera.render(&template_name.as_str(), &context);
@@ -176,7 +182,13 @@ macro_rules! show {
                     let mut context = prepare_tera_context(current_user).await;
                     context.insert("data", &result);
                     context.insert("title", &model_class.as_str());
-                    context.insert("description", &t!("crud.show.description", name = model_class).to_string());
+                    context.insert("locale", &config.locale.to_string());
+                    let args = {
+                        let mut map = HashMap::new();
+                        map.insert(String::from("name"), model_class.into());
+                        map
+                    };
+                    context.insert("description", &LOCALES.lookup_with_args(&config.locale, "crud_show_description", &args).to_string());
                     let template_name = $view::show_view(tera);
                     let rendered = tera.render(&template_name.as_str(), &context).unwrap();
                     Response{status_code: StatusCode::OK, content_type: "text/html", datas: rendered}
@@ -209,7 +221,7 @@ macro_rules! edit {
             let result = $resource
                 .find(param_id)
                 .first::<CrudModel>(&mut config.database.pool.get().unwrap())
-                .expect(&t!("errors.crud.loading").to_string());
+                .expect(&LOCALES.lookup(&config.locale, "error_load").to_string());
             let table_name = stringify!($resource);
             let link_name = table_name.to_kebab_case();
             let config_ref = config.as_ref();
@@ -228,7 +240,7 @@ macro_rules! delete {
             diesel::delete($resource)
                 .filter(id.eq(param_id))
                 .execute(&mut config.database.pool.get().unwrap())
-                .expect(&t!("errors.crud.deleting").to_string());
+                .expect(&LOCALES.lookup(&config.locale, "error_delete").to_string());
             Redirect::to(format!("/{}", link_name).as_str()) 
         }
     }

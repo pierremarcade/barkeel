@@ -12,6 +12,9 @@ use tera::Tera;
 use axum::{  Extension, extract::{Path, State, Query}, response::{ IntoResponse, Redirect }, http::{ HeaderMap, StatusCode }, Form};
 use validator::{Validate, ValidationErrors};
 use inflector::Inflector;
+use crate::config::application::LOCALES;
+use fluent_templates::Loader;
+use std::collections::HashMap;
 
 type CrudModel = User;
 type CrudForm = UserForm;

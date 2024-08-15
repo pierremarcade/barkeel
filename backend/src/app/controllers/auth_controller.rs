@@ -9,6 +9,8 @@ use axum::{extract::State, response::{IntoResponse, Response as AxumResponse}, h
 use barkeel_lib::session::CSRFManager;
 use diesel::prelude::*;
 use bcrypt::verify;
+use crate::config::application::LOCALES;
+use fluent_templates::Loader;
 
 fn redirect_response(location: &str) -> AxumResponse {
     AxumResponse::builder()
@@ -71,7 +73,7 @@ pub async fn new_session(
             .filter(id.eq(other_user_id))
             .set(session_token.eq(session_tok.clone()))
             .get_result(&mut config.database.pool.get().unwrap())
-            .expect(&t!("errors.crud.updating").to_string());
+            .unwrap_or_else(|_| { panic!("{}", LOCALES.lookup(&config.locale, "error_load").to_string()) });
 
     session_tok
 }

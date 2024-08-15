@@ -13,6 +13,9 @@ use barkeel_lib::app::http::response::Response;
 use validator::{Validate, ValidationErrors};
 use crate::crud;
 use inflector::Inflector;
+use crate::config::application::LOCALES;
+use fluent_templates::Loader;
+use std::collections::HashMap;
 
 type CrudModel = MenuItem;
 type CrudForm = MenuItemForm;
