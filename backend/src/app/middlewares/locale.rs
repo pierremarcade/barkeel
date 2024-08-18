@@ -1,17 +1,13 @@
 use crate::config::application::Config;
 use axum::{
     middleware::Next,
-    extract::Request, 
-    http::StatusCode,  
-    body::Body,
-    response::Response
+    extract::Request,
 };
 use std::sync::Mutex;
 use serde::Deserialize;
 use std::sync::Arc;
 use axum::extract::Query;
 use axum::RequestPartsExt;
-use unic_langid::{LanguageIdentifier, langid};
 
 #[derive(Deserialize, Debug)]
 struct Params {
@@ -27,8 +23,9 @@ pub(crate) async fn change_locale(
     let params: Query<Params> = parts.extract().await.expect("REASON");
     match &params.locale {
         Some(locale) => {
-            let mut config_guard = config.lock().unwrap();
-            config_guard.change_locale(langid!("fr"));
+            if let Ok(mut config_guard) = config.lock() {
+                config_guard.change_locale(locale.to_string());
+            }
         },
         None => {},
     }

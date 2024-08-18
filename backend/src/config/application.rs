@@ -1,7 +1,7 @@
 use dotenvy::dotenv;
 use crate::config::routes;
 use tower_http::cors::{Any, CorsLayer};
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 #[cfg(feature = "postgres")]
 use crate::config::database::postgres::{Connector, Database};
 #[cfg(feature = "mysql")]
@@ -31,6 +31,13 @@ pub struct Config {
     pub template: Tera,
     pub csrf_manager: CSRFManager,
     pub locale: LanguageIdentifier,
+}
+
+impl Config {
+    pub fn change_locale(&mut self, locale: String) {
+        println!("{}", self.locale);
+        self.locale = locale.parse().expect("Parsing failed.");
+    }
 }
 
 pub struct Loader;
@@ -71,10 +78,16 @@ impl Loader {
         };
         let database = Self::init_database()?;
         let csrf_manager = CSRFManager::new();
-        let config = Arc::new(Config { database: database.clone(), template: tera, csrf_manager, locale: langid!("en") });
+        let config = Config { database: database.clone(), template: tera, csrf_manager, locale: langid!("en") };
+        let arc_mutex_config = Arc::new(Mutex::new(config.clone()));
+        let arc_config = Arc::new(config.clone());
         let cors = CorsLayer::new().allow_origin(Any);
 
-        let app = NormalizePathLayer::trim_trailing_slash().layer(routes::routes(config.clone()).with_state(config.clone())
+        let routes =  routes::web::routes(arc_mutex_config.clone())
+        .nest("/api", routes::api::routes(arc_mutex_config));
+
+
+        let app = NormalizePathLayer::trim_trailing_slash().layer(routes.with_state(arc_config)
         .layer(cors).layer(DefaultBodyLimit::disable()));
         
         let host = std::env::var("HOST")?;
