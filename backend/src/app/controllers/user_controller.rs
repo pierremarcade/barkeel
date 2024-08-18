@@ -7,7 +7,7 @@ use crate::crud;
 use barkeel_lib::app::pagination::{ PaginationQuery, Pagination, PaginationTrait };
 use barkeel_lib::app::http::response::Response;
 use diesel::prelude::*;
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 use tera::Tera;
 use axum::{  Extension, extract::{Path, State, Query}, response::{ IntoResponse, Redirect }, http::{ HeaderMap, StatusCode }, Form};
 use validator::{Validate, ValidationErrors};

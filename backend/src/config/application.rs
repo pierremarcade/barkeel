@@ -84,10 +84,10 @@ impl Loader {
         let cors = CorsLayer::new().allow_origin(Any);
 
         let routes =  routes::web::routes(arc_mutex_config.clone())
-        .nest("/api", routes::api::routes(arc_mutex_config));
+        .nest("/api", routes::api::routes(arc_mutex_config.clone()));
 
 
-        let app = NormalizePathLayer::trim_trailing_slash().layer(routes.with_state(arc_config)
+        let app = NormalizePathLayer::trim_trailing_slash().layer(routes.with_state(arc_mutex_config)
         .layer(cors).layer(DefaultBodyLimit::disable()));
         
         let host = std::env::var("HOST")?;

@@ -3,7 +3,7 @@ use crate::app::models::user::User;
 use crate::app::models::auth::Credentials;
 use barkeel_lib::app::http::response::Response;
 use crate::db::schema::users::dsl::*;
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 use tera::{Context, Tera};
 use axum::{extract::State, response::{IntoResponse, Response as AxumResponse}, http::{ HeaderMap, StatusCode }, Form, body::Body};
 use barkeel_lib::session::CSRFManager;
@@ -31,13 +31,13 @@ fn set_cookie_response(session_tok: &str) -> AxumResponse {
 
 pub mod get {
     use super::*;
-    pub async fn login(headers: HeaderMap, State(config): State<Arc<Config>>) -> impl IntoResponse {
+    pub async fn login(headers: HeaderMap, State(config): State<Arc<Mutex<Config>>>) -> impl IntoResponse {
         let tera: &Tera = &config.template;
         let mut tera = tera.clone();
         tera.add_raw_template("login.html", include_str!("../views/login.html")).unwrap();
         let mut context = Context::new();
-        let config_ref = config.as_ref();
-        context.insert("data", &Credentials::build_create_form(config_ref, headers, "/login"));
+        let config_guard = config.lock().unwrap();
+        context.insert("data", &Credentials::build_create_form(config_guard, headers, "/login"));
         let rendered = tera.render("login.html", &context).unwrap();
         Response{status_code: StatusCode::OK, content_type: "text/html", datas: rendered}
     }
@@ -49,13 +49,14 @@ pub mod get {
 
 pub mod post {
     use super::*;
-    pub async fn login(State(config): State<Arc<Config>>, Form(creds): Form<Credentials>) -> impl IntoResponse {
+    pub async fn login(State(config): State<Arc<Mutex<Config>>>, Form(creds): Form<Credentials>) -> impl IntoResponse {
         match users.filter(email.eq(creds.email)).first::<User>(&mut config.database.pool.get().unwrap()) {
             Ok(user) => {
                 if let Err(_err) = verify(creds.password, &user.password) {
                     return redirect_response("/login");
                 }
-                let session_tok = new_session(&config, user.id).await;
+                let config_guard = config.lock().unwrap();
+                let session_tok = new_session(&config_guard, user.id).await;
                 set_cookie_response(&session_tok)
             },
             _ => redirect_response("/login")

@@ -3,14 +3,14 @@ use axum::{ Extension, extract::{ State, Path}, response:: { Html, IntoResponse 
 use tera::Tera;
 use crate::config::application::Config;
 use crate::app::middlewares::auth::AuthState;
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 use crate::app::controllers::prepare_tera_context;
 
 static MAIN_CSS: &str = include_str!("../../public/css/main.css");
 static MAIN_JS: &str = include_str!("../../public/js/main.js");
 static FAVICON: &str = include_str!("../../public/img/favicon.svg");
 
-pub async fn index(Extension(current_user): Extension<AuthState>, State(config): State<Arc<Config>>) -> impl IntoResponse {
+pub async fn index(Extension(current_user): Extension<AuthState>, State(config): State<Arc<Mutex<Config>>>) -> impl IntoResponse {
     let tera: &Tera = &config.template;
     let mut tera = tera.clone();
     tera.add_raw_template("index.html", include_str!("../views/index.html")).unwrap();
