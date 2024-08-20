@@ -3,9 +3,7 @@ use axum::{
     middleware::Next,
     extract::Request,
 };
-use std::sync::Mutex;
 use serde::Deserialize;
-use std::sync::Arc;
 use axum::extract::Query;
 use axum::RequestPartsExt;
 
@@ -15,7 +13,7 @@ struct Params {
 }
 
 pub(crate) async fn change_locale(
-    config: Arc<Mutex<Config>>,
+    mut config: Config,
     request: Request, next: Next,
 ) -> axum::response::Response {
     let (mut parts, body) = request.into_parts();
@@ -23,9 +21,7 @@ pub(crate) async fn change_locale(
     let params: Query<Params> = parts.extract().await.expect("REASON");
     match &params.locale {
         Some(locale) => {
-            if let Ok(mut config_guard) = config.lock() {
-                config_guard.change_locale(locale.to_string());
-            }
+            config.change_locale(locale.to_string());
         },
         None => {},
     }

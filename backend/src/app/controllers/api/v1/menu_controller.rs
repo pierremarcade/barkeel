@@ -4,10 +4,9 @@ use crate::app::models::menu::{Menu, MenuWithItem, MenuItemWithArticle};
 use crate::db::schema::{ menus:: { self, dsl::* }, menu_items, articles};
 use barkeel_lib::app::http::response::Response;
 use diesel::prelude::*;
-use std::sync::Arc;
 use std::collections::BTreeMap;
 
-pub async fn index(State(config): State<Arc<Config>>) -> impl IntoResponse  {
+pub async fn index(State(config): State<Config>) -> impl IntoResponse  {
     let all_menus = menus::table.select(Menu::as_select()).order(menus::id.asc()).load(&mut config.database.pool.get().unwrap());
     match all_menus {
         Ok(all_menus) => {
@@ -40,7 +39,7 @@ pub async fn index(State(config): State<Arc<Config>>) -> impl IntoResponse  {
     }
 }
 
-pub async fn show(Path(param_id): Path<i32>, State(config): State<Arc<Config>>) -> Json<String> {
+pub async fn show(Path(param_id): Path<i32>, State(config): State<Config>) -> Json<String> {
     let result = menus
         .find(param_id).first::<Menu>(&mut config.database.pool.get().unwrap()) 
         .expect("Error loading data");
@@ -48,7 +47,7 @@ pub async fn show(Path(param_id): Path<i32>, State(config): State<Arc<Config>>) 
     Json(serialized)
 }
 
-pub async fn create(Json(payload): Json<Menu>, State(config): State<Arc<Config>>) -> Json<String> {
+pub async fn create(Json(payload): Json<Menu>, State(config): State<Config>) -> Json<String> {
     let inserted_record: Menu = diesel::insert_into(menus)
         .values(name.eq(payload.name))
         .get_result(&mut config.database.pool.get().unwrap())
@@ -57,7 +56,7 @@ pub async fn create(Json(payload): Json<Menu>, State(config): State<Arc<Config>>
     Json(serialized)
 }
 
-pub async fn update(Path(param_id): Path<i32>, Json(payload): Json<Menu>, State(config): State<Arc<Config>>) -> Json<String> {
+pub async fn update(Path(param_id): Path<i32>, Json(payload): Json<Menu>, State(config): State<Config>) -> Json<String> {
     let updated_record: Menu = diesel::update(menus)
         .filter(id.eq(param_id))
         .set(name.eq(payload.name))
@@ -67,7 +66,7 @@ pub async fn update(Path(param_id): Path<i32>, Json(payload): Json<Menu>, State(
     Json(serialized)
 }
 
-pub async fn delete(Path(param_id): Path<i32>, State(config): State<Arc<Config>>) -> impl IntoResponse {
+pub async fn delete(Path(param_id): Path<i32>, State(config): State<Config>) -> impl IntoResponse {
     diesel::delete(menus)
         .filter(id.eq(param_id))
         .execute(&mut config.database.pool.get().unwrap())

@@ -3,7 +3,6 @@ use crate::app::models::user::User;
 use crate::app::models::auth::Credentials;
 use barkeel_lib::app::http::response::Response;
 use crate::db::schema::users::dsl::*;
-use std::sync::Arc;
 use tera::{Context, Tera};
 use axum::{extract::State, response::{IntoResponse, Response as AxumResponse}, http::{ HeaderMap, StatusCode }, Form, body::Body};
 use barkeel_lib::session::CSRFManager;
@@ -31,13 +30,13 @@ fn set_cookie_response(session_tok: &str) -> AxumResponse {
 
 pub mod get {
     use super::*;
-    pub async fn login(headers: HeaderMap, State(config): State<Arc<Config>>) -> impl IntoResponse {
+    pub async fn login(headers: HeaderMap, State(config): State<Config>) -> impl IntoResponse {
         let tera: &Tera = &config.template;
         let mut tera = tera.clone();
         tera.add_raw_template("login.html", include_str!("../views/login.html")).unwrap();
         let mut context = Context::new();
-        let config_ref = config.as_ref();
-        context.insert("data", &Credentials::build_create_form(config_ref, headers, "/login"));
+        let config_ref = config.clone();
+        context.insert("data", &Credentials::build_create_form(&config_ref, headers, "/login"));
         let rendered = tera.render("login.html", &context).unwrap();
         Response{status_code: StatusCode::OK, content_type: "text/html", datas: rendered}
     }
@@ -49,7 +48,7 @@ pub mod get {
 
 pub mod post {
     use super::*;
-    pub async fn login(State(config): State<Arc<Config>>, Form(creds): Form<Credentials>) -> impl IntoResponse {
+    pub async fn login(State(config): State<Config>, Form(creds): Form<Credentials>) -> impl IntoResponse {
         match users.filter(email.eq(creds.email)).first::<User>(&mut config.database.pool.get().unwrap()) {
             Ok(user) => {
                 if let Err(_err) = verify(creds.password, &user.password) {
@@ -69,11 +68,13 @@ pub async fn new_session(
 ) -> String {
     let csrf_manager = CSRFManager::new();
     let session_tok = csrf_manager.generate_csrf_token();
+    let config_clone = config.clone();
+    let locale = config_clone.locale.lock().expect("mutex was poisoned");
     let _updated_record: User = diesel::update(users)
             .filter(id.eq(other_user_id))
             .set(session_token.eq(session_tok.clone()))
             .get_result(&mut config.database.pool.get().unwrap())
-            .unwrap_or_else(|_| { panic!("{}", LOCALES.lookup(&config.locale, "error_load").to_string()) });
+            .unwrap_or_else(|_| { panic!("{}", LOCALES.lookup(&locale, "error_load").to_string()) });
 
     session_tok
 }

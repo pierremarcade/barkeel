@@ -4,9 +4,8 @@ use crate::config::application::Config;
 use crate::db::schema::{ menus, menu_items, articles::{self, dsl::*}, article_metas};
 use crate::app::models::article::{ArticleWithMenu, ArticleWithMenuAndMeta};
 use diesel::prelude::*;
-use std::sync::Arc;
 
-pub async fn index(State(config): State<Arc<Config>>) -> impl IntoResponse {
+pub async fn index(State(config): State<Config>) -> impl IntoResponse {
     let results = menu_items::table
         .inner_join(articles::table)
         .inner_join(menus::table)
@@ -17,7 +16,7 @@ pub async fn index(State(config): State<Arc<Config>>) -> impl IntoResponse {
     Response{status_code: StatusCode::OK, content_type: "application/json", datas: serialized}
 }
 
-pub async fn show(Path(other_slug): Path<String>, State(config): State<Arc<Config>>) -> impl IntoResponse {
+pub async fn show(Path(other_slug): Path<String>, State(config): State<Config>) -> impl IntoResponse {
     let (meta_desc, _title_desc) = diesel::alias!(article_metas as meta_desc, article_metas as title_desc);
     
     match menu_items::table
@@ -36,7 +35,7 @@ pub async fn show(Path(other_slug): Path<String>, State(config): State<Arc<Confi
     }  
 }
 
-pub async fn search(Path(query): Path<String>, State(config): State<Arc<Config>>) -> impl IntoResponse {
+pub async fn search(Path(query): Path<String>, State(config): State<Config>) -> impl IntoResponse {
     let results = menu_items::table
         .inner_join(articles::table)
         .inner_join(menus::table)
