@@ -10,7 +10,7 @@ static MAIN_CSS: &str = include_str!("../../public/css/main.css");
 static MAIN_JS: &str = include_str!("../../public/js/main.js");
 static FAVICON: &str = include_str!("../../public/img/favicon.svg");
 
-pub async fn index(Extension(current_user): Extension<AuthState>, State(config): State<Arc<Config>>) -> impl IntoResponse {
+pub async fn index(Extension(current_user): Extension<AuthState>, State(config): State<Config>) -> impl IntoResponse {
     let tera: &Tera = &config.template;
     let mut tera = tera.clone();
     tera.add_raw_template("index.html", include_str!("../views/index.html")).unwrap();

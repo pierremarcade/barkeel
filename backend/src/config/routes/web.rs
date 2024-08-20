@@ -11,7 +11,7 @@ use tower::ServiceBuilder;
 use inflector::Inflector;
 
 //Add here new route
-pub fn routes(config: Config) -> Router<Arc<Config>> {
+pub fn routes(config: Config) -> Router<Config> {
     let auth_config = config.clone();
     let locale_config = config.clone();
     let router = Router::new()

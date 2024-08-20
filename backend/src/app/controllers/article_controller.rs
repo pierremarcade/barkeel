@@ -53,7 +53,7 @@ fn update_values(payload: ArticleForm, _current_user: User) -> ArticleUpdateValu
     }
 }
 
-pub async fn search(Query(params): Query<HashMap<String, String>>, State(config): State<Arc<Config>>) -> impl IntoResponse {
+pub async fn search(Query(params): Query<HashMap<String, String>>, State(config): State<Config>) -> impl IntoResponse {
     let config_clone = config.clone();
     let locale = config_clone.locale.lock().expect("mutex was poisoned");
     let mut query = articles::table.into_boxed();

@@ -32,7 +32,7 @@ pub fn get_content_type(headers: HeaderMap) -> String {
     content_type
 }
 
-pub fn is_csrf_token_valid(headers: HeaderMap, config: Arc<Config>, csrf_token: String) -> bool {
+pub fn is_csrf_token_valid(headers: HeaderMap, config: Config, csrf_token: String) -> bool {
     if let Some(cookie_header) = headers.get(header::COOKIE) {
         if let Ok(cookie_str) = cookie_header.to_str() {
             for cookie in Cookie::split_parse(cookie_str) {
@@ -65,7 +65,7 @@ macro_rules! crud {
 #[macro_export]
 macro_rules! create {
     ($resource:ident, $view:ident) => {
-        pub async fn create(Extension(mut current_user): Extension<AuthState>, headers: HeaderMap, State(config): State<Arc<Config>>, Form(payload): Form<CrudForm>) -> impl IntoResponse {
+        pub async fn create(Extension(mut current_user): Extension<AuthState>, headers: HeaderMap, State(config): State<Config>, Form(payload): Form<CrudForm>) -> impl IntoResponse {
             let config_clone = config.clone();
             let locale = config_clone.locale.lock().expect("mutex was poisoned");
             if is_csrf_token_valid(headers.clone(), config.clone(), payload.clone().csrf_token) {
@@ -82,8 +82,8 @@ macro_rules! create {
                         Redirect::to(format!("/{}", link_name).as_str()).into_response()
                     },
                     Err(e) => {
-                        let config_ref = config.as_ref();
-                        let form = payload.build_form(config_ref, headers, format!("/{}", link_name).as_str());
+                        let config_ref = config.clone();
+                        let form = payload.build_form(&config_ref, headers, format!("/{}", link_name).as_str());
                         render_form!(form, $view, config, current_user, Some(e.clone()))
                     }
                 }
@@ -98,7 +98,7 @@ macro_rules! create {
 #[macro_export]
 macro_rules! update {
     ($resource:ident, $view:ident) => {
-        pub async fn update(Extension(mut current_user): Extension<AuthState>, headers: HeaderMap, State(config): State<Arc<Config>>, Path(param_id): Path<i32>, Form(payload): Form<CrudForm>) -> impl IntoResponse {
+        pub async fn update(Extension(mut current_user): Extension<AuthState>, headers: HeaderMap, State(config): State<Config>, Path(param_id): Path<i32>, Form(payload): Form<CrudForm>) -> impl IntoResponse {
             let config_clone = config.clone();
             let locale = config_clone.locale.lock().expect("mutex was poisoned");
             if is_csrf_token_valid(headers.clone(), config.clone(), payload.clone().csrf_token) {
@@ -116,8 +116,8 @@ macro_rules! update {
                         Redirect::to(format!("/{}", link_name).as_str()).into_response()
                     },
                     Err(e) => {
-                        let config_ref = config.as_ref();
-                        let form = payload.build_form(config_ref, headers, format!("/{}", link_name).as_str());
+                        let config_ref = config.clone();
+                        let form = payload.build_form(&config_ref, headers, format!("/{}", link_name).as_str());
                         render_form!(form, $view, config, current_user, Some(e.clone()))
                     }
                 }
@@ -132,7 +132,7 @@ macro_rules! update {
 #[macro_export]
 macro_rules! index {
     ($resource:ident, $view:ident) => {
-        pub async fn index(Extension(current_user): Extension<AuthState>, Query(pagination_query): Query<PaginationQuery>, headers: HeaderMap, State(config): State<Arc<Config>>) -> impl IntoResponse {
+        pub async fn index(Extension(current_user): Extension<AuthState>, Query(pagination_query): Query<PaginationQuery>, headers: HeaderMap, State(config): State<Config>) -> impl IntoResponse {
             let config_clone = config.clone();
             let locale = config_clone.locale.lock().expect("mutex was poisoned");
             let total_results: i64 = get_total!(config, $resource);
@@ -179,7 +179,7 @@ macro_rules! index {
 #[macro_export]
 macro_rules! show {
     ($resource:ident, $view:ident) => {
-        pub async fn show(Extension(current_user): Extension<AuthState>, Path(param_id): Path<i32>, State(config): State<Arc<Config>>) -> impl IntoResponse {
+        pub async fn show(Extension(current_user): Extension<AuthState>, Path(param_id): Path<i32>, State(config): State<Config>) -> impl IntoResponse {
             let config_clone = config.clone();
             let locale = config_clone.locale.lock().expect("mutex was poisoned");
             let tera: &mut Tera = &mut config.template.clone();
@@ -212,11 +212,11 @@ macro_rules! show {
 #[macro_export]
 macro_rules! new {
     ($resource:ident, $view:ident) => {
-        pub async fn new(Extension(current_user): Extension<AuthState>, headers: HeaderMap, State(config): State<Arc<Config>>) -> impl IntoResponse {
-            let config_ref = config.as_ref();
+        pub async fn new(Extension(current_user): Extension<AuthState>, headers: HeaderMap, State(config): State<Config>) -> impl IntoResponse {
+            let config_ref = config.clone();
             let table_name = stringify!($resource);
             let link_name = table_name.to_kebab_case();
-            let form = CrudModel::build_create_form(config_ref, headers, format!("/{}", link_name).as_str());
+            let form = CrudModel::build_create_form(&config_ref, headers, format!("/{}", link_name).as_str());
             render_form!(form, $view, config, current_user, None::<Option<ValidationErrors>>)
         }
     }
@@ -225,7 +225,7 @@ macro_rules! new {
 #[macro_export]
 macro_rules! edit {
     ($resource:ident, $view:ident) => {
-        pub async fn edit(Extension(current_user): Extension<AuthState>, headers: HeaderMap, Path(param_id): Path<i32>, State(config): State<Arc<Config>>) -> impl IntoResponse {
+        pub async fn edit(Extension(current_user): Extension<AuthState>, headers: HeaderMap, Path(param_id): Path<i32>, State(config): State<Config>) -> impl IntoResponse {
             let config_clone = config.clone();
             let locale = config_clone.locale.lock().expect("mutex was poisoned");
             let result = $resource
@@ -234,8 +234,8 @@ macro_rules! edit {
                 .expect(&LOCALES.lookup(&locale, "error_load").to_string());
             let table_name = stringify!($resource);
             let link_name = table_name.to_kebab_case();
-            let config_ref = config.as_ref();
-            let form = result.build_edit_form(config_ref, headers, format!("/{}/{}", link_name, param_id).as_str());
+            let config_ref = config.clone();
+            let form = result.build_edit_form(&config_ref, headers, format!("/{}/{}", link_name, param_id).as_str());
             render_form!(form, $view, config, current_user, None::<Option<ValidationErrors>>)
         }
     }
@@ -244,7 +244,7 @@ macro_rules! edit {
 #[macro_export]
 macro_rules! delete {
     ($resource:ident) => {
-        pub async fn delete(Path(param_id): Path<i32>, State(config): State<Arc<Config>>) -> Redirect {
+        pub async fn delete(Path(param_id): Path<i32>, State(config): State<Config>) -> Redirect {
             let config_clone = config.clone();
             let locale = config_clone.locale.lock().expect("mutex was poisoned");
             let table_name = stringify!($resource);

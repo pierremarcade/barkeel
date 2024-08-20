@@ -5,7 +5,7 @@ use crate::db::schema::menu_items::dsl::*;
 use diesel::prelude::*;
 use std::sync::Arc;
 
-pub async fn index(State(config): State<Arc<Config>>) -> Json<String> {
+pub async fn index(State(config): State<Config>) -> Json<String> {
     let results = menu_items
         .load::<MenuItem>(&mut config.database.pool.get().unwrap())
         .expect("Error loading datas");
@@ -13,7 +13,7 @@ pub async fn index(State(config): State<Arc<Config>>) -> Json<String> {
     Json(serialized)
 }
 
-pub async fn show(Path(param_id): Path<i32>, State(config): State<Arc<Config>>) -> Json<String> {
+pub async fn show(Path(param_id): Path<i32>, State(config): State<Config>) -> Json<String> {
     let result = menu_items
         .find(param_id).first::<MenuItem>(&mut config.database.pool.get().unwrap()) 
         .expect("Error loading data");
@@ -21,7 +21,7 @@ pub async fn show(Path(param_id): Path<i32>, State(config): State<Arc<Config>>) 
     Json(serialized)
 }
 
-pub async fn create(Json(payload): Json<MenuItem>, State(config): State<Arc<Config>>) -> Json<String> {
+pub async fn create(Json(payload): Json<MenuItem>, State(config): State<Config>) -> Json<String> {
     let inserted_record: MenuItem = diesel::insert_into(menu_items)
         .values((menu_id.eq(payload.menu_id), label.eq(payload.label), position.eq(payload.position)))
         .get_result(&mut config.database.pool.get().unwrap())
@@ -30,7 +30,7 @@ pub async fn create(Json(payload): Json<MenuItem>, State(config): State<Arc<Conf
     Json(serialized)
 }
 
-pub async fn update(Path(param_id): Path<i32>, Json(payload): Json<MenuItem>, State(config): State<Arc<Config>>) -> Json<String> {
+pub async fn update(Path(param_id): Path<i32>, Json(payload): Json<MenuItem>, State(config): State<Config>) -> Json<String> {
     let updated_record: MenuItem = diesel::update(menu_items)
         .filter(id.eq(param_id))
         .set((menu_id.eq(payload.menu_id), label.eq(payload.label), position.eq(payload.position)))
@@ -40,7 +40,7 @@ pub async fn update(Path(param_id): Path<i32>, Json(payload): Json<MenuItem>, St
     Json(serialized)
 }
 
-pub async fn delete(Path(param_id): Path<i32>, State(config): State<Arc<Config>>) -> &'static str {
+pub async fn delete(Path(param_id): Path<i32>, State(config): State<Config>) -> &'static str {
     diesel::delete(menu_items)
         .filter(id.eq(param_id))
         .execute(&mut config.database.pool.get().unwrap())

@@ -79,14 +79,13 @@ impl Loader {
         let database = Self::init_database()?;
         let csrf_manager = CSRFManager::new();
         let config = Config { database: database.clone(), template: tera, csrf_manager, locale: Arc::new(Mutex::new(langid!("en"))) };
-        let arc_config = Arc::new(config.clone());
         let cors = CorsLayer::new().allow_origin(Any);
 
         let routes =  routes::web::routes(config.clone())
         .nest("/api", routes::api::routes(config.clone()));
 
 
-        let app = NormalizePathLayer::trim_trailing_slash().layer(routes.with_state(arc_config)
+        let app = NormalizePathLayer::trim_trailing_slash().layer(routes.with_state(config.clone())
         .layer(cors).layer(DefaultBodyLimit::disable()));
         
         let host = std::env::var("HOST")?;
