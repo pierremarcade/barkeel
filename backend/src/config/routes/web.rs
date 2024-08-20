@@ -31,9 +31,9 @@ pub fn routes(config: Config) -> Router<Config> {
                 .layer(HandleErrorLayer::new(error_controller::handle_timeout_error))
                 .timeout(Duration::from_secs(30))
         )
-        /*.layer(axum::middleware::from_fn(move |req, next| {
+        .layer(axum::middleware::from_fn(move |req, next| {
             crate::app::middlewares::locale::change_locale(locale_config.clone(), req, next)
-        }))*/
+        }))
         .fallback(error_controller::handler_404)
         .route("/public/*path", get(index_controller::handle_assets))
 }
