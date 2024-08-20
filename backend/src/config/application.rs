@@ -30,13 +30,13 @@ pub struct Config {
     pub database: Database,
     pub template: Tera,
     pub csrf_manager: CSRFManager,
-    pub locale: LanguageIdentifier,
+    pub locale: Arc<Mutex<LanguageIdentifier>>,
 }
 
 impl Config {
     pub fn change_locale(&mut self, locale: String) {
-        println!("{}", self.locale);
-        self.locale = locale.parse().expect("Parsing failed.");
+        let mut config_locale = self.locale.lock().expect("mutex was poisoned");
+        *config_locale = locale.parse().expect("Parsing failed.");
     }
 }
 
@@ -78,13 +78,12 @@ impl Loader {
         };
         let database = Self::init_database()?;
         let csrf_manager = CSRFManager::new();
-        let config = Config { database: database.clone(), template: tera, csrf_manager, locale: langid!("en") };
-        let arc_mutex_config = Arc::new(Mutex::new(config.clone()));
+        let config = Config { database: database.clone(), template: tera, csrf_manager, locale: Arc::new(Mutex::new(langid!("en"))) };
         let arc_config = Arc::new(config.clone());
         let cors = CorsLayer::new().allow_origin(Any);
 
-        let routes =  routes::web::routes(arc_mutex_config.clone())
-        .nest("/api", routes::api::routes(arc_mutex_config));
+        let routes =  routes::web::routes(config.clone())
+        .nest("/api", routes::api::routes(config.clone()));
 
 
         let app = NormalizePathLayer::trim_trailing_slash().layer(routes.with_state(arc_config)

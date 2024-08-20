@@ -14,7 +14,7 @@ use cookie::Cookie;
 const USER_COOKIE_NAME: &str = "session_token";
 
 pub(crate) async fn auth(
-    config: Arc<Mutex<Config>>,
+    config: Config,
     mut request: Request, next: Next,
 ) -> axum::response::Response {
     let cookie_header = request.headers().get("Cookie");
@@ -74,16 +74,15 @@ pub(crate) async fn auth(
 ///
 /// ```
 #[derive(Clone)]
-pub struct AuthState(Option<(String, Option<User>, Arc<Mutex<Config>>)>);
+pub struct AuthState(Option<(String, Option<User>, Config)>);
 
 impl AuthState {
     pub async fn get_user(&mut self) -> Option<&User> {
         let (session_tok, store, config) = self.0.as_mut()?;
-        let config_guard = config.lock().unwrap();
         if store.is_none() {
             let user = users
                 .filter(session_token.eq(session_tok.clone()))
-                .first::<User>(&mut config_guard.database.pool.get().unwrap());
+                .first::<User>(&mut config.database.pool.get().unwrap());
 
             match user {
                 Ok(user) => *store = Some(user),

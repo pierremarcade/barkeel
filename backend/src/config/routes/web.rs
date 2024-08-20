@@ -11,7 +11,7 @@ use tower::ServiceBuilder;
 use inflector::Inflector;
 
 //Add here new route
-pub fn routes(config: Arc<Mutex<Config>>) -> Router<Arc<Config>> {
+pub fn routes(config: Config) -> Router<Arc<Config>> {
     let auth_config = config.clone();
     let locale_config = config.clone();
     let router = Router::new()
@@ -32,9 +32,9 @@ pub fn routes(config: Arc<Mutex<Config>>) -> Router<Arc<Config>> {
                 .layer(HandleErrorLayer::new(error_controller::handle_timeout_error))
                 .timeout(Duration::from_secs(30))
         )
-        .layer(axum::middleware::from_fn(move |req, next| {
+        /*.layer(axum::middleware::from_fn(move |req, next| {
             crate::app::middlewares::locale::change_locale(locale_config.clone(), req, next)
-        }))
+        }))*/
         .fallback(error_controller::handler_404)
         .route("/public/*path", get(index_controller::handle_assets))
 }

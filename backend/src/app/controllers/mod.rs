@@ -66,6 +66,8 @@ macro_rules! crud {
 macro_rules! create {
     ($resource:ident, $view:ident) => {
         pub async fn create(Extension(mut current_user): Extension<AuthState>, headers: HeaderMap, State(config): State<Arc<Config>>, Form(payload): Form<CrudForm>) -> impl IntoResponse {
+            let config_clone = config.clone();
+            let locale = config_clone.locale.lock().expect("mutex was poisoned");
             if is_csrf_token_valid(headers.clone(), config.clone(), payload.clone().csrf_token) {
                 let table_name = stringify!($resource);
                 let link_name = table_name.to_kebab_case();
@@ -75,7 +77,7 @@ macro_rules! create {
                             let _inserted_record: CrudModel = diesel::insert_into($resource)
                             .values(insert_values(payload, user.clone()))
                             .get_result(&mut config.database.pool.get().unwrap())
-                            .expect(&LOCALES.lookup(&config.locale, "error_insert").to_string());
+                            .expect(&LOCALES.lookup(&locale, "error_insert").to_string());
                         }
                         Redirect::to(format!("/{}", link_name).as_str()).into_response()
                     },
@@ -86,7 +88,7 @@ macro_rules! create {
                     }
                 }
             } else {
-                let serialized = serde_json::to_string(&LOCALES.lookup(&config.locale, "invalid_csrf_token").to_string()).unwrap();
+                let serialized = serde_json::to_string(&LOCALES.lookup(&locale, "invalid_csrf_token").to_string()).unwrap();
                 render_json!(StatusCode::BAD_REQUEST, serialized) 
             }
         }
@@ -97,6 +99,8 @@ macro_rules! create {
 macro_rules! update {
     ($resource:ident, $view:ident) => {
         pub async fn update(Extension(mut current_user): Extension<AuthState>, headers: HeaderMap, State(config): State<Arc<Config>>, Path(param_id): Path<i32>, Form(payload): Form<CrudForm>) -> impl IntoResponse {
+            let config_clone = config.clone();
+            let locale = config_clone.locale.lock().expect("mutex was poisoned");
             if is_csrf_token_valid(headers.clone(), config.clone(), payload.clone().csrf_token) {
                 let table_name = stringify!($resource);
                 let link_name = table_name.to_kebab_case();
@@ -107,7 +111,7 @@ macro_rules! update {
                                 .filter(id.eq(param_id))
                                 .set(update_values(payload, user.clone()))
                                 .get_result(&mut config.database.pool.get().unwrap())
-                                .expect(&LOCALES.lookup(&config.locale, "error_update").to_string());
+                                .expect(&LOCALES.lookup(&locale, "error_update").to_string());
                         }
                         Redirect::to(format!("/{}", link_name).as_str()).into_response()
                     },
@@ -118,7 +122,7 @@ macro_rules! update {
                     }
                 }
             } else {
-                let serialized = serde_json::to_string(&LOCALES.lookup(&config.locale, "invalid_csrf_token").to_string()).unwrap();
+                let serialized = serde_json::to_string(&LOCALES.lookup(&locale, "invalid_csrf_token").to_string()).unwrap();
                 render_json!(StatusCode::BAD_REQUEST, serialized) 
             }
         }
@@ -129,6 +133,8 @@ macro_rules! update {
 macro_rules! index {
     ($resource:ident, $view:ident) => {
         pub async fn index(Extension(current_user): Extension<AuthState>, Query(pagination_query): Query<PaginationQuery>, headers: HeaderMap, State(config): State<Arc<Config>>) -> impl IntoResponse {
+            let config_clone = config.clone();
+            let locale = config_clone.locale.lock().expect("mutex was poisoned");
             let total_results: i64 = get_total!(config, $resource);
             let pagination = Pagination::new(pagination_query, total_results);
             match $resource.limit(pagination.per_page as i64).offset(pagination.offset as i64).load::< CrudModel >(&mut config.database.pool.get().unwrap()) {
@@ -147,7 +153,7 @@ macro_rules! index {
                         };
                         context.insert("title", &model_class.as_str());
                         context.insert("base_url", format!("/{}", link_name).as_str());
-                        context.insert("description", &LOCALES.lookup_with_args(&config.locale, "crud_list_description", &args).to_string());
+                        context.insert("description", &LOCALES.lookup_with_args(&locale, "crud_list_description", &args).to_string());
                         context.insert("datas", &results);
                         context.insert("total_pages", &pagination.total_pages);
                         context.insert("current_page", &pagination.current_page);
@@ -155,7 +161,7 @@ macro_rules! index {
                         context.insert("offset", &pagination.offset);
                         context.insert("per_page", &pagination.per_page);
                         context.insert("page_numbers", &pagination.generate_page_numbers());
-                        context.insert("locale", &config.locale.to_string());
+                        context.insert("locale", &locale.to_string());
                         let tera: &mut tera::Tera = &mut config.template.clone();
                         let template_name = $view::index_view(tera);                   
                         let rendered = tera.render(&template_name.as_str(), &context);
@@ -174,6 +180,8 @@ macro_rules! index {
 macro_rules! show {
     ($resource:ident, $view:ident) => {
         pub async fn show(Extension(current_user): Extension<AuthState>, Path(param_id): Path<i32>, State(config): State<Arc<Config>>) -> impl IntoResponse {
+            let config_clone = config.clone();
+            let locale = config_clone.locale.lock().expect("mutex was poisoned");
             let tera: &mut Tera = &mut config.template.clone();
             let table_name = stringify!($resource);
             let model_class = table_name.to_class_case();
@@ -182,13 +190,13 @@ macro_rules! show {
                     let mut context = prepare_tera_context(current_user).await;
                     context.insert("data", &result);
                     context.insert("title", &model_class.as_str());
-                    context.insert("locale", &config.locale.to_string());
+                    context.insert("locale", &locale.to_string());
                     let args = {
                         let mut map = HashMap::new();
                         map.insert(String::from("name"), model_class.into());
                         map
                     };
-                    context.insert("description", &LOCALES.lookup_with_args(&config.locale, "crud_show_description", &args).to_string());
+                    context.insert("description", &LOCALES.lookup_with_args(&locale, "crud_show_description", &args).to_string());
                     let template_name = $view::show_view(tera);
                     let rendered = tera.render(&template_name.as_str(), &context).unwrap();
                     Response{status_code: StatusCode::OK, content_type: "text/html", datas: rendered}
@@ -218,10 +226,12 @@ macro_rules! new {
 macro_rules! edit {
     ($resource:ident, $view:ident) => {
         pub async fn edit(Extension(current_user): Extension<AuthState>, headers: HeaderMap, Path(param_id): Path<i32>, State(config): State<Arc<Config>>) -> impl IntoResponse {
+            let config_clone = config.clone();
+            let locale = config_clone.locale.lock().expect("mutex was poisoned");
             let result = $resource
                 .find(param_id)
                 .first::<CrudModel>(&mut config.database.pool.get().unwrap())
-                .expect(&LOCALES.lookup(&config.locale, "error_load").to_string());
+                .expect(&LOCALES.lookup(&locale, "error_load").to_string());
             let table_name = stringify!($resource);
             let link_name = table_name.to_kebab_case();
             let config_ref = config.as_ref();
@@ -235,12 +245,14 @@ macro_rules! edit {
 macro_rules! delete {
     ($resource:ident) => {
         pub async fn delete(Path(param_id): Path<i32>, State(config): State<Arc<Config>>) -> Redirect {
+            let config_clone = config.clone();
+            let locale = config_clone.locale.lock().expect("mutex was poisoned");
             let table_name = stringify!($resource);
             let link_name = table_name.to_kebab_case();
             diesel::delete($resource)
                 .filter(id.eq(param_id))
                 .execute(&mut config.database.pool.get().unwrap())
-                .expect(&LOCALES.lookup(&config.locale, "error_delete").to_string());
+                .expect(&LOCALES.lookup(&locale, "error_delete").to_string());
             Redirect::to(format!("/{}", link_name).as_str()) 
         }
     }

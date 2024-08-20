@@ -69,11 +69,13 @@ pub async fn new_session(
 ) -> String {
     let csrf_manager = CSRFManager::new();
     let session_tok = csrf_manager.generate_csrf_token();
+    let config_clone = config.clone();
+    let locale = config_clone.locale.lock().expect("mutex was poisoned");
     let _updated_record: User = diesel::update(users)
             .filter(id.eq(other_user_id))
             .set(session_token.eq(session_tok.clone()))
             .get_result(&mut config.database.pool.get().unwrap())
-            .unwrap_or_else(|_| { panic!("{}", LOCALES.lookup(&config.locale, "error_load").to_string()) });
+            .unwrap_or_else(|_| { panic!("{}", LOCALES.lookup(&locale, "error_load").to_string()) });
 
     session_tok
 }

@@ -4,7 +4,7 @@ use crate::config::application::Config;
 use crate::app::controllers::api::*;
 
 //Add here new route
-pub fn routes(_config: Arc<Mutex<Config>>) -> Router<Arc<Config>> {
+pub fn routes(_config: Config) -> Router<Arc<Config>> {
     let api_routes = Router::new()
         .route("/articles", get(v1::article_controller::index))
         .route("/articles/:slug", get(v1::article_controller::show))
