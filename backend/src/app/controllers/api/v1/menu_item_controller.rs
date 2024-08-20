@@ -3,7 +3,6 @@ use crate::config::application::Config;
 use crate::app::models::menu_item::MenuItem;
 use crate::db::schema::menu_items::dsl::*;
 use diesel::prelude::*;
-use std::sync::Arc;
 
 pub async fn index(State(config): State<Config>) -> Json<String> {
     let results = menu_items

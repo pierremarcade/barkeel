@@ -4,7 +4,6 @@ use crate::app::models::menu::{Menu, MenuWithItem, MenuItemWithArticle};
 use crate::db::schema::{ menus:: { self, dsl::* }, menu_items, articles};
 use barkeel_lib::app::http::response::Response;
 use diesel::prelude::*;
-use std::sync::Arc;
 use std::collections::BTreeMap;
 
 pub async fn index(State(config): State<Config>) -> impl IntoResponse  {

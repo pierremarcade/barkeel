@@ -3,7 +3,6 @@ use crate::app::models::user::User;
 use crate::app::models::auth::Credentials;
 use barkeel_lib::app::http::response::Response;
 use crate::db::schema::users::dsl::*;
-use std::sync::Arc;
 use tera::{Context, Tera};
 use axum::{extract::State, response::{IntoResponse, Response as AxumResponse}, http::{ HeaderMap, StatusCode }, Form, body::Body};
 use barkeel_lib::session::CSRFManager;

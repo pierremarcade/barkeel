@@ -9,7 +9,6 @@ use barkeel_lib::utils::slugify;
 use barkeel_lib::app::http::response::Response;
 use barkeel_lib::app::pagination::{ PaginationQuery, Pagination, PaginationTrait };
 use diesel::prelude::*;
-use std::sync::Arc;
 use tera::Tera;
 use chrono::Utc;
 use validator::{Validate, ValidationErrors};

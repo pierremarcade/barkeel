@@ -2,7 +2,6 @@
 use axum::{ extract::State, BoxError, response::IntoResponse, http::StatusCode };
 use tera::{Context, Tera};
 use crate::config::application::Config;
-use std::sync::Arc;
 use tokio::time::error;
 use barkeel_lib::app::http::response::Response;
 

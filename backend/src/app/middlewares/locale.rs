@@ -3,9 +3,7 @@ use axum::{
     middleware::Next,
     extract::Request,
 };
-use std::sync::Mutex;
 use serde::Deserialize;
-use std::sync::Arc;
 use axum::extract::Query;
 use axum::RequestPartsExt;
 

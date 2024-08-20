@@ -4,7 +4,6 @@ use crate::config::application::Config;
 use crate::db::schema::{ menus, menu_items, articles::{self, dsl::*}, article_metas};
 use crate::app::models::article::{ArticleWithMenu, ArticleWithMenuAndMeta};
 use diesel::prelude::*;
-use std::sync::Arc;
 
 pub async fn index(State(config): State<Config>) -> impl IntoResponse {
     let results = menu_items::table

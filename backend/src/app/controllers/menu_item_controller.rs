@@ -3,7 +3,6 @@ use crate::app::models::menu_item::{ MenuItem, MenuItemForm, MenuItemValues };
 use crate::app::models::user::User;
 use crate::db::schema::menu_items::dsl::*;
 use diesel::prelude::*;
-use std::sync::Arc;
 use tera::Tera;
 use axum::{  Extension, extract::{Path, State, Query}, response::{ IntoResponse, Redirect }, http::{ HeaderMap, StatusCode }, Form};
 use crate::app::controllers::{ CrudViewTrait, get_content_type, is_csrf_token_valid, error_controller, prepare_tera_context };

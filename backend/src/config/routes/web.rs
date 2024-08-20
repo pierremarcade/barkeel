@@ -3,7 +3,6 @@ use axum::{
     Router,
     error_handling::HandleErrorLayer
 };
-use std::sync::{Arc, Mutex};
 use crate::config::application::Config;
 use crate::app::controllers::*;
 use std::time::Duration;

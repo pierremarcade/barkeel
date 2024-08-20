@@ -7,7 +7,6 @@ use axum::{
     body::Body,
     response::Response
 };
-use std::sync::{Arc, Mutex};
 use crate::db::schema::users::dsl::*;
 use diesel::prelude::*;
 use cookie::Cookie;

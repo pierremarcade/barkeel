@@ -1,5 +1,4 @@
 use axum::{ routing::get, Router };
-use std::sync::{Arc, Mutex};
 use crate::config::application::Config;
 use crate::app::controllers::api::*;
 

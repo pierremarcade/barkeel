@@ -3,7 +3,6 @@ use axum::{ Extension, extract::{ State, Path}, response:: { Html, IntoResponse 
 use tera::Tera;
 use crate::config::application::Config;
 use crate::app::middlewares::auth::AuthState;
-use std::sync::Arc;
 use crate::app::controllers::prepare_tera_context;
 
 static MAIN_CSS: &str = include_str!("../../public/css/main.css");
