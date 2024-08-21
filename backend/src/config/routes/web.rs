@@ -34,6 +34,9 @@ pub fn routes(config: Config) -> Router<Config> {
         .layer(axum::middleware::from_fn(move |req, next| {
             crate::app::middlewares::locale::change_locale(locale_config.clone(), req, next)
         }))
+        .layer(axum::middleware::from_fn(move |req, next| {
+            crate::app::middlewares::session_token::unique_id_middleware(req, next)
+        }))
         .fallback(error_controller::handler_404)
         .route("/public/*path", get(index_controller::handle_assets))
 }

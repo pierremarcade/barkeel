@@ -23,7 +23,7 @@ fn set_cookie_response(session_tok: &str) -> AxumResponse {
     AxumResponse::builder()
         .status(StatusCode::SEE_OTHER)
         .header("Location", "/")
-        .header("Set-Cookie", format!("session_token={}", session_tok))
+        .header("Set-Cookie", format!("auth_token={}", session_tok))
         .body(Body::empty())
         .unwrap()
 }

@@ -10,7 +10,7 @@ use axum::{
 use crate::db::schema::users::dsl::*;
 use diesel::prelude::*;
 use cookie::Cookie;
-const USER_COOKIE_NAME: &str = "session_token";
+const USER_COOKIE_NAME: &str = "auth_token";
 
 pub(crate) async fn auth(
     config: Config,
@@ -97,7 +97,7 @@ impl AuthState {
         Response::builder()
             .status(StatusCode::SEE_OTHER)
             .header("Location", "/login")
-            .header("Set-Cookie", "session_token=; Max-Age=0")
+            .header("Set-Cookie", format!("{}=; Max-Age=0", USER_COOKIE_NAME))
             .body(Body::empty())
             .unwrap()
     }
