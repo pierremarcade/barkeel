@@ -26,8 +26,6 @@ pub(crate) async fn change_locale(
         None => {},
     }
 
-    
-
     // Reconstruire la requête avec les mêmes parties et corps
     let request = Request::from_parts(parts, body);
     next.run(request).await

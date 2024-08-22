@@ -10,6 +10,7 @@ use diesel::prelude::*;
 use bcrypt::verify;
 use crate::config::application::LOCALES;
 use fluent_templates::Loader;
+use crate::app::middlewares::auth::USER_COOKIE_NAME;
 
 fn redirect_response(location: &str) -> AxumResponse {
     AxumResponse::builder()
@@ -23,7 +24,7 @@ fn set_cookie_response(session_tok: &str) -> AxumResponse {
     AxumResponse::builder()
         .status(StatusCode::SEE_OTHER)
         .header("Location", "/")
-        .header("Set-Cookie", format!("auth_token={}", session_tok))
+        .header("Set-Cookie", format!("{}={}", USER_COOKIE_NAME, session_tok))
         .body(Body::empty())
         .unwrap()
 }

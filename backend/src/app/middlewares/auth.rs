@@ -10,7 +10,7 @@ use axum::{
 use crate::db::schema::users::dsl::*;
 use diesel::prelude::*;
 use cookie::Cookie;
-const USER_COOKIE_NAME: &str = "auth_token";
+pub const USER_COOKIE_NAME: &str = "auth_token";
 
 pub(crate) async fn auth(
     config: Config,
