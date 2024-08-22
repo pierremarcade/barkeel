@@ -1,12 +1,12 @@
 use axum::{
-    http::{header,HeaderValue, HeaderMap},
+    http::{header, HeaderValue, HeaderMap},
     response::Response,
     middleware::Next,
     extract::Request,
 };
 use cookie::Cookie;
 use barkeel_lib::session::CSRFManager;
-const SESSION_COOKIE_NAME: &str = "session_token";
+use crate::config::constants::SESSION_COOKIE_NAME;
 
 #[derive(Clone)]
 pub struct UniqueId(pub String);

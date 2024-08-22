@@ -3,20 +3,20 @@ use crate::app::models::user::User;
 use axum::{
     middleware::Next,
     extract::Request, 
-    http::StatusCode,  
+    http::{header, StatusCode},  
     body::Body,
     response::Response
 };
 use crate::db::schema::users::dsl::*;
 use diesel::prelude::*;
 use cookie::Cookie;
-pub const USER_COOKIE_NAME: &str = "auth_token";
+use crate::config::constants::USER_COOKIE_NAME;
 
 pub(crate) async fn auth(
     config: Config,
     mut request: Request, next: Next,
 ) -> axum::response::Response {
-    let cookie_header = request.headers().get("Cookie");
+    let cookie_header = request.headers().get(header::COOKIE);
     match cookie_header {
         Some(cookie_header) => {
             let cookies: Vec<Cookie> = cookie_header

@@ -10,7 +10,7 @@ use diesel::prelude::*;
 use bcrypt::verify;
 use crate::config::application::LOCALES;
 use fluent_templates::Loader;
-use crate::app::middlewares::auth::USER_COOKIE_NAME;
+use crate::config::constants::USER_COOKIE_NAME;
 
 fn redirect_response(location: &str) -> AxumResponse {
     AxumResponse::builder()

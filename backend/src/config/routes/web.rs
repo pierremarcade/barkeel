@@ -12,7 +12,6 @@ use inflector::Inflector;
 //Add here new route
 pub fn routes(config: Config) -> Router<Config> {
     let auth_config = config.clone();
-    let locale_config = config.clone();
     let router = Router::new()
         .route("/", get(index_controller::index))
         .route("/logout", get(auth_controller::get::logout));
@@ -32,7 +31,7 @@ pub fn routes(config: Config) -> Router<Config> {
                 .timeout(Duration::from_secs(30))
         )
         .layer(axum::middleware::from_fn(move |req, next| {
-            crate::app::middlewares::locale::change_locale(locale_config.clone(), req, next)
+            crate::app::middlewares::locale::change_locale(req, next)
         }))
         .layer(axum::middleware::from_fn(move |req, next| {
             crate::app::middlewares::session_token::unique_id_middleware(req, next)
