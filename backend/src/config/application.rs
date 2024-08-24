@@ -2,11 +2,11 @@ use dotenvy::dotenv;
 use crate::config::routes;
 use tower_http::cors::{Any, CorsLayer};
 #[cfg(feature = "postgres")]
-use crate::config::database::postgres::{Connector, Database};
+use barkeel_lib::database::postgres::{Connector, Database};
 #[cfg(feature = "mysql")]
-use crate::config::database::mysql::{Connector, Database};
+use barkeel_lib::database::mysql::{Connector, Database};
 #[cfg(feature = "sqlite")]
-use crate::config::database::sqlite::{Connector, Database};
+use barkeel_lib::database::sqlite::{Connector, Database};
 use tera::Tera;
 use std::error::Error;
 use axum::{extract::DefaultBodyLimit, Router};

@@ -24,7 +24,6 @@ pub fn routes(config: Config) -> Router<Config> {
             crate::app::middlewares::auth::auth(auth_config.clone(), req, next)
         }))
         .route("/login", get(auth_controller::get::login))
-        .route("/login", post(auth_controller::post::login))
         .layer(
             ServiceBuilder::new()
                 .layer(HandleErrorLayer::new(error_controller::handle_timeout_error))
@@ -36,6 +35,8 @@ pub fn routes(config: Config) -> Router<Config> {
         .layer(axum::middleware::from_fn(move |req, next| {
             crate::app::middlewares::session_token::unique_id_middleware(req, next)
         }))
+       
+        .route("/login", post(auth_controller::post::login))
         .fallback(error_controller::handler_404)
         .route("/public/*path", get(index_controller::handle_assets))
 }

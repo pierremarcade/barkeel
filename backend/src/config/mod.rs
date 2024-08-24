@@ -1,4 +1,3 @@
-pub mod database;
 pub mod constants;
 pub mod application;
 pub mod routes;
