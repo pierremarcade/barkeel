@@ -5,9 +5,8 @@ use tera::Context;
 use crate::config::application::Config;
 use crate::config::constants::{DEFAULT_LOCALE, LOCALE_COOKIE_NAME, SESSION_COOKIE_NAME};
 use crate::app::middlewares::auth::AuthState;
-use crate::app::middlewares::locale::LocaleQuery;
 use unic_langid::LanguageIdentifier;
-use serde::Deserialize;
+use barkeel_lib::app::pagination::RequestQuery;
 
 pub trait CrudViewTrait {
     fn index_view(tera: &mut tera::Tera) -> String {
@@ -35,7 +34,12 @@ pub fn get_content_type(headers: HeaderMap) -> String {
     content_type
 }
 
-pub fn get_locale(headers: HeaderMap) -> LanguageIdentifier {
+pub fn get_locale(headers: HeaderMap, request_query: Option<RequestQuery>) -> LanguageIdentifier {
+    if let Some(query) = request_query {
+        if let Some(locale) = query.locale {
+            return locale.parse().expect("Parsing failed.");
+        }
+    }
     if let Some(cookie_header) = headers.get(header::COOKIE) {
         if let Ok(cookie_str) = cookie_header.to_str() {
             for cookie in Cookie::split_parse(cookie_str) {
@@ -83,7 +87,7 @@ macro_rules! crud {
 macro_rules! create {
     ($resource:ident, $view:ident) => {
         pub async fn create(Extension(mut current_user): Extension<AuthState>, headers: HeaderMap, State(config): State<Config>, Form(payload): Form<CrudForm>) -> impl IntoResponse {
-            let locale = get_locale(headers.clone());
+            let locale = get_locale(headers.clone(), None);
             if is_csrf_token_valid(headers.clone(), config.clone(), payload.clone().csrf_token) {
                 let table_name = stringify!($resource);
                 let link_name = table_name.to_kebab_case();
@@ -114,7 +118,7 @@ macro_rules! create {
 macro_rules! update {
     ($resource:ident, $view:ident) => {
         pub async fn update(Extension(mut current_user): Extension<AuthState>, headers: HeaderMap, State(config): State<Config>, Path(param_id): Path<i32>, Form(payload): Form<CrudForm>) -> impl IntoResponse {
-            let locale = get_locale(headers.clone());
+            let locale = get_locale(headers.clone(), None);
             if is_csrf_token_valid(headers.clone(), config.clone(), payload.clone().csrf_token) {
                 let table_name = stringify!($resource);
                 let link_name = table_name.to_kebab_case();
@@ -145,10 +149,10 @@ macro_rules! update {
 #[macro_export]
 macro_rules! index {
     ($resource:ident, $view:ident) => {
-        pub async fn index(State(config): State<Config>, Extension(current_user): Extension<AuthState>, Query(pagination_query): Query<RequestQuery>, headers: HeaderMap) -> impl IntoResponse {
-            let locale = get_locale(headers.clone());
+        pub async fn index(State(config): State<Config>, Extension(current_user): Extension<AuthState>, Query(request_query): Query<RequestQuery>, headers: HeaderMap) -> impl IntoResponse {
+            let locale = get_locale(headers.clone(), Some(request_query.clone()));
             let total_results: i64 = get_total!(config, $resource);
-            let pagination = Pagination::new(pagination_query, total_results);
+            let pagination = Pagination::new(request_query, total_results);
             match $resource.limit(pagination.per_page as i64).offset(pagination.offset as i64).load::< CrudModel >(&mut config.database.pool.get().unwrap()) {
                 Ok(results) => {
                     if get_content_type(headers) == "application/json" {
@@ -191,10 +195,10 @@ macro_rules! index {
 #[macro_export]
 macro_rules! show {
     ($resource:ident, $view:ident) => {
-        pub async fn show(Extension(current_user): Extension<AuthState>, headers: HeaderMap, Path(param_id): Path<i32>, State(config): State<Config>) -> impl IntoResponse {
+        pub async fn show(Extension(current_user): Extension<AuthState>, headers: HeaderMap, Query(request_query): Query<RequestQuery>, Path(param_id): Path<i32>, State(config): State<Config>) -> impl IntoResponse {
             let tera: &mut Tera = &mut config.template.clone();
             let table_name = stringify!($resource);
-            let locale = get_locale(headers);
+            let locale = get_locale(headers, Some(request_query));
             let model_class = table_name.to_class_case();
             match $resource.find(param_id).first::<CrudModel>(&mut config.database.pool.get().unwrap()) {
                 Ok(result) => {
@@ -225,7 +229,7 @@ macro_rules! show {
 #[macro_export]
 macro_rules! new {
     ($resource:ident, $view:ident) => {
-        pub async fn new(Extension(current_user): Extension<AuthState>, headers: HeaderMap, State(config): State<Config>) -> impl IntoResponse {
+        pub async fn new(Extension(current_user): Extension<AuthState>, headers: HeaderMap, Query(_request_query): Query<RequestQuery>, State(config): State<Config>) -> impl IntoResponse {
             let table_name = stringify!($resource);
             let link_name = table_name.to_kebab_case();
             let form = CrudModel::build_create_form(&config.clone(), headers, format!("/{}", link_name).as_str());
@@ -237,8 +241,8 @@ macro_rules! new {
 #[macro_export]
 macro_rules! edit {
     ($resource:ident, $view:ident) => {
-        pub async fn edit(Extension(current_user): Extension<AuthState>, headers: HeaderMap, Path(param_id): Path<i32>, State(config): State<Config>) -> impl IntoResponse {
-            let locale = get_locale(headers.clone());
+        pub async fn edit(Extension(current_user): Extension<AuthState>, headers: HeaderMap, Query(request_query): Query<RequestQuery>, Path(param_id): Path<i32>, State(config): State<Config>) -> impl IntoResponse {
+            let locale = get_locale(headers.clone(), Some(request_query));
             let result = $resource
                 .find(param_id)
                 .first::<CrudModel>(&mut config.database.pool.get().unwrap())
@@ -256,7 +260,7 @@ macro_rules! delete {
     ($resource:ident) => {
         pub async fn delete(Path(param_id): Path<i32>, headers: HeaderMap, State(config): State<Config>) -> Redirect {
             let table_name = stringify!($resource);
-            let locale = get_locale(headers);
+            let locale = get_locale(headers, None);
             let link_name = table_name.to_kebab_case();
             diesel::delete($resource)
                 .filter(id.eq(param_id))

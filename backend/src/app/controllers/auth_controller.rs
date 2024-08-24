@@ -70,7 +70,7 @@ pub async fn new_session(
     headers: HeaderMap
 ) -> String {
     let csrf_manager = CSRFManager::new();
-    let locale = get_locale(headers);
+    let locale = get_locale(headers, None);
     let session_tok = csrf_manager.generate_csrf_token();
     let _updated_record: User = diesel::update(users)
             .filter(id.eq(other_user_id))

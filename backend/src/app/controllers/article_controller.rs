@@ -53,7 +53,7 @@ fn update_values(payload: ArticleForm, _current_user: User) -> ArticleUpdateValu
 }
 
 pub async fn search(Query(params): Query<HashMap<String, String>>, State(config): State<Config>, headers: HeaderMap) -> impl IntoResponse {
-    let locale = get_locale(headers);
+    let locale = get_locale(headers, None);
     let mut query = articles::table.into_boxed();
     if let Some(title_param) = params.get("title") {
         query = query.filter(articles::title.ilike(format!("%{}%", title_param)))
