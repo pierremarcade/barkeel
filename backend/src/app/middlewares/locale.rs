@@ -1,5 +1,5 @@
 use axum::{
-    http::header,
+    http::{header, HeaderValue},
     middleware::Next,
     extract::Request,
 };
@@ -10,7 +10,7 @@ use axum::RequestPartsExt;
 use crate::config::constants::{LOCALE_COOKIE_NAME, DEFAULT_LOCALE};
 
 #[derive(Deserialize, Debug)]
-struct Params {
+pub struct LocaleQuery {
     locale: Option<String>,
 }
 
@@ -31,7 +31,7 @@ pub(crate) async fn change_locale(request: Request, next: Next) -> axum::respons
     };
 
     let (mut parts, body) = request.into_parts();
-    let params: Query<Params> = parts.extract().await.expect("REASON");
+    let params: Query<LocaleQuery> = parts.extract().await.expect("REASON");
     match &params.locale {
         Some(locale) => {
             cookie.set_value(locale);
@@ -39,5 +39,10 @@ pub(crate) async fn change_locale(request: Request, next: Next) -> axum::respons
         None => {},
     }
     let request = Request::from_parts(parts, body);
-    next.run(request).await
+    let mut response = next.run(request).await;
+    response.headers_mut().insert(
+        header::SET_COOKIE,
+        HeaderValue::from_str(&cookie.to_string()).unwrap(),
+    );
+    response
 }

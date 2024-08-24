@@ -7,7 +7,7 @@ use tera::Tera;
 use axum::{  Extension, extract::{Path, State, Query}, response::{ IntoResponse, Redirect }, http::{ HeaderMap, StatusCode }, Form};
 use crate::app::controllers::{ CrudViewTrait, get_locale, get_content_type, is_csrf_token_valid, error_controller, prepare_tera_context };
 use crate::app::middlewares::auth::AuthState;
-use barkeel_lib::app::pagination::{ PaginationQuery, Pagination, PaginationTrait };
+use barkeel_lib::app::pagination::{ RequestQuery, Pagination, PaginationTrait };
 use barkeel_lib::app::http::response::Response;
 use validator::{Validate, ValidationErrors};
 use crate::crud;

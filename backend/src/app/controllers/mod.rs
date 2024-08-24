@@ -5,7 +5,9 @@ use tera::Context;
 use crate::config::application::Config;
 use crate::config::constants::{DEFAULT_LOCALE, LOCALE_COOKIE_NAME, SESSION_COOKIE_NAME};
 use crate::app::middlewares::auth::AuthState;
+use crate::app::middlewares::locale::LocaleQuery;
 use unic_langid::LanguageIdentifier;
+use serde::Deserialize;
 
 pub trait CrudViewTrait {
     fn index_view(tera: &mut tera::Tera) -> String {
@@ -143,7 +145,7 @@ macro_rules! update {
 #[macro_export]
 macro_rules! index {
     ($resource:ident, $view:ident) => {
-        pub async fn index(State(config): State<Config>, Extension(current_user): Extension<AuthState>, Query(pagination_query): Query<PaginationQuery>, headers: HeaderMap) -> impl IntoResponse {
+        pub async fn index(State(config): State<Config>, Extension(current_user): Extension<AuthState>, Query(pagination_query): Query<RequestQuery>, headers: HeaderMap) -> impl IntoResponse {
             let locale = get_locale(headers.clone());
             let total_results: i64 = get_total!(config, $resource);
             let pagination = Pagination::new(pagination_query, total_results);

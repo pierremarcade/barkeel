@@ -7,7 +7,7 @@ use crate::app::middlewares::auth::AuthState;
 use barkeel_lib::storage::{local_storage::LocalStorage, FileStorage};
 use barkeel_lib::utils::slugify;
 use barkeel_lib::app::http::response::Response;
-use barkeel_lib::app::pagination::{ PaginationQuery, Pagination, PaginationTrait };
+use barkeel_lib::app::pagination::{ RequestQuery, Pagination, PaginationTrait };
 use diesel::prelude::*;
 use tera::Tera;
 use chrono::Utc;
