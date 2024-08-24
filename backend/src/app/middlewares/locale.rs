@@ -14,17 +14,12 @@ struct Params {
     locale: Option<String>,
 }
 
-pub(crate) async fn change_locale(
-    request: Request, next: Next,
-) -> axum::response::Response {
+pub(crate) async fn change_locale(request: Request, next: Next) -> axum::response::Response {
     let cookie_header = request.headers().get(header::COOKIE);
     let mut cookie = match cookie_header {
         Some(cookie_header) => {
-            let cookies: Vec<Cookie> = cookie_header
-                .to_str()
-                .unwrap_or_default()
-                .split(';')
-                .filter_map(|s| s.trim().parse::<Cookie>().ok())
+            let cookies: Vec<Cookie> = cookie_header.to_str().unwrap_or_default()
+                .split(';').filter_map(|s| s.trim().parse::<Cookie>().ok())
                 .collect();
             let locale_cookie = cookies.iter().find(|cookie| cookie.name() == LOCALE_COOKIE_NAME);
             match locale_cookie {
@@ -36,17 +31,13 @@ pub(crate) async fn change_locale(
     };
 
     let (mut parts, body) = request.into_parts();
-
     let params: Query<Params> = parts.extract().await.expect("REASON");
-    
     match &params.locale {
         Some(locale) => {
             cookie.set_value(locale);
         },
         None => {},
     }
-
-    // Reconstruire la requête avec les mêmes parties et corps
     let request = Request::from_parts(parts, body);
     next.run(request).await
 }

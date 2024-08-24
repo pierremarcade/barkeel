@@ -1,7 +1,6 @@
 use dotenvy::dotenv;
 use crate::config::routes;
 use tower_http::cors::{Any, CorsLayer};
-use std::sync::{Arc, Mutex};
 #[cfg(feature = "postgres")]
 use crate::config::database::postgres::{Connector, Database};
 #[cfg(feature = "mysql")]
@@ -14,7 +13,6 @@ use axum::{extract::DefaultBodyLimit, Router};
 use tower::layer::Layer;
 use tower_http::normalize_path::{ NormalizePathLayer, NormalizePath };
 use barkeel_lib::session::CSRFManager;
-use unic_langid::{LanguageIdentifier, langid};
 use fluent_templates::{ FluentLoader, static_loader};
 
 static_loader! {
@@ -30,14 +28,6 @@ pub struct Config {
     pub database: Database,
     pub template: Tera,
     pub csrf_manager: CSRFManager,
-    pub locale: Arc<Mutex<LanguageIdentifier>>,
-}
-
-impl Config {
-    pub fn change_locale(&mut self, locale: String) {
-        let mut config_locale = self.locale.lock().expect("mutex was poisoned");
-        *config_locale = locale.parse().expect("Parsing failed.");
-    }
 }
 
 pub struct Loader;
@@ -78,12 +68,11 @@ impl Loader {
         };
         let database = Self::init_database()?;
         let csrf_manager = CSRFManager::new();
-        let config = Config { database: database.clone(), template: tera, csrf_manager, locale: Arc::new(Mutex::new(langid!("en"))) };
+        let config = Config { database: database.clone(), template: tera, csrf_manager };
         let cors = CorsLayer::new().allow_origin(Any);
 
         let routes =  routes::web::routes(config.clone())
         .nest("/api", routes::api::routes(config.clone()));
-
 
         let app = NormalizePathLayer::trim_trailing_slash().layer(routes.with_state(config.clone())
         .layer(cors).layer(DefaultBodyLimit::disable()));

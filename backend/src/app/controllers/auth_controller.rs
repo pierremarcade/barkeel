@@ -9,6 +9,7 @@ use barkeel_lib::session::CSRFManager;
 use diesel::prelude::*;
 use bcrypt::verify;
 use crate::config::application::LOCALES;
+use crate::app::controllers::get_locale;
 use fluent_templates::Loader;
 use crate::config::constants::USER_COOKIE_NAME;
 
@@ -49,13 +50,13 @@ pub mod get {
 
 pub mod post {
     use super::*;
-    pub async fn login(State(config): State<Config>, Form(creds): Form<Credentials>) -> impl IntoResponse {
+    pub async fn login(State(config): State<Config>, headers: HeaderMap, Form(creds): Form<Credentials>) -> impl IntoResponse {
         match users.filter(email.eq(creds.email)).first::<User>(&mut config.database.pool.get().unwrap()) {
             Ok(user) => {
                 if let Err(_err) = verify(creds.password, &user.password) {
                     return redirect_response("/login");
                 }
-                let session_tok = new_session(&config, user.id).await;
+                let session_tok = new_session(&config, user.id, headers).await;
                 set_cookie_response(&session_tok)
             },
             _ => redirect_response("/login")
@@ -65,12 +66,12 @@ pub mod post {
 
 pub async fn new_session(
     config: &Config, 
-    other_user_id: i32
+    other_user_id: i32,
+    headers: HeaderMap
 ) -> String {
     let csrf_manager = CSRFManager::new();
+    let locale = get_locale(headers);
     let session_tok = csrf_manager.generate_csrf_token();
-    let config_clone = config.clone();
-    let locale = config_clone.locale.lock().expect("mutex was poisoned");
     let _updated_record: User = diesel::update(users)
             .filter(id.eq(other_user_id))
             .set(session_token.eq(session_tok.clone()))
