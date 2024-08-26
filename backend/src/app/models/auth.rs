@@ -1,4 +1,4 @@
-use crate::config::application::Config;
+use barkeel_lib::app::Config;
 use serde::{Deserialize, Serialize};
 use barkeel_derives::FormBuilder;
 use validator::Validate;

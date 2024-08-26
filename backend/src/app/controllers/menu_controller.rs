@@ -1,4 +1,4 @@
-use crate::config::application::Config;
+use barkeel_lib::app::Config;
 use crate::app::models::menu::{ Menu, MenuForm, MenuValues };
 use crate::app::models::user::User;
 use crate::db::schema::menus::dsl::*;

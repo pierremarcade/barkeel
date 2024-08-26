@@ -1,4 +1,4 @@
-use crate::config::application::Config;
+use barkeel_lib::app::Config;
 use crate::app::models::user::User;
 use crate::app::models::auth::Credentials;
 use barkeel_lib::app::http::response::Response;

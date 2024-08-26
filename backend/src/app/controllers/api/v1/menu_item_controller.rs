@@ -1,5 +1,5 @@
 use axum::{ extract::{ Path, State}, response::Json };
-use crate::config::application::Config;
+use barkeel_lib::app::Config;
 use crate::app::models::menu_item::MenuItem;
 use crate::db::schema::menu_items::dsl::*;
 use diesel::prelude::*;

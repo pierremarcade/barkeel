@@ -1,4 +1,4 @@
-use crate::config::application::Config;
+use barkeel_lib::app::Config;
 use crate::app::models::article::{ Article, ArticleForm, ArticleInsertValues, ArticleUpdateValues };
 use crate::db::schema::articles::{self, dsl::*};
 use crate::app::models::user::User;

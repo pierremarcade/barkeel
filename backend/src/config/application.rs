@@ -7,6 +7,7 @@ use barkeel_lib::database::postgres::{Connector, Database};
 use barkeel_lib::database::mysql::{Connector, Database};
 #[cfg(feature = "sqlite")]
 use barkeel_lib::database::sqlite::{Connector, Database};
+use barkeel_lib::app::Config;
 use tera::Tera;
 use std::error::Error;
 use axum::{extract::DefaultBodyLimit, Router};
@@ -21,13 +22,6 @@ static_loader! {
         fallback_language: "en",
         customise: |bundle| bundle.set_use_isolating(false),
     };
-}
-
-#[derive(Debug, Clone)]
-pub struct Config {
-    pub database: Database,
-    pub template: Tera,
-    pub csrf_manager: CSRFManager,
 }
 
 pub struct Loader;

@@ -1,6 +1,6 @@
 use axum::{ extract::{Path, State}, response::IntoResponse, http::StatusCode };
 use barkeel_lib::app::http::response::Response;
-use crate::config::application::Config;
+use barkeel_lib::app::Config;
 use crate::db::schema::{ menus, menu_items, articles::{self, dsl::*}, article_metas};
 use crate::app::models::article::{ArticleWithMenu, ArticleWithMenuAndMeta};
 use diesel::prelude::*;

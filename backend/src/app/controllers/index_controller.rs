@@ -1,7 +1,7 @@
 
 use axum::{ Extension, extract::{ State, Path}, response:: { Html, IntoResponse }, http::{header, HeaderMap, StatusCode} };
 use tera::Tera;
-use crate::config::application::Config;
+use barkeel_lib::app::Config;
 use crate::app::middlewares::auth::AuthState;
 use crate::app::controllers::prepare_tera_context;
 
