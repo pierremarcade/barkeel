@@ -10,7 +10,7 @@ use crate::app::middlewares::auth::AuthState;
 use barkeel_lib::app::pagination::{ RequestQuery, Pagination, PaginationTrait };
 use barkeel_lib::app::http::response::Response;
 use validator::{Validate, ValidationErrors};
-use crate::crud;
+use barkeel_lib::crud;
 use inflector::Inflector;
 use crate::config::application::LOCALES;
 use fluent_templates::Loader;

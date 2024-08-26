@@ -70,20 +70,6 @@ pub fn is_csrf_token_valid(headers: HeaderMap, config: Config, csrf_token: Strin
     false
 }
 
-#[macro_export]
-macro_rules! crud {
-    ($resource:ident, $view:ident) => {
-        index!($resource, $view);
-        new!($resource, $view);
-        edit!($resource, $view);
-        show!($resource, $view);
-        delete!($resource);
-        create!($resource, $view); 
-        update!($resource, $view);
-    };
-}
-
-#[macro_export]
 macro_rules! create {
     ($resource:ident, $view:ident) => {
         pub async fn create(Extension(mut current_user): Extension<AuthState>, headers: HeaderMap, State(config): State<Config>, Form(payload): Form<CrudForm>) -> impl IntoResponse {
@@ -114,7 +100,6 @@ macro_rules! create {
     }
 }
 
-#[macro_export]
 macro_rules! update {
     ($resource:ident, $view:ident) => {
         pub async fn update(Extension(mut current_user): Extension<AuthState>, headers: HeaderMap, State(config): State<Config>, Path(param_id): Path<i32>, Form(payload): Form<CrudForm>) -> impl IntoResponse {
@@ -146,7 +131,6 @@ macro_rules! update {
     }
 }
 
-#[macro_export]
 macro_rules! index {
     ($resource:ident, $view:ident) => {
         pub async fn index(State(config): State<Config>, Extension(current_user): Extension<AuthState>, Query(request_query): Query<RequestQuery>, headers: HeaderMap) -> impl IntoResponse {
@@ -192,7 +176,6 @@ macro_rules! index {
     }
 }
 
-#[macro_export]
 macro_rules! show {
     ($resource:ident, $view:ident) => {
         pub async fn show(Extension(current_user): Extension<AuthState>, headers: HeaderMap, Query(request_query): Query<RequestQuery>, Path(param_id): Path<i32>, State(config): State<Config>) -> impl IntoResponse {
@@ -226,7 +209,6 @@ macro_rules! show {
     }
 }
 
-#[macro_export]
 macro_rules! new {
     ($resource:ident, $view:ident) => {
         pub async fn new(Extension(current_user): Extension<AuthState>, headers: HeaderMap, Query(_request_query): Query<RequestQuery>, State(config): State<Config>) -> impl IntoResponse {
@@ -238,7 +220,6 @@ macro_rules! new {
     }
 }
 
-#[macro_export]
 macro_rules! edit {
     ($resource:ident, $view:ident) => {
         pub async fn edit(Extension(current_user): Extension<AuthState>, headers: HeaderMap, Query(request_query): Query<RequestQuery>, Path(param_id): Path<i32>, State(config): State<Config>) -> impl IntoResponse {
@@ -255,7 +236,6 @@ macro_rules! edit {
     }
 }
 
-#[macro_export]
 macro_rules! delete {
     ($resource:ident) => {
         pub async fn delete(Path(param_id): Path<i32>, headers: HeaderMap, State(config): State<Config>) -> Redirect {
@@ -271,7 +251,6 @@ macro_rules! delete {
     }
 }
 
-#[macro_export]
 macro_rules! render_form {
     ($form:ident, $view:ident, $config:ident, $current_user:ident, $error:expr) => {
         {
@@ -289,7 +268,6 @@ macro_rules! render_form {
     };
 }
 
-#[macro_export]
 macro_rules! render_html {
     ($config:ident, $rendered:ident) => {
         {
@@ -305,7 +283,6 @@ macro_rules! render_html {
     };
 }
 
-#[macro_export]
 macro_rules! render_json {
     ($status_code:expr, $results:ident) => {
         {
@@ -321,7 +298,6 @@ macro_rules! render_json {
     };
 }
 
-#[macro_export]
 macro_rules! get_total {
     ($config:ident, $model:ident) => {
         {

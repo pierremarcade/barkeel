@@ -13,7 +13,7 @@ use tera::Tera;
 use chrono::Utc;
 use validator::{Validate, ValidationErrors};
 use axum::{ Extension, extract::{Multipart, Path, State, Query}, response::{ IntoResponse, Redirect }, http::{ HeaderMap, StatusCode }, Form};
-use crate::crud;
+use barkeel_lib::crud;
 use inflector::Inflector;
 use std::collections::HashMap;
 use crate::config::application::LOCALES;

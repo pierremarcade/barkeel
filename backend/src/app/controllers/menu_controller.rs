@@ -4,7 +4,7 @@ use crate::app::models::user::User;
 use crate::db::schema::menus::dsl::*;
 use crate::app::controllers::{ CrudViewTrait, get_locale, get_content_type, is_csrf_token_valid, error_controller, prepare_tera_context };
 use crate::app::middlewares::auth::AuthState;
-use crate::crud;
+use barkeel_lib::crud;
 use barkeel_lib::app::pagination::{ RequestQuery, Pagination, PaginationTrait };
 use barkeel_lib::app::http::response::Response;
 use diesel::prelude::*;
