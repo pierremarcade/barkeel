@@ -1,11 +1,18 @@
 use barkeel_lib::app::Config;
 use diesel::prelude::*;
-use barkeel_derives::FormBuilder;
+use barkeel_derives::{FormBuilder, OrderBy};
+use crate::db::schema::articles::dsl::articles;
+#[cfg(feature = "postgres")]
+use barkeel_lib::database::postgres::DB;
+#[cfg(feature = "mysql")]
+use barkeel_lib::database::mysql::DB;
+#[cfg(feature = "sqlite")]
+use barkeel_lib::database::sqlite::DB;
 use serde::{Deserialize, Serialize};
 use chrono::NaiveDateTime;
 use validator::Validate;
 
-#[derive(Serialize, Deserialize, Identifiable, Queryable, FormBuilder, Selectable, Clone)]
+#[derive(Serialize, Deserialize, Identifiable, Queryable, FormBuilder, Selectable, Clone, OrderBy)]
 #[diesel(table_name = crate::db::schema::articles)]
 #[form_builder(label = title, id = id)]
 pub struct Article {
