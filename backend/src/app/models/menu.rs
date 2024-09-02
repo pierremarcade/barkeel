@@ -1,12 +1,18 @@
 use barkeel_lib::app::Config;
 use diesel::prelude::*;
-use barkeel_derives::FormBuilder;
+use barkeel_derives::{FormBuilder, OrderBy};
 use serde::{Deserialize, Serialize};
-use crate::db::schema::menus;
+use crate::db::schema::menus::dsl::menus;
 use validator::Validate;
+#[cfg(feature = "postgres")]
+use barkeel_lib::database::postgres::DB;
+#[cfg(feature = "mysql")]
+use barkeel_lib::database::mysql::DB;
+#[cfg(feature = "sqlite")]
+use barkeel_lib::database::sqlite::DB;
 
-#[derive(Serialize, Deserialize, Identifiable, Queryable, Selectable, FormBuilder, Validate, Clone)]
-#[diesel(table_name = menus)]
+#[derive(Serialize, Deserialize, Identifiable, Queryable, Selectable, FormBuilder, Validate, Clone, OrderBy)]
+#[diesel(table_name = crate::db::schema::menus)]
 #[form_builder(label = name, id = id)]
 pub struct Menu {
     pub id: i32,
@@ -32,7 +38,7 @@ pub struct MenuItemWithArticle{
 }
 
 #[derive(Insertable, AsChangeset)]
-#[diesel(table_name = menus)]
+#[diesel(table_name = crate::db::schema::menus)]
 pub struct MenuValues {
     pub name: String,
 }
