@@ -137,7 +137,7 @@ macro_rules! index {
             let locale = get_locale(headers.clone(), Some(request_query.clone()));
             let total_results: i64 = get_total!(config, $resource);
             let pagination = Pagination::new(request_query, total_results);
-            match $resource.limit(pagination.per_page as i64).offset(pagination.offset as i64).load::< CrudModel >(&mut config.database.pool.get().unwrap()) {
+            match $resource.limit(pagination.per_page as i64).order(CrudModel::get_order("")).offset(pagination.offset as i64).load::< CrudModel >(&mut config.database.pool.get().unwrap()) {
                 Ok(results) => {
                     if get_content_type(headers) == "application/json" {
                         render_json!(StatusCode::OK, results)
