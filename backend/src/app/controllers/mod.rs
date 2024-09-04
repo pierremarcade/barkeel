@@ -4,7 +4,7 @@ use cookie::Cookie;
 use tera::Context;
 use barkeel_lib::app::Config;
 use crate::config::constants::{DEFAULT_LOCALE, LOCALE_COOKIE_NAME, SESSION_COOKIE_NAME};
-use crate::app::middlewares::auth::AuthState;
+use crate::app::models::auth::AuthState;
 use unic_langid::LanguageIdentifier;
 use barkeel_lib::app::pagination::RequestQuery;
 

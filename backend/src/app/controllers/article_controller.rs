@@ -3,7 +3,7 @@ use crate::app::models::article::{ Article, ArticleForm, ArticleInsertValues, Ar
 use crate::db::schema::articles::{self, dsl::*};
 use crate::app::models::user::User;
 use crate::app::controllers::{ CrudViewTrait, get_locale, get_content_type, is_csrf_token_valid, error_controller, prepare_tera_context };
-use crate::app::middlewares::auth::AuthState;
+use crate::app::models::auth::AuthState;
 use barkeel_lib::storage::{local_storage::LocalStorage, FileStorage};
 use barkeel_lib::utils::slugify;
 use barkeel_lib::app::http::response::Response;

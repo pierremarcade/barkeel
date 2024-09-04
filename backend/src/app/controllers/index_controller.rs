@@ -2,7 +2,7 @@
 use axum::{ Extension, extract::{ State, Path}, response:: { Html, IntoResponse }, http::{header, HeaderMap, StatusCode} };
 use tera::Tera;
 use barkeel_lib::app::Config;
-use crate::app::middlewares::auth::AuthState;
+use crate::app::models::auth::AuthState;
 use crate::app::controllers::prepare_tera_context;
 
 static MAIN_CSS: &str = include_str!("../../public/css/main.css");

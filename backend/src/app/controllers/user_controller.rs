@@ -2,7 +2,7 @@ use barkeel_lib::app::Config;
 use crate::app::models::user::{ User, UserForm, UserValues };
 use crate::db::schema::users::dsl::*;
 use crate::app::controllers::{ CrudViewTrait, get_locale, get_content_type, is_csrf_token_valid, error_controller, prepare_tera_context };
-use crate::app::middlewares::auth::AuthState;
+use crate::app::models::auth::AuthState;
 use barkeel_lib::crud;
 use barkeel_lib::app::pagination::{ RequestQuery, Pagination, PaginationTrait };
 use barkeel_lib::app::http::response::Response;
