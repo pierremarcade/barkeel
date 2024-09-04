@@ -3,7 +3,6 @@ use axum::{ Extension, extract::{ State, Path}, response:: { Html, IntoResponse 
 use tera::Tera;
 use barkeel_lib::app::Config;
 use crate::app::models::auth::AuthState;
-use crate::app::controllers::prepare_tera_context;
 
 static MAIN_CSS: &str = include_str!("../../public/css/main.css");
 static MAIN_JS: &str = include_str!("../../public/js/main.js");
@@ -13,7 +12,7 @@ pub async fn index(Extension(current_user): Extension<AuthState>, State(config):
     let tera: &Tera = &config.template;
     let mut tera = tera.clone();
     tera.add_raw_template("index.html", include_str!("../views/index.html")).unwrap();
-    let context = prepare_tera_context(current_user).await;
+    let context = crate::app::controllers::prepare_tera_context(current_user).await;
     let rendered = tera.render("index.html", &context).unwrap();
     Html(rendered)
 }

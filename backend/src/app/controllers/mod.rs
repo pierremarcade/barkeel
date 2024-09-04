@@ -73,8 +73,8 @@ pub fn is_csrf_token_valid(headers: HeaderMap, config: Config, csrf_token: Strin
 macro_rules! create {
     ($resource:ident, $view:ident) => {
         pub async fn create(Extension(mut current_user): Extension<AuthState>, headers: HeaderMap, State(config): State<Config>, Form(payload): Form<CrudForm>) -> impl IntoResponse {
-            let locale = get_locale(headers.clone(), None);
-            if is_csrf_token_valid(headers.clone(), config.clone(), payload.clone().csrf_token) {
+            let locale = crate::app::controllers::get_locale(headers.clone(), None);
+            if crate::app::controllers::is_csrf_token_valid(headers.clone(), config.clone(), payload.clone().csrf_token) {
                 let table_name = stringify!($resource);
                 let link_name = table_name.to_kebab_case();
                 match payload.validate() {
@@ -103,8 +103,8 @@ macro_rules! create {
 macro_rules! update {
     ($resource:ident, $view:ident) => {
         pub async fn update(Extension(mut current_user): Extension<AuthState>, headers: HeaderMap, State(config): State<Config>, Path(param_id): Path<i32>, Form(payload): Form<CrudForm>) -> impl IntoResponse {
-            let locale = get_locale(headers.clone(), None);
-            if is_csrf_token_valid(headers.clone(), config.clone(), payload.clone().csrf_token) {
+            let locale = crate::app::controllers::get_locale(headers.clone(), None);
+            if crate::app::controllers::is_csrf_token_valid(headers.clone(), config.clone(), payload.clone().csrf_token) {
                 let table_name = stringify!($resource);
                 let link_name = table_name.to_kebab_case();
                 match payload.validate() {
@@ -134,18 +134,18 @@ macro_rules! update {
 macro_rules! index {
     ($resource:ident, $view:ident) => {
         pub async fn index(State(config): State<Config>, Extension(current_user): Extension<AuthState>, Query(request_query): Query<RequestQuery>, headers: HeaderMap) -> impl IntoResponse {
-            let locale = get_locale(headers.clone(), Some(request_query.clone()));
+            let locale = crate::app::controllers::get_locale(headers.clone(), Some(request_query.clone()));
             let total_results: i64 = get_total!(config, $resource);
             let pagination = Pagination::new(request_query, total_results);
             match $resource.limit(pagination.per_page as i64).order(CrudModel::get_order("")).offset(pagination.offset as i64).load::< CrudModel >(&mut config.database.pool.get().unwrap()) {
                 Ok(results) => {
-                    if get_content_type(headers) == "application/json" {
+                    if crate::app::controllers::get_content_type(headers) == "application/json" {
                         render_json!(StatusCode::OK, results)
                     } else {
                         let table_name = stringify!($resource);
                         let link_name = table_name.to_kebab_case();
                         let model_class = table_name.to_class_case();
-                        let mut context = prepare_tera_context(current_user).await;
+                        let mut context = crate::app::controllers::prepare_tera_context(current_user).await;
                         let args = {
                             let mut map = HashMap::new();
                             map.insert(String::from("name"), table_name.into());
@@ -169,7 +169,7 @@ macro_rules! index {
                     }
                 },
                 Err(err) => {
-                    error_controller::handler_error(config, StatusCode::BAD_REQUEST, err.to_string()).into_response()
+                    crate::app::controllers::error_controller::handler_error(config, StatusCode::BAD_REQUEST, err.to_string()).into_response()
                 }
             }
         }
@@ -181,11 +181,11 @@ macro_rules! show {
         pub async fn show(Extension(current_user): Extension<AuthState>, headers: HeaderMap, Query(request_query): Query<RequestQuery>, Path(param_id): Path<i32>, State(config): State<Config>) -> impl IntoResponse {
             let tera: &mut Tera = &mut config.template.clone();
             let table_name = stringify!($resource);
-            let locale = get_locale(headers, Some(request_query));
+            let locale = crate::app::controllers::get_locale(headers, Some(request_query));
             let model_class = table_name.to_class_case();
             match $resource.find(param_id).first::<CrudModel>(&mut config.database.pool.get().unwrap()) {
                 Ok(result) => {
-                    let mut context = prepare_tera_context(current_user).await;
+                    let mut context = crate::app::controllers::prepare_tera_context(current_user).await;
                     context.insert("data", &result);
                     context.insert("title", &model_class.as_str());
                     context.insert("locale", &"en");
@@ -202,7 +202,7 @@ macro_rules! show {
                     Response{status_code: StatusCode::OK, content_type: "text/html", datas: rendered}
                 },
                 _ => {
-                    error_controller::render_404(config)
+                    crate::app::controllers::error_controller::render_404(config)
                 }
             }
         }
@@ -223,7 +223,7 @@ macro_rules! new {
 macro_rules! edit {
     ($resource:ident, $view:ident) => {
         pub async fn edit(Extension(current_user): Extension<AuthState>, headers: HeaderMap, Query(request_query): Query<RequestQuery>, Path(param_id): Path<i32>, State(config): State<Config>) -> impl IntoResponse {
-            let locale = get_locale(headers.clone(), Some(request_query));
+            let locale = crate::app::controllers::get_locale(headers.clone(), Some(request_query));
             let result = $resource
                 .find(param_id)
                 .first::<CrudModel>(&mut config.database.pool.get().unwrap())
@@ -240,7 +240,7 @@ macro_rules! delete {
     ($resource:ident) => {
         pub async fn delete(Path(param_id): Path<i32>, headers: HeaderMap, State(config): State<Config>) -> Redirect {
             let table_name = stringify!($resource);
-            let locale = get_locale(headers, None);
+            let locale = crate::app::controllers::get_locale(headers, None);
             let link_name = table_name.to_kebab_case();
             diesel::delete($resource)
                 .filter(id.eq(param_id))
@@ -255,7 +255,7 @@ macro_rules! render_form {
     ($form:ident, $view:ident, $config:ident, $current_user:ident, $error:expr) => {
         {
             let tera: &mut Tera = &mut $config.template.clone();
-            let mut context = prepare_tera_context($current_user).await;
+            let mut context = crate::app::controllers::prepare_tera_context($current_user).await;
             if let Some(error) = $error {
                 let serialized = serde_json::to_string(&error).unwrap();
                 context.insert("errors_message", &serialized);
@@ -276,7 +276,7 @@ macro_rules! render_html {
                     Response{status_code: axum::http::StatusCode::OK, content_type: "text/html", datas: result}.into_response()
                 },
                 Err(err) => {
-                    error_controller::handler_error($config, axum::http::StatusCode::BAD_REQUEST, err.to_string()).into_response()
+                    crate::app::controllers::error_controller::handler_error($config, axum::http::StatusCode::BAD_REQUEST, err.to_string()).into_response()
                 }
             }
         }  

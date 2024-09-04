@@ -2,7 +2,7 @@ use barkeel_lib::app::Config;
 use crate::app::models::menu::{ Menu, MenuForm, MenuValues };
 use crate::app::models::user::User;
 use crate::db::schema::menus::dsl::*;
-use crate::app::controllers::{ CrudViewTrait, get_locale, get_content_type, is_csrf_token_valid, error_controller, prepare_tera_context };
+use crate::app::controllers::CrudViewTrait;
 use crate::app::models::auth::AuthState;
 use barkeel_lib::crud;
 use barkeel_lib::app::pagination::{ RequestQuery, Pagination, PaginationTrait };
