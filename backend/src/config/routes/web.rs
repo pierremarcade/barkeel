@@ -15,18 +15,17 @@ pub fn routes(config: Config) -> Router<Config> {
     let public_dir = ServeDir::new("src/public");
     let auth_config = config.clone();
     let router = Router::new()
-        .nest_service("/public", public_dir.clone()).fallback_service(public_dir)
-        .route("/", get(index_controller::index))
-        .route("/logout", get(auth_controller::get::logout));
+        .route("/", get(index_controller::index));
+       
     let router = resource_routes!(router, menu_item_controller);
     let router = resource_routes!(router, menu_controller);
         resource_routes!(router, article_controller)
         .route("/articles/search", get(article_controller::search))
         .route("/articles/upload", post(article_controller::upload))
+        .route("/login", get(auth_controller::get::login))
         .layer(axum::middleware::from_fn(move |req, next| {
             crate::app::middlewares::auth::auth(auth_config.clone(), req, next)
         }))
-        .route("/login", get(auth_controller::get::login))
         .layer(
             ServiceBuilder::new()
                 .layer(HandleErrorLayer::new(error_controller::handle_timeout_error))
@@ -38,8 +37,9 @@ pub fn routes(config: Config) -> Router<Config> {
         .layer(axum::middleware::from_fn(move |req, next| {
             crate::app::middlewares::session_token::unique_id_middleware(req, next)
         }))
-       
+        .route("/logout", get(auth_controller::get::logout))
         .route("/login", post(auth_controller::post::login))
+        .nest_service("/public", public_dir.clone()).fallback_service(public_dir)
         .fallback(error_controller::handler_404)
         
 }

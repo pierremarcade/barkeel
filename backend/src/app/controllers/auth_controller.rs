@@ -21,10 +21,15 @@ fn redirect_response(location: &str) -> AxumResponse {
 }
 
 fn set_cookie_response(session_tok: &str) -> AxumResponse {
+    let cookie_value = if session_tok.is_empty() {
+        format!("{}=; Expires=Thu, 01-Jan-1970 00:00:00 GMT; Max-Age=0", USER_COOKIE_NAME)
+    } else {
+        format!("{}={}", USER_COOKIE_NAME, session_tok)
+    };
     AxumResponse::builder()
         .status(StatusCode::SEE_OTHER)
         .header("Location", "/")
-        .header("Set-Cookie", format!("{}={}", USER_COOKIE_NAME, session_tok))
+        .header("Set-Cookie", cookie_value)
         .body(Body::empty())
         .unwrap()
 }
