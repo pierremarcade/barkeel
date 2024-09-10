@@ -1,5 +1,5 @@
 use axum::{ 
-    routing::{get, post, delete}, 
+    routing::{ get, post, delete }, 
     Router,
     error_handling::HandleErrorLayer
 };
@@ -7,12 +7,15 @@ use barkeel_lib::app::Config;
 use crate::app::controllers::*;
 use std::time::Duration;
 use tower::ServiceBuilder;
+use tower_http::services::ServeDir;
 use inflector::Inflector;
 
 //Add here new route
 pub fn routes(config: Config) -> Router<Config> {
+    let public_dir = ServeDir::new("src/public");
     let auth_config = config.clone();
     let router = Router::new()
+        .nest_service("/public", public_dir.clone()).fallback_service(public_dir)
         .route("/", get(index_controller::index))
         .route("/logout", get(auth_controller::get::logout));
     let router = resource_routes!(router, menu_item_controller);
@@ -38,7 +41,7 @@ pub fn routes(config: Config) -> Router<Config> {
        
         .route("/login", post(auth_controller::post::login))
         .fallback(error_controller::handler_404)
-        .route("/public/*path", get(index_controller::handle_assets))
+        
 }
 
 
