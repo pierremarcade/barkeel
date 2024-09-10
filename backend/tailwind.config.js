@@ -1,6 +1,7 @@
 /** @type {import('tailwindcss').Config} */
 const defaultTheme = require('tailwindcss/defaultTheme')
 module.exports = {
+  content: ["./src/**/*.{html,js}"],
   theme: {
     extend: {
       colors: {
@@ -8,7 +9,6 @@ module.exports = {
       },
     },
   },
-  content: ["./src/**/*.{html,js}"],
   plugins: [
     require('@tailwindcss/typography'),
     require('@tailwindcss/forms'),
