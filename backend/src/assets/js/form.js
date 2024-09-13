@@ -12,8 +12,7 @@ function updateDatetimeFields(form) {
 }
 
 function handleCheckboxFields(form) {
-    const checkboxFields = form.querySelectorAll('input[type="checkbox"]');
-    checkboxFields.forEach(field => {
+    form.querySelectorAll('input[type="checkbox"]').forEach(field => {
         if (!field.checked) {
             field.value = false;
             field.checked = true;
@@ -23,16 +22,13 @@ function handleCheckboxFields(form) {
 
 export function beforeSubmit() {
     document.querySelectorAll('form').forEach(form => {
-        updateDatetimeFields(form);
-        handleCheckboxFields(form);
-
         form.addEventListener('submit', event => {
             event.preventDefault();
             form.querySelectorAll('h1, h2, h3, h4, h5, h6').forEach(titleElement => {
                 const slug = createSlug(titleElement.textContent);
                 titleElement.setAttribute('id', slug);
             });
-
+            handleCheckboxFields(form);
             updateDatetimeFields(form);
 
             form.submit();

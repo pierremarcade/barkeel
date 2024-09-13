@@ -7,5 +7,6 @@ document.addEventListener('DOMContentLoaded', function() {
     handleFileElements();
     handleAutocompleteElements();
     init();
+    console.log("sdfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
     beforeSubmit();
 });
