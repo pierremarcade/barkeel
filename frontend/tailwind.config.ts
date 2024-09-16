@@ -28,6 +28,20 @@ export default {
       maxWidth: {
         '8xl': '88rem',
       },
+      colors: {
+        blue: {
+          DEFAULT: '#ff5555',
+          100: '#ff8888', // Teinte légère
+          200: '#ff9999',
+          300: '#ffa5a5',
+          400: '#ffb3b3', // Teinte forte
+          500: '#ff5555', // Couleur par défaut
+          600: '#ff7373',
+          700: '#ff8484',
+          800: '#ff9595',
+          900: '#ffaaaa',
+        },
+      },
     },
   },
   plugins: [typographyPlugin],
