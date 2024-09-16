@@ -49,14 +49,11 @@ function Header() {
       </div>
       <div className="relative flex flex-grow basis-0 items-center">
         <Link href="/" aria-label="Home page">
-        
-        <Image
-              className="absolute bottom-full right-full -mb-6 -mr-36"
-              src={Logo}
-              alt=""
-              width={130}
-              height="auto"            />
-          
+          <Image
+                className="absolute bottom-full right-full -mb-6 -mr-36"
+                src={Logo}
+                alt=""
+                width={130} />
         </Link>
       </div>
       <div className="-my-5 mr-6 sm:mr-8 md:mr-0">
