@@ -10,7 +10,7 @@ rust-version = "1.80"
 
 [dependencies]
 axum =  { version = "0.7", features = ["multipart"] }
-redis = { version = "0.26", features = ["aio", "tokio-comp"] }
+redis = { version = "0.27", features = ["aio", "tokio-comp"] }
 async-trait = "0.1"
 chrono = { version = "0.4", features = ["serde"] }
 serde = "1.0"
@@ -24,7 +24,7 @@ tower-http = { version = "0.5", features = ["cors", "normalize-path", "fs"] }
 #barkeel_derives = { git = "https://github.com/pierremarcade/barkeel-derives.git"}
 #barkeel_lib = { git = "https://github.com/pierremarcade/barkeel-lib.git", features = ["full", "postgres"] }
 barkeel_derives = { path = "../../barkeel-derives" }
-barkeel_lib = { path = "../../barkeel-lib", features = ["full", "postgres"] }
+barkeel_lib = { path = "../../barkeel-lib", default-features = false, features = ["full", "postgres"] }
 cookie = "0.18"
 rand = "0.8.5"
 jwt = "0.16.0"
@@ -43,9 +43,9 @@ optional = true
 
 [features]
 default = ["postgres", "web"]
-postgres = ["diesel/postgres"]
-mysql = ["diesel/mysql"]
-sqlite = ["diesel/sqlite"]
+postgres = ["diesel/postgres", "barkeel_lib/full", "barkeel_lib/postgres"]
+mysql = ["diesel/mysql", "barkeel_lib/full", "barkeel_lib/mysql"]
+sqlite = ["diesel/sqlite", "barkeel_lib/full", "barkeel_lib/sqlite"]
 web= ["tera"]
 api= []
 

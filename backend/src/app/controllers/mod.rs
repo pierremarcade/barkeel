@@ -195,7 +195,6 @@ macro_rules! show {
                         map.insert(String::from("name"), model_class.into());
                         map
                     };
-                    context.insert("description", &"tes test");
                     context.insert("description", &LOCALES.lookup_with_args(&locale, "crud_show_description", &args).to_string());
                     let template_name = $view::show_view(tera);
                     let rendered = tera.render(&template_name.as_str(), &context).unwrap();
