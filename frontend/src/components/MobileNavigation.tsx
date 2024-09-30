@@ -4,8 +4,8 @@ import { Suspense, useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useSearchParams } from 'next/navigation'
 import { Dialog } from '@headlessui/react'
-
-import { Logomark } from '@/components/Logo'
+import Logo from '@/images/logo.png'
+import Image from 'next/image'
 import { Navigation } from '@/components/Navigation'
 
 function MenuIcon(props: React.ComponentPropsWithoutRef<'svg'>) {
@@ -92,7 +92,11 @@ export function MobileNavigation() {
               <CloseIcon className="h-6 w-6 stroke-slate-500" />
             </button>
             <Link href="/" className="ml-6" aria-label="Home page">
-              <Logomark className="h-9 w-9" />
+            <Image
+                className="absolute bottom-full right-full -mb-14 -mr-52"
+                src={Logo}
+                alt=""
+                width={130} />
             </Link>
           </div>
           <Navigation className="mt-5 px-1" onLinkClick={onLinkClick} />
