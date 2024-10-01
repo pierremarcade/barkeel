@@ -76,11 +76,11 @@ pub async fn new_session(
     let csrf_manager = CSRFManager::new();
     let locale = crate::app::controllers::get_locale(headers, None);
     let session_tok = csrf_manager.generate_csrf_token();
-    let _updated_record: User = diesel::update(users)
-            .filter(id.eq(other_user_id))
-            .set(session_token.eq(session_tok.clone()))
-            .get_result(&mut config.database.pool.get().unwrap())
-            .unwrap_or_else(|_| { panic!("{}", LOCALES.lookup(&locale, "error_load").to_string()) });
+    diesel::update(users)
+        .filter(id.eq(other_user_id))
+        .set(session_token.eq(session_tok.clone()))
+        .execute(&mut config.database.pool.get().unwrap())
+        .expect("Failed to update user record");
 
     session_tok
 }
