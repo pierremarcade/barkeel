@@ -59,7 +59,7 @@ const Detail: React.FC<DetailProps> = ({ slug }) => {
       frontmatter={{ title: data.title, section_name: data.section_name }}
       nodes={nodes}
     >
-      <div dangerouslySetInnerHTML={{ __html: data.content }} />
+      <div dangerouslySetInnerHTML={{ __html: data.content }} className="dark:bg-transparent dark:text-white" />
     </DocsLayout>
   );
 };
