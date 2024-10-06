@@ -15,7 +15,6 @@ use tower::layer::Layer;
 use tower_http::normalize_path::{ NormalizePathLayer, NormalizePath };
 use barkeel_lib::session::CSRFManager;
 use fluent_templates::{ FluentLoader, static_loader};
-use barkeel_lib::database::DatabaseTrait;
 
 static_loader! {
     pub static LOCALES = {

@@ -80,7 +80,7 @@ pub async fn new_session(
         .filter(id.eq(other_user_id))
         .set(session_token.eq(session_tok.clone()))
         .execute(&mut config.database.pool.get().unwrap())
-        .expect("Failed to update user record");
+        .expect(&LOCALES.lookup(&locale, "error_load"));
 
     session_tok
 }

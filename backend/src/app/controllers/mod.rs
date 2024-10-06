@@ -136,8 +136,23 @@ macro_rules! index {
         pub async fn index(State(config): State<Config>, Extension(current_user): Extension<AuthState>, Query(request_query): Query<RequestQuery>, headers: HeaderMap) -> impl IntoResponse {
             let locale = crate::app::controllers::get_locale(headers.clone(), Some(request_query.clone()));
             let total_results: i64 = get_total!(config, $resource);
-            let pagination = Pagination::new(request_query, total_results);
-            match $resource.limit(pagination.per_page as i64).order(CrudModel::get_order("")).offset(pagination.offset as i64).load::< CrudModel >(&mut config.database.pool.get().unwrap()) {
+            let pagination = Pagination::new(request_query.clone(), total_results);
+            let order: &str = match request_query.order.as_deref() {
+                Some(s) => s,
+                None => &"",
+            };
+            let orders = order.split(",");
+            let mut query = $resource.into_boxed();
+            let mut is_first_order = true;
+            for order in orders {
+                if is_first_order {
+                    is_first_order = false;
+                    query = query.order_by(CrudModel::get_order(&order));
+                } else {
+                    query = query.then_order_by(CrudModel::get_order(&order));
+                }
+            }
+            match query.limit(pagination.per_page as i64).offset(pagination.offset as i64).load::< CrudModel >(&mut config.database.pool.get().unwrap()) {
                 Ok(results) => {
                     if crate::app::controllers::get_content_type(headers) == "application/json" {
                         render_json!(StatusCode::OK, results)
