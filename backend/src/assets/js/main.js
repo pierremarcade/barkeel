@@ -1,9 +1,60 @@
 import { beforeSubmit, handleSelectAndRadioElements, handleFileElements, handleAutocompleteElements, handleCheckboxElements } from './form.js';
 import { init } from './quill.js';
 
-function sortTable(columnName, order) {
-    console.log(`Sorting by ${columnName} in ${order} order`);
+function updateUrlParameter(key, value) {
+    const urlParams = new URLSearchParams(window.location.search);
+    const params = [];
+
+    if (urlParams.has('order')) {
+        const orders = urlParams.get('order').split(',');
+        let found = false;
+        orders.forEach(order => {
+            const lastUnderscoreIndex = order.lastIndexOf('_');
+            const col = order.substring(0, lastUnderscoreIndex);
+            if (col === key) {
+                found = true;
+                params.push(`${key}_${value}`);
+            } else {
+                params.push(order);
+            }
+        });
+        if (!found) {
+            params.push(`${key}_${value}`);
+        }
+    } else {
+        params.push(`${key}_${value}`);
+    }
+
+    // Update the 'order' parameter
+    if (params.length > 0) {
+        urlParams.set('order', params.join(','));
+    } else {
+        urlParams.delete('order');
+    }
+
+    // Rebuild the URL
+    const newUrlParams = urlParams.toString();
+    const currentUrlParams = window.location.search.substring(1);
+
+    // Redirect if necessary
+    if (newUrlParams !== currentUrlParams) {
+        window.location.href = `${window.location.pathname}?${newUrlParams}`;
+    }
 }
+
+document.addEventListener('DOMContentLoaded', function () {
+    initializeTableHeaders();
+    handleCheckboxElements();
+    handleSelectAndRadioElements();
+    handleFileElements();
+    handleAutocompleteElements();
+    init();
+    beforeSubmit();
+
+    document.querySelectorAll('th[data-sort]').forEach(th => {
+        th.addEventListener('click', handleColumnClick);
+    });
+});
 
 function handleColumnClick(event) {
     const th = event.target.closest('th[data-sort]');
@@ -21,57 +72,56 @@ function handleColumnClick(event) {
         newOrder = 'asc';
     }
 
-    updateUrlParameter(columnName, newOrder);
+    handleSortParameter(columnName, newOrder);
 
-    if (newOrder !== 'none') {
-        sortTable(columnName, newOrder);
-    }
     th.dataset.order = newOrder;
 }
 
-function updateUrlParameter(key, value) {
-    const urlParams = new URLSearchParams(window.location.search);
-    const params = [];
-
-    if (urlParams.has('order')) {
-        const orders = urlParams.get('order').split(',');
-        let found = false;
-        orders.forEach(order => {
-            const [col, dir] = order.split('_');
-            if (col === key) {
-                found = true;
-                if (value !== 'none') {
-                    params.push(`${key}_${value}`);
-                }
-            } else {
-                params.push(order);
-            }
-        });
-        if (!found && value !== 'none') {
-            params.push(`${key}_${value}`);
-        }
-    } else if (value !== 'none') {
-        params.push(`${key}_${value}`);
-    }
-
-    if (params.length > 0) {
-        urlParams.set('order', params.join(','));
+function handleSortParameter(columnName, newOrder) {
+    if (newOrder === 'none') {
+        removeUrlParameter(columnName);
     } else {
-        urlParams.delete('order');
+        updateUrlParameter(columnName, newOrder);
     }
-
-    window.history.replaceState({}, '', `${window.location.pathname}?${urlParams.toString()}`);
 }
 
-document.addEventListener('DOMContentLoaded', function () {
-    handleCheckboxElements();
-    handleSelectAndRadioElements();
-    handleFileElements();
-    handleAutocompleteElements();
-    init();
-    beforeSubmit();
+function initializeTableHeaders() {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.has('order')) {
+        const orders = urlParams.get('order').split(',');
+        orders.forEach(order => {
+            const lastUnderscoreIndex = order.lastIndexOf('_');
+            const col = order.substring(0, lastUnderscoreIndex);
+            const val = order.substring(lastUnderscoreIndex + 1);
+            const th = document.querySelector(`th[data-sort="${col}"]`);
+            if (th) {
+                th.dataset.order = val;
+            }
+        });
+    }
+}
 
-    document.querySelectorAll('th[data-sort]').forEach(th => {
-        th.addEventListener('click', handleColumnClick);
-    });
-});
+
+function removeUrlParameter(key) {
+    const urlParams = new URLSearchParams(window.location.search);
+
+    if (urlParams.has('order')) {
+        const orders = urlParams.get('order').split(',').filter(order => {
+            const col = order.substring(0, order.lastIndexOf('_'));
+            return col !== key;
+        });
+
+        if (orders.length > 0) {
+            urlParams.set('order', orders.join(','));
+        } else {
+            urlParams.delete('order');
+        }
+    }
+
+    // Rebuild the URL
+    const newUrl = `${window.location.pathname}?${urlParams.toString()}`;
+
+    // Redirect to the new URL
+    window.location.href = newUrl;
+}
+
