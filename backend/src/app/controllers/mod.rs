@@ -137,20 +137,15 @@ macro_rules! index {
             let locale = crate::app::controllers::get_locale(headers.clone(), Some(request_query.clone()));
             let total_results: i64 = get_total!(config, $resource);
             let pagination = Pagination::new(request_query.clone(), total_results);
-            let order: &str = match request_query.order.as_deref() {
-                Some(s) => s,
-                None => &"",
-            };
+            let order = request_query.order.as_deref().unwrap_or("");
             let orders = order.split(",");
             let mut query = $resource.into_boxed();
-            let mut is_first_order = true;
-            for order in orders {
-                if is_first_order {
-                    is_first_order = false;
-                    query = query.order_by(CrudModel::get_order(&order));
+            for (is_first_order, order) in orders.enumerate() {
+                query = if is_first_order == 0 {
+                    query.order_by(CrudModel::get_order(order))
                 } else {
-                    query = query.then_order_by(CrudModel::get_order(&order));
-                }
+                    query.then_order_by(CrudModel::get_order(order))
+                };
             }
             match query.limit(pagination.per_page as i64).offset(pagination.offset as i64).load::< CrudModel >(&mut config.database.pool.get().unwrap()) {
                 Ok(results) => {
@@ -193,7 +188,13 @@ macro_rules! index {
 
 macro_rules! show {
     ($resource:ident, $view:ident) => {
-        pub async fn show(Extension(current_user): Extension<AuthState>, headers: HeaderMap, Query(request_query): Query<RequestQuery>, Path(param_id): Path<i32>, State(config): State<Config>) -> impl IntoResponse {
+        pub async fn show(
+            Extension(current_user): Extension<AuthState>, 
+            headers: HeaderMap, 
+            Query(request_query): Query<RequestQuery>, 
+            Path(param_id): Path<i32>, 
+            State(config): State<Config>
+        ) -> impl IntoResponse {
             let tera: &mut Tera = &mut config.template.clone();
             let table_name = stringify!($resource);
             let locale = crate::app::controllers::get_locale(headers, Some(request_query));

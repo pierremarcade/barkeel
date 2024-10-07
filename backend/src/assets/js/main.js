@@ -2,54 +2,31 @@ import { beforeSubmit, handleSelectAndRadioElements, handleFileElements, handleA
 import { init } from './quill.js';
 
 function sortTable(columnName, order) {
-    const table = document.getElementById('myTable');
-    const tbody = table.tBodies[0];
-
-    // Récupération des lignes
-    let rows = Array.from(tbody.rows);
-
-    // Tri des lignes
-    rows.sort((rowA, rowB) => {
-        const cellA = rowA.cells.find(cell => cell.dataset.sort === columnName);
-        const cellB = rowB.cells.find(cell => cell.dataset.sort === columnName);
-
-        if (!cellA || !cellB) return 0;
-
-        const valueA = cellA.textContent.trim();
-        const valueB = cellB.textContent.trim();
-
-        if (valueA === valueB) return 0;
-
-        const isAscending = order === 'asc';
-        return isAscending ?
-            (valueA > valueB ? 1 : -1) :
-            (valueA < valueB ? 1 : -1);
-    });
-
-    // Remplacement des lignes triées
-    tbody.innerHTML = '';
-    rows.forEach(row => tbody.appendChild(row));
+    console.log(`Sorting by ${columnName} in ${order} order`);
 }
-
 
 function handleColumnClick(event) {
     const th = event.target.closest('th[data-sort]');
     if (!th) return;
 
     const columnName = th.dataset.sort;
-    const currentOrder = th.dataset.order || 'asc';
+    const currentOrder = th.dataset.order || 'none';
 
-    let newOrder = 'desc';
-    if (currentOrder === 'desc') {
+    let newOrder;
+    if (currentOrder === 'asc') {
+        newOrder = 'desc';
+    } else if (currentOrder === 'desc') {
         newOrder = 'none';
+    } else {
+        newOrder = 'asc';
     }
 
-    th.dataset.order = newOrder;
     updateUrlParameter(columnName, newOrder);
 
     if (newOrder !== 'none') {
         sortTable(columnName, newOrder);
     }
+    th.dataset.order = newOrder;
 }
 
 function updateUrlParameter(key, value) {
@@ -58,9 +35,11 @@ function updateUrlParameter(key, value) {
 
     if (urlParams.has('order')) {
         const orders = urlParams.get('order').split(',');
+        let found = false;
         orders.forEach(order => {
             const [col, dir] = order.split('_');
             if (col === key) {
+                found = true;
                 if (value !== 'none') {
                     params.push(`${key}_${value}`);
                 }
@@ -68,14 +47,21 @@ function updateUrlParameter(key, value) {
                 params.push(order);
             }
         });
+        if (!found && value !== 'none') {
+            params.push(`${key}_${value}`);
+        }
     } else if (value !== 'none') {
         params.push(`${key}_${value}`);
     }
 
-    urlParams.set('order', params.join(','));
+    if (params.length > 0) {
+        urlParams.set('order', params.join(','));
+    } else {
+        urlParams.delete('order');
+    }
+
     window.history.replaceState({}, '', `${window.location.pathname}?${urlParams.toString()}`);
 }
-
 
 document.addEventListener('DOMContentLoaded', function () {
     handleCheckboxElements();
