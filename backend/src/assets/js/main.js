@@ -74,6 +74,7 @@ function handleColumnClick(event) {
 
     handleSortParameter(columnName, newOrder);
 
+
     th.dataset.order = newOrder;
 }
 
@@ -96,6 +97,10 @@ function initializeTableHeaders() {
             const th = document.querySelector(`th[data-sort="${col}"]`);
             if (th) {
                 th.dataset.order = val;
+                // Dispatch a custom event to update Alpine.js state
+                window.dispatchEvent(new CustomEvent(`${col}-order-change`, {
+                    detail: { order: val }
+                }));
             }
         });
     }
