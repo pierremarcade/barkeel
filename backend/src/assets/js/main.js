@@ -98,6 +98,7 @@ function initializeTableHeaders() {
             if (th) {
                 th.dataset.order = val;
                 // Dispatch a custom event to update Alpine.js state
+                console.log('dispatching', `${col}-order-change`, val);
                 window.dispatchEvent(new CustomEvent(`${col}-order-change`, {
                     detail: { order: val }
                 }));
