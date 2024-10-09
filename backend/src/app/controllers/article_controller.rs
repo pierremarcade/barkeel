@@ -1,23 +1,35 @@
-use barkeel_lib::app::Config;
-use crate::app::models::article::{ Article, ArticleForm, ArticleInsertValues, ArticleUpdateValues };
-use crate::db::schema::articles::{self, dsl::*};
-use crate::app::models::user::User;
+// Standard library imports
+use std::collections::HashMap;
+
+// External crate imports
+use axum::{
+    extract::{Multipart, Path, Query, State},
+    http::{HeaderMap, StatusCode},
+    response::{IntoResponse, Redirect},
+    Extension, Form,
+};
+use chrono::Utc;
+use diesel::prelude::*;
+use fluent_templates::Loader;
+use inflector::Inflector;
+use tera::Tera;
+use validator::{Validate, ValidationErrors};
+
+// Internal crate imports
 use crate::app::controllers::CrudViewTrait;
+use crate::app::models::article::{Article, ArticleForm, ArticleInsertValues, ArticleUpdateValues};
 use crate::app::models::auth::AuthState;
+use crate::app::models::user::User;
+use crate::config::application::LOCALES;
+use crate::db::schema::articles::{self, dsl::*};
+
+// barkeel_lib imports
+use barkeel_lib::app::Config;
+use barkeel_lib::app::http::response::Response;
+use barkeel_lib::app::pagination::{Pagination, PaginationTrait, RequestQuery};
+use barkeel_lib::crud;
 use barkeel_lib::storage::{local_storage::LocalStorage, FileStorage};
 use barkeel_lib::utils::slugify;
-use barkeel_lib::app::http::response::Response;
-use barkeel_lib::app::pagination::{ RequestQuery, Pagination, PaginationTrait };
-use diesel::prelude::*;
-use tera::Tera;
-use chrono::Utc;
-use validator::{Validate, ValidationErrors};
-use axum::{ Extension, extract::{Multipart, Path, State, Query}, response::{ IntoResponse, Redirect }, http::{ HeaderMap, StatusCode }, Form};
-use barkeel_lib::crud;
-use inflector::Inflector;
-use std::collections::HashMap;
-use crate::config::application::LOCALES;
-use fluent_templates::Loader;
 
 type CrudModel = Article;
 type CrudForm = ArticleForm;
